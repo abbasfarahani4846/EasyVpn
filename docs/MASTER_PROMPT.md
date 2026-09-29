@@ -234,6 +234,13 @@ Emit **only `rule_set` references**; legacy `geosite`/`geoip` fields no longer e
 - **Selector-outbound design:** the tunnel runs `selector("proxy") → {node outbounds…}` plus `urltest("auto")`. **Node switch = selector hot-swap via the core API — no tunnel teardown** (today `SwitchNode` always errors and restarts: `adapter.go:153-157`). Node switch < 300 ms, no state flap. For 10k nodes only the active node + top-N (default 50) are materialized as outbounds; others are compiled on demand.
 - **TUN is real:** `Engine.StartWithNode` currently discards `tunEnabled` (`engine.go:123`). Implement TUN inbound (fd handoff on mobile, Wintun/system TUN on desktop) and system-proxy mode.
 - Real stats: fill `upBps/downBps` (sing-box traffic manager) — `GetStats` currently returns zeros.
+- **Connection mode (user-selectable, FlClash-style):** `mode ∈ {tun, system_proxy, both}` plus an optional `proxy_only` (local mixed port only, no OS changes).
+  - `tun` — TUN inbound captures all traffic; system proxy untouched. Needs VpnService (Android) / Wintun+elevation (Windows) / NE (macOS/iOS) / CAP_NET_ADMIN (Linux).
+  - `system_proxy` — no TUN, no elevation. Core listens on the mixed inbound (`127.0.0.1:<port>`, local auth per §7) and the app sets the OS proxy (WinINET / `networksetup` / gsettings). **Not available on Android/iOS** (hide the option there; mobile is always `tun`, with optional `proxy_only` for advanced users).
+  - `both` — TUN + system proxy together (apps that honor the system proxy skip TUN overhead; everything else is still captured). Keep the mixed inbound and TUN inbound in one core instance; TUN must exclude the core's own traffic (auto-route with `route_exclude`/`protect`) to avoid loops.
+  - Rules: the mode is stored in settings and passed in `Start{mode}`; the generated config emits inbounds accordingly (`tun-in` and/or `mixed-in`). **Switching mode while connected = rebuild inbounds only (core restart), never leaving stale system-proxy or TUN state.** On disconnect, crash or app exit the app **always restores the previous OS proxy settings** (persist the prior value before overriding; restore on next launch if a crash left it set).
+  - UI: a segmented control on the Dashboard (TUN | Proxy | Both) plus details in Settings (mixed port, allow-LAN, bypass list for system proxy, TUN MTU/auto-route/strict-route/IPv6, per-app split). Show a clear permission/elevation prompt when the chosen mode needs it and a graceful fallback message if denied.
+  - Tray menu (desktop) and Android Quick Tile expose the same mode switch.
 - Auto-failover (opt-in): on N consecutive URL-test failures switch to best node in the same profile.
 - Reconnect on resume (desktop), network change (Android `ConnectivityManager`), VPN revoke.
 
@@ -361,7 +368,8 @@ Each item lists its acceptance check.
 2. Builders for AnyTLS, ShadowTLS, Naive, SSH, **`openvpn-client`** and mux/fragment/ECH/uTLS options; capability computation for `xhttp`/`mlkem`/`awg`.
 3. Parser additions (`.ovpn`, `wg-quick`, SIP008, anytls/ssh/naive).
 4. Pinger URL-mode wired through the core; batched progress.
-5. Desktop IPC: authenticated UDS/pipe with `Start/Stop/SwitchNode/GetStats/ParseContent/PingBatch/FetchSubscription/SyncRuleSets/SetRouting`.
+5. Connection modes (§F4): inbound generation for `tun` / `system_proxy` / `both` / `proxy_only`.
+6. Desktop IPC: authenticated UDS/pipe with `Start/Stop/SwitchNode/GetStats/ParseContent/PingBatch/FetchSubscription/SyncRuleSets/SetRouting`.
 ✅ `go test ./...` green incl. fixtures; local echo round-trips via TUN-less mixed inbound; hot switch keeps a live connection; OpenVPN endpoint config passes `box` validation on a fixture `.ovpn`.
 
 ### Phase 2 — Dart bridge + storage (1 week)
@@ -381,8 +389,8 @@ CoreModule (JNI), VpnService + fd handoff + `protect()`, foreground notification
 ✅ QA matrix rows pass on API 24 & 34 emulators + one device; connect < 1.5 s; switch < 300 ms.
 
 ### Phase 5 — Desktop (1–1.5 weeks)
-Process-mode core + privileged helper (one-time elevation, Wintun install), system proxy (WinINET/networksetup/gsettings), tray, auto-start, close-to-tray, TUN permission flows; bundle core binaries in runners.
-✅ Windows UAC once; macOS dev-signed run + notarization script; Ubuntu TUN perms documented + graceful error.
+Process-mode core + privileged helper (one-time elevation, Wintun install), system proxy (WinINET/networksetup/gsettings) with save/restore of prior OS proxy state and crash-recovery, all four connection modes, tray mode switch, auto-start, close-to-tray, TUN permission flows; bundle core binaries in runners.
+✅ Each mode works and cleans up (proxy restored after disconnect/kill -9 + relaunch); Windows UAC once; macOS dev-signed run + notarization script; Ubuntu TUN perms documented + graceful error.
 
 ### Phase 6 — Feature completion (1–1.5 weeks)
 Subscription scheduler + health, export (YAML/JSON/URI), encrypted backup/restore, deep links, QR (camera + file), logs page + diagnostics bundle, theme engine, onboarding, i18n fa/en + RTL pass.
@@ -493,7 +501,7 @@ Same maintainer, other formats: `Chocolate4U/Iran-v2ray-rules` branch `release` 
 | Method | Args → Result | Notes |
 |---|---|---|
 | `Init` | `{cacheDir}` → `{version, cores:[{name,version,capabilities}]}` | idempotent |
-| `Start` | `{nodeId, presetId, customRules?, tun:{enabled,mtu,perApp?}, dns:{…}, tlsTricks:{…}}` → `{session}` | compile, validate, start |
+| `Start` | `{nodeId, presetId, mode:"tun"\|"system_proxy"\|"both"\|"proxy_only", customRules?, tun:{mtu,autoRoute,strictRoute,perApp?}, systemProxy:{bypass[],port}, dns:{…}, tlsTricks:{…}}` → `{session}` | compile, validate, start |
 | `Stop` | `{}` → `{}` | graceful; flush stats |
 | `SwitchNode` | `{nodeId}` → `{}` | selector hot-swap; cross-core = restart |
 | `PingBatch` | `{nodes:[id…], mode:"tcp"\|"url", workers}` → streamed `delay` events | throttled |
