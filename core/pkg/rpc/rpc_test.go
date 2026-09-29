@@ -98,3 +98,18 @@ func TestUnknownMethod(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestSealOpen(t *testing.T) {
+	s := newServer(t)
+	key := "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" // 32 bytes
+	enc := call(t, s, "Seal", map[string]any{"key": key, "items": []string{"secret-1", "secret-2"}})
+	if enc.Error != "" {
+		t.Fatal(enc.Error)
+	}
+	items := enc.Result.(map[string]any)["items"].([]any)
+	dec := call(t, s, "Open", map[string]any{"key": key, "items": items})
+	got := dec.Result.(map[string]any)["items"].([]any)
+	if got[0] != "secret-1" || got[1] != "secret-2" {
+		t.Fatalf("round trip failed: %v (%s)", got, dec.Error)
+	}
+}

@@ -98,6 +98,8 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 			return nil, err
 		}
 		return map[string]any{}, e.SwitchNode(a.Node)
+	case "ExitInfo":
+		return e.ExitInfo(ctx)
 	case "GetStats":
 		return e.GetStats(), nil
 	case "DumpConfig":
@@ -245,6 +247,39 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 		}
 		return doExport(a.Format, a.Nodes)
 
+	case "Seal", "Open":
+		a, err := decode[struct {
+			Key   string   `json:"key"` // base64, 32 bytes
+			Items []string `json:"items"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		key, err := base64.StdEncoding.DecodeString(a.Key)
+		if err != nil {
+			return nil, fmt.Errorf("bad key encoding")
+		}
+		out := make([]string, len(a.Items))
+		for i, it := range a.Items {
+			if method == "Seal" {
+				sealed, err := backup.Seal(key, []byte(it))
+				if err != nil {
+					return nil, err
+				}
+				out[i] = base64.StdEncoding.EncodeToString(sealed)
+				continue
+			}
+			blob, err := base64.StdEncoding.DecodeString(it)
+			if err != nil {
+				return nil, fmt.Errorf("item %d: bad encoding", i)
+			}
+			pt, err := backup.Open(key, blob)
+			if err != nil {
+				return nil, fmt.Errorf("item %d: %w", i, err)
+			}
+			out[i] = string(pt)
+		}
+		return map[string]any{"items": out}, nil
 	case "BackupEncrypt":
 		a, err := decode[struct {
 			Data       json.RawMessage `json:"data"`

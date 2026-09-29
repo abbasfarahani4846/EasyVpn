@@ -6,7 +6,11 @@ package adapter
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"net/netip"
+	"net/url"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -25,6 +29,7 @@ import (
 	"github.com/sagernet/sing/common/auth"
 	singjson "github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/json/badoption"
+	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/service"
 )
 
@@ -119,6 +124,8 @@ type CoreAdapter interface {
 	UrlTest(ctx context.Context, node *protocol.ProxyNode, testURL string, timeoutMs int) (int64, error)
 	LatestStats() Stats
 	Running() bool
+	// HTTPGet fetches a plain-HTTP URL through the running tunnel.
+	HTTPGet(ctx context.Context, rawURL string) ([]byte, error)
 }
 
 // ErrNeedsRestart is returned by SwitchNode when a full restart is required.
@@ -569,4 +576,46 @@ func ExportSingBox(nodes []*protocol.ProxyNode) (string, error) {
 		option.Outbound{Type: C.TypeDirect, Tag: "direct", Options: &option.DirectOutboundOptions{}})
 	b, err := singjson.MarshalContext(include.Context(context.Background()), opts)
 	return string(b), err
+}
+
+// HTTPGet performs a plain-HTTP GET through the running tunnel's "proxy"
+// selector (used for the real exit-IP lookup). https targets are not supported.
+func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, error) {
+	a.mu.Lock()
+	b := a.instance
+	a.mu.Unlock()
+	if b == nil {
+		return nil, fmt.Errorf("box not running")
+	}
+	out, ok := b.Outbound().Outbound(selectorTag)
+	if !ok {
+		return nil, fmt.Errorf("proxy outbound not found")
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme != "http" {
+		return nil, fmt.Errorf("only http:// URLs are supported")
+	}
+	host := u.Host
+	if u.Port() == "" {
+		host += ":80"
+	}
+	client := &http.Client{
+		Timeout: 8 * time.Second,
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return out.DialContext(ctx, network, M.ParseSocksaddr(host))
+			},
+			DisableKeepAlives: true,
+		},
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))
 }

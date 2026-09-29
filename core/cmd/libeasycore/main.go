@@ -2,7 +2,8 @@
 // stable FFI surface consumed by the Dart bridge (and the Android JNI module):
 //
 //	InitCore(cacheDir)              create/refresh the engine
-//	RegisterEventCallback(cb)       batched events (JSON) are pushed to cb
+//	RegisterEventCallback(cb)       batched events (JSON) are pushed to cb; the
+//	                                callee must FreeString() each event string
 //	CoreCall(requestJSON) -> JSON   run any RPC method (see pkg/rpc)
 //	FreeString(p)                   release strings returned by CoreCall
 //
@@ -72,9 +73,10 @@ func pumpEvents(e *engine.Engine) {
 		if err != nil {
 			continue
 		}
+		// Ownership of cstr passes to the callback: Dart's NativeCallable.listener
+		// runs asynchronously, so it must release the string with FreeString.
 		cstr := C.CString(string(payload))
 		C.invoke_event_callback(fn, cstr)
-		C.free(unsafe.Pointer(cstr))
 	}
 }
 

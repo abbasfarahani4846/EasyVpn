@@ -95,3 +95,36 @@ func newGCM(key []byte) (cipher.AEAD, error) {
 	}
 	return cipher.NewGCM(blk)
 }
+
+// Seal encrypts small blobs (e.g. node secrets at rest) with a raw 32-byte key:
+// output = nonce | ciphertext+tag. Fast enough for tens of thousands of nodes.
+func Seal(key, plaintext []byte) ([]byte, error) {
+	if len(key) != keyLen {
+		return nil, errors.New("key must be 32 bytes")
+	}
+	gcm, err := newGCM(key)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+// Open reverses Seal.
+func Open(key, sealed []byte) ([]byte, error) {
+	if len(key) != keyLen {
+		return nil, errors.New("key must be 32 bytes")
+	}
+	gcm, err := newGCM(key)
+	if err != nil {
+		return nil, err
+	}
+	if len(sealed) < gcm.NonceSize()+16 {
+		return nil, errors.New("sealed blob too short")
+	}
+	n := gcm.NonceSize()
+	return gcm.Open(nil, sealed[:n], sealed[n:], nil)
+}

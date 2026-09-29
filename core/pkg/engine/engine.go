@@ -5,6 +5,7 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -470,4 +471,17 @@ func (e *Engine) DumpConfig(p StartParams) (string, error) {
 		Node: p.Node, Candidates: p.Candidates, Routing: e.currentRouting(),
 		Mode: adapter.ParseConnMode(p.Mode), Tun: p.Tun, LocalPort: p.LocalPort,
 	})
+}
+
+// ExitInfo looks up the real exit IP/country through the running tunnel.
+func (e *Engine) ExitInfo(ctx context.Context) (map[string]any, error) {
+	b, err := e.core.HTTPGet(ctx, "http://ip-api.com/json/?fields=status,country,countryCode,city,query,isp")
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(b, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
