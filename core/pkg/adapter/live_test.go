@@ -84,10 +84,8 @@ func TestLiveBoxSOCKSChain(t *testing.T) {
 	// The mixed-in listener must be reachable on 127.0.0.1:2080.
 	resp, err := (&http.Client{Timeout: 5 * time.Second}).Get(echoAddr + "/probe")
 	if err == nil {
+		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
-		// If the environment routes loopback through the system proxy this
-		// may fail; it's informational only.
-		_ = io.Copy(io.Discard, resp.Body)
 	}
 }
 
