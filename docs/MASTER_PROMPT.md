@@ -1,6 +1,6 @@
 # EasyVPN — Master Implementation Prompt & Engineering Plan
 
-> **Version:** 3.0 (research-verified and repo-verified, 2026-09-29)
+> **Version:** 3.1 (research-verified; implementation status added — see Appendix E)
 > **Audience:** A self-contained instruction set for an autonomous AI engineer (or human team) implementing EasyVPN. Follow it sequentially. Where this document and your assumptions disagree, **this document wins**. Where this document is marked **VERIFY**, confirm the fact against the primary source before building on it (Appendix D lists sources).
 > **Working directory:** repository root of this checkout. A Go core (`core/`) and Flutter app (`lib/`) are already scaffolded — **Appendix C is the authoritative description of what exists vs. what is a stub.** Do not rebuild what works; fix what is listed in Phase 0.
 
@@ -579,3 +579,26 @@ Missing entirely: Drift/SQLite + FTS, secure storage, downloader/registry/schedu
 6. Xray-core version compatible with server-side deployments (XHTTP wire-format change in 26.9.x).
 7. Iran protocol-effectiveness claims (§2.2) — treat as hints.
 8. Flutter 3.47 patch level and package versions (`drift`, `mobile_scanner`, `tray_manager`, `app_links`) at implementation time.
+
+## Appendix E — Implementation status (v3.1) and deviations from this spec
+
+**Built and verified (Go tests, Flutter tests, real-core integration, `flutter build linux`, app run under Xvfb):**
+connection modes (tun / system_proxy / both / proxy_only) with crash-safe OS-proxy restore; selector hot-switch; real speeds;
+router (fixed rule order, service overrides, 1.14 DNS schema, local rule-sets); `rulesync` (mirrors, proxy fallback,
+atomic swap, embedded Iran baseline); country detection; subscriptions with usage headers; `.ovpn` + `wg-quick` import;
+export (URI/Clash/sing-box/wg-quick); AES-256-GCM/Argon2id backups; chunked URL test; OpenVPN, AnyTLS, SSH endpoints;
+**Xray-core sidecar** for XHTTP / ML-KEM / TCP-HTTP-header nodes (verified against a real Xray server);
+SQLite (WAL, trigram FTS5, keyset paging, sealed secrets); Riverpod 3 providers; all screens; theme engine; en/fa (RTL);
+tray/window; deep links; local-port auth (verified: SOCKS `0xFF`, HTTP `407`).
+
+**Deviations (intentional):**
+1. IPC on desktop is **loopback TCP + 256-bit per-launch token** (not UDS/named pipe).
+2. i18n is a hand-written `S` class with Dart maps (not ARB/gen-l10n).
+3. Persistence uses Drift's isolate executor with hand-written SQL (no code generation).
+4. Xray-core is an in-process **sidecar behind sing-box** (TUN/DNS/routing stay in sing-box). Go 1.26 is required.
+5. Android TUN: the host creates the interface (`VpnService`) and passes the fd (`tun.fd`); the app package is excluded from
+   the VPN instead of using `protect()`. **Not yet run on a device/emulator.**
+6. Local-port password protection applies to `proxy_only` mode only (OS system proxies cannot carry credentials).
+
+**Not implemented:** iOS / macOS NetworkExtension, mihomo adapter (AmneziaWG), IKEv2 platform adapters, OpenConnect,
+ShadowTLS/Naive builders, auto-failover implementation (setting exists), Windows/macOS/Android builds (CI defined, not run here).

@@ -1,0 +1,13 @@
+EasyVPN
+Copyright (C) 2026 EasyVPN contributors
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License v3.0 (see LICENSE). It embeds:
+
+- sing-box (GPL-3.0 with additional terms) https://github.com/SagerNet/sing-box
+- Xray-core (MPL-2.0)                        https://github.com/XTLS/Xray-core
+- Flutter and plugins (BSD-3-Clause / MIT / Apache-2.0, see the in-app license page)
+- Wintun (Windows, prebuilt redistributable)  https://www.wintun.net/
+
+Rule lists downloaded at runtime come from community projects:
+Chocolate4U/Iran-sing-box-rules, MetaCubeX/meta-rules-dat and others (each under its own license).

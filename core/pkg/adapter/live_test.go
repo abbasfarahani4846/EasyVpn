@@ -3,9 +3,11 @@ package adapter
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -159,5 +161,50 @@ func TestURLTestBatchThroughSOCKS(t *testing.T) {
 	}
 	if res[1].LatencyMs != -1 || res[2].LatencyMs != -1 || res[2].Error == "" {
 		t.Fatalf("dead/bad nodes must fail: %+v %+v", res[1], res[2])
+	}
+}
+
+// The local mixed port must reject clients that do not present the credentials.
+func TestMixedInboundEnforcesLocalAuth(t *testing.T) {
+	echoAddr, closeEcho := startEchoServer(t)
+	defer closeEcho()
+	serverAddr, closeServer := startSOCKSServerBox(t)
+	defer closeServer()
+	host, port := splitHostPort(t, serverAddr)
+	node := &protocol.ProxyNode{Name: "up", Type: protocol.ProtoSocks, Server: host, Port: port}
+
+	local := freePort(t)
+	a := NewSingBoxAdapter()
+	err := a.Start(context.Background(), &StartRequest{
+		Node: node, Routing: routerGlobal(), Mode: ModeProxyOnly, LocalPort: local,
+		Auth: &LocalAuth{User: "easyvpn", Pass: "s3cret"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Stop(context.Background())
+
+	get := func(proxyURL string) error {
+		u, _ := url.Parse(proxyURL)
+		c := &http.Client{Timeout: 4 * time.Second, Transport: &http.Transport{Proxy: http.ProxyURL(u)}}
+		resp, err := c.Get(echoAddr + "/generate_204")
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusProxyAuthRequired {
+			return fmt.Errorf("proxy auth required (407)")
+		}
+		return nil
+	}
+	base := fmt.Sprintf("127.0.0.1:%d", local)
+	if err := get("socks5://easyvpn:s3cret@" + base); err != nil {
+		t.Fatalf("valid credentials must work: %v", err)
+	}
+	if err := get("socks5://" + base); err == nil {
+		t.Fatal("SOCKS without credentials must be rejected")
+	}
+	if err := get("http://easyvpn:wrong@" + base); err == nil {
+		t.Fatal("HTTP proxy with wrong credentials must be rejected")
 	}
 }

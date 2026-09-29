@@ -23,7 +23,10 @@ Future<AppEnv> bootstrap() async {
   final secrets = await SecretStore.open(dataDir);
   final db = await AppDatabase.open(p.join(dataDir, 'easyvpn.db'));
 
-  var settings = const AppSettings();
+  // First run: desktop starts with the OS proxy (no admin rights), Android with the VPN tunnel.
+  var settings = AppSettings(
+    mode: Platform.isAndroid ? ConnMode.tun : (Platform.isWindows || Platform.isLinux || Platform.isMacOS ? ConnMode.systemProxy : ConnMode.proxyOnly),
+  );
   final raw = await db.kvGet('settings');
   if (raw != null) {
     try {
