@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/database/node_repository.dart';
 import '../../core/models/models.dart';
+import '../../core/providers/capabilities_provider.dart';
 import '../../core/providers/core_provider.dart';
 import '../../core/providers/env.dart';
 import '../../core/providers/node_list_provider.dart';
@@ -270,7 +271,9 @@ class _NodeTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = context.s;
     final cs = Theme.of(context).colorScheme;
-    final needs = row.requires.isNotEmpty ? row.requires.join(', ') : null;
+    final caps = ref.watch(supportedCapsProvider).value;
+    final missing = caps == null ? const <String>[] : row.requires.where((c) => !caps.contains(c)).toList();
+    final needs = missing.isNotEmpty ? missing.join(', ') : null;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       child: Material(

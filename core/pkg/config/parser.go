@@ -108,10 +108,15 @@ func (p *Parser) ParseWithWarnings(content string) (*ParseResult, error) {
 }
 
 func looksLikeBase64(s string) bool {
-	if strings.ContainsAny(s, "://{} \n\t") {
-		return false
-	}
-	if len(s) < 16 {
+	// Subscriptions are often line-wrapped; whitespace is not part of the alphabet.
+	s = strings.Map(func(r rune) rune {
+		switch r {
+		case '\r', '\n', ' ', '\t':
+			return -1
+		}
+		return r
+	}, s)
+	if len(s) < 16 || strings.Contains(s, "://") {
 		return false
 	}
 	for _, r := range s {
@@ -277,6 +282,9 @@ func parseTransportQuery(q url.Values) *protocol.TransportConfig {
 	t := strings.ToLower(q.Get("type"))
 	switch t {
 	case "", "tcp", "raw":
+		if strings.EqualFold(q.Get("headerType"), "http") {
+			return &protocol.TransportConfig{Type: "tcp-http", Path: q.Get("path"), Host: q.Get("host")}
+		}
 		return nil
 	case "xhttp", "splithttp":
 		return &protocol.TransportConfig{

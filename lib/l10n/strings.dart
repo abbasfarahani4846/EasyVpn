@@ -95,6 +95,10 @@ const _en = <String, String>{
       'Only opens a local HTTP/SOCKS port. Configure apps manually.',
   'mode.unsupported': 'Not available on this device',
   'err.no_node': 'No node selected. Import a profile first.',
+  'err.needs_admin':
+      'Tunnel mode needs administrator rights. Restart as administrator, or use Proxy mode.',
+  'err.restart_admin': 'Restart as administrator',
+  'err.vpn_permission_denied': 'VPN permission was denied.',
   'err.needs_core':
       'This node needs the “{cap}” engine, which is not available in the built-in core.',
   'proxies.title': 'Proxies',

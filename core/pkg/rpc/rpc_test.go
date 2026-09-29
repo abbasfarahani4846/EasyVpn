@@ -82,10 +82,12 @@ func TestCountryAndRulesStatus(t *testing.T) {
 
 func TestStartUnsupportedNodeIsTypedError(t *testing.T) {
 	s := newServer(t)
-	node := map[string]any{"name": "x", "type": "vless", "server": "h.example.com", "port": 443, "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811",
-		"transport": map[string]any{"type": "xhttp"}}
+	// AmneziaWG needs the mihomo engine, which is not bundled: neither sing-box nor Xray can run it.
+	node := map[string]any{"name": "x", "type": "wireguard", "server": "h.example.com", "port": 51820,
+		"wireguard": map[string]any{"private_key": "eCtX0T4W4+Z7JPVQvZkYtUvYB4m0mpXGpjD5jT4tkVk=", "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+			"local_address": []string{"10.0.0.2/32"}, "awg": map[string]string{"jc": "4"}}}
 	r := call(t, s, "Start", map[string]any{"node": node, "mode": "proxy_only"})
-	if !strings.Contains(r.Error, "unsupported_by_core:xhttp") {
+	if !strings.Contains(r.Error, "unsupported_by_core:awg") {
 		t.Fatalf("want typed capability error, got %q", r.Error)
 	}
 	if st := call(t, s, "GetState", nil).Result.(map[string]any)["state"]; st != "error" {
@@ -111,5 +113,21 @@ func TestSealOpen(t *testing.T) {
 	got := dec.Result.(map[string]any)["items"].([]any)
 	if got[0] != "secret-1" || got[1] != "secret-2" {
 		t.Fatalf("round trip failed: %v (%s)", got, dec.Error)
+	}
+}
+
+func TestXhttpNodeStartsThroughXraySidecar(t *testing.T) {
+	s := newServer(t)
+	node := map[string]any{"name": "x", "type": "vless", "server": "127.0.0.1", "port": 9, "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811",
+		"encryption": "none", "transport": map[string]any{"type": "xhttp", "path": "/x"}}
+	r := call(t, s, "Start", map[string]any{"node": node, "mode": "proxy_only", "local_port": 24080})
+	if r.Error != "" {
+		t.Fatalf("xhttp node must start via the xray sidecar: %s", r.Error)
+	}
+	if st := call(t, s, "GetState", nil).Result.(map[string]any)["state"]; st != "connected" {
+		t.Fatalf("state=%v", st)
+	}
+	if e := call(t, s, "Stop", nil); e.Error != "" {
+		t.Fatal(e.Error)
 	}
 }

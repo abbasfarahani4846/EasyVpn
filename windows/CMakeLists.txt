@@ -87,6 +87,20 @@ if(PLUGIN_BUNDLED_LIBRARIES)
     COMPONENT Runtime)
 endif()
 
+# EasyVPN core (built with `make -C core windows-proc`) and the Wintun driver DLL
+# (download from https://www.wintun.net/ into third_party/wintun/wintun.dll — see docs/BUILD.md).
+set(EASYCORE_EXE "${CMAKE_CURRENT_SOURCE_DIR}/../bin/easycoreproc-windows-amd64.exe")
+if(EXISTS "${EASYCORE_EXE}")
+  install(FILES "${EASYCORE_EXE}" RENAME "easycoreproc.exe"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+else()
+  message(WARNING "easycoreproc-windows-amd64.exe not found: run `make -C core windows-proc` first")
+endif()
+set(WINTUN_DLL "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/wintun/wintun.dll")
+if(EXISTS "${WINTUN_DLL}")
+  install(FILES "${WINTUN_DLL}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+endif()
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"

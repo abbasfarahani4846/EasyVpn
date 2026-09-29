@@ -48,3 +48,7 @@ app.*.map.json
 core/pkg/**/cache.db
 *.db
 bin/
+
+# Android release signing + native libs built from core/
+android/key.properties
+android/app/src/main/jniLibs/

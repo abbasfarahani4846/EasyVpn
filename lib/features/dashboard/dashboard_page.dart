@@ -276,13 +276,7 @@ class _ConnectButtonState extends ConsumerState<_ConnectButton>
   }
 
   Future<void> _onTap() async {
-    final ctl = ref.read(coreControllerProvider.notifier);
-    final mode = ref.read(settingsProvider).mode;
-    if (!widget.core.isConnected && mode.usesTun && PlatformService.isAndroid) {
-      final ok = await PlatformService.prepareVpn();
-      if (!ok) return;
-    }
-    await ctl.toggle();
+    await ref.read(coreControllerProvider.notifier).toggle();
   }
 
   @override

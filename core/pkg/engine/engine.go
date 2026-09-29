@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -71,6 +72,8 @@ type Engine struct {
 	proxyOn    bool
 	lastStart  StartParams
 
+	sidecar *adapter.XraySidecar // Xray-core instance serving nodes sing-box cannot run
+
 	rulesOnce sync.Once
 	rulesErr  error
 }
@@ -105,10 +108,27 @@ func (e *Engine) Info() map[string]any {
 	return map[string]any{
 		"core":         e.core.Name(),
 		"version":      e.core.Version(),
-		"capabilities": e.core.Capabilities(),
+		"capabilities": e.capabilities(),
 		"protocols":    protocol.SupportedProtocols(),
 		"system_proxy": e.sysProxy.Supported(),
 	}
+}
+
+// capabilities is the union of every engine's optional node capabilities.
+func (e *Engine) capabilities() []string {
+	set := map[string]bool{}
+	for _, c := range e.core.Capabilities() {
+		set[c] = true
+	}
+	for c := range adapter.XrayCapabilities {
+		set[c] = true
+	}
+	var out []string
+	for c := range set {
+		out = append(out, c)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func (e *Engine) setState(s State, detail string) {
@@ -182,8 +202,25 @@ func (e *Engine) Start(p StartParams) error {
 
 	e.setState(StateConnecting, "")
 
+	// Nodes that need Xray-core (XHTTP, ML-KEM, TCP HTTP header) run in an
+	// in-process Xray sidecar exposed to sing-box as a loopback SOCKS upstream,
+	// so TUN, DNS and routing keep working unchanged.
+	runNode := node
+	if adapter.NeedsXray(node) {
+		sc, err := adapter.StartXraySidecar(node)
+		if err != nil {
+			e.setState(StateError, err.Error())
+			cancel()
+			return err
+		}
+		e.mu.Lock()
+		e.sidecar = sc
+		e.mu.Unlock()
+		runNode = sc.Node()
+	}
+
 	req := &adapter.StartRequest{
-		Node:       node,
+		Node:       runNode,
 		Candidates: p.Candidates,
 		Routing:    e.currentRouting(),
 		Mode:       mode,
@@ -203,6 +240,7 @@ func (e *Engine) Start(p StartParams) error {
 		},
 	}
 	if err := e.core.Start(ctx, req); err != nil {
+		e.closeSidecar()
 		e.setState(StateError, err.Error())
 		cancel()
 		return err
@@ -257,11 +295,22 @@ func (e *Engine) Stop() error {
 
 	_ = e.sysProxy.Restore()
 	err := e.core.Stop(context.Background())
+	e.closeSidecar()
 	if stopFn != nil {
 		stopFn()
 	}
 	e.setState(StateDisconnected, "")
 	return err
+}
+
+func (e *Engine) closeSidecar() {
+	e.mu.Lock()
+	sc := e.sidecar
+	e.sidecar = nil
+	e.mu.Unlock()
+	if sc != nil {
+		_ = sc.Close()
+	}
 }
 
 // Shutdown is called on app exit.
@@ -333,7 +382,15 @@ func (e *Engine) SwitchNode(node *protocol.ProxyNode) error {
 		return fmt.Errorf("no node")
 	}
 	node.EnsureID()
-	err := e.core.SwitchNode(context.Background(), node)
+	e.mu.Lock()
+	viaSidecar := e.sidecar != nil
+	e.mu.Unlock()
+	var err error
+	if viaSidecar || adapter.NeedsXray(node) {
+		err = adapter.ErrNeedsRestart // the sidecar serves exactly one node
+	} else {
+		err = e.core.SwitchNode(context.Background(), node)
+	}
 	if err != nil {
 		if errors.Is(err, adapter.ErrNeedsRestart) && e.GetState() == StateConnected {
 			e.mu.Lock()

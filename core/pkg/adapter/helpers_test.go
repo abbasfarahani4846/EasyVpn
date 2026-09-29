@@ -23,3 +23,7 @@ func decodeOptionsStrict(b []byte) (*option.Options, error) {
 	}
 	return &opts, nil
 }
+
+func routerGlobal() router.Model {
+	return router.Model{Mode: router.ModeGlobalProxy, LogLevel: "warn"}
+}

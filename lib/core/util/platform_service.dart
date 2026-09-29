@@ -39,6 +39,34 @@ class PlatformService {
     return (await _try<bool>('prepareVpn')) ?? false;
   }
 
+  /// Creates the VPN interface (Android) and returns its TUN file descriptor
+  /// for the Go core, or null when the system refused.
+  static Future<int?> establishVpn({
+    required int mtu,
+    required bool ipv6,
+    List<String> include = const [],
+    List<String> exclude = const [],
+  }) => _try<int>('establishVpn', {
+    'mtu': mtu,
+    'ipv6': ipv6,
+    'include': include,
+    'exclude': exclude,
+  });
+
+  static Future<void> stopVpn() => _try<bool>('stopVpn');
+
+  /// Native -> Dart notifications (system revoked the VPN / tile or notification tapped).
+  static void setHandlers({
+    required void Function() onRevoked,
+    required void Function() onToggle,
+  }) {
+    _ch.setMethodCallHandler((call) async {
+      if (call.method == 'vpnRevoked') onRevoked();
+      if (call.method == 'toggle') onToggle();
+      return null;
+    });
+  }
+
   /// Returns launchable apps (Android) for the per-app tunneling picker.
   static Future<List<InstalledApp>> installedApps() async {
     final r = await _try<List<dynamic>>('installedApps');
@@ -48,6 +76,49 @@ class PlatformService {
         .map((m) => InstalledApp(m['package'] as String, m['label'] as String))
         .toList()
       ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+  }
+
+  /// True when the process may create a TUN device (admin/root). Always true on mobile.
+  static Future<bool> isElevated() async {
+    try {
+      if (Platform.isWindows) {
+        final r = await Process.run('fltmc', const []);
+        return r.exitCode == 0;
+      }
+      if (Platform.isLinux || Platform.isMacOS) {
+        final r = await Process.run('id', const ['-u']);
+        return (r.stdout as String).trim() == '0';
+      }
+    } catch (_) {}
+    return true;
+  }
+
+  /// Relaunches the app with administrator rights (Windows UAC / Linux pkexec).
+  /// Returns false when the platform has no supported mechanism.
+  static Future<bool> relaunchElevated() async {
+    final exe = Platform.resolvedExecutable;
+    try {
+      if (Platform.isWindows) {
+        await Process.start('powershell', [
+          '-NoProfile',
+          '-Command',
+          "Start-Process -FilePath '$exe' -Verb RunAs",
+        ], mode: ProcessStartMode.detached);
+        exit(0);
+      }
+      if (Platform.isLinux) {
+        final display = Platform.environment['DISPLAY'] ?? ':0';
+        final xauth = Platform.environment['XAUTHORITY'] ?? '';
+        await Process.start('pkexec', [
+          'env',
+          'DISPLAY=$display',
+          'XAUTHORITY=$xauth',
+          exe,
+        ], mode: ProcessStartMode.detached);
+        exit(0);
+      }
+    } catch (_) {}
+    return false;
   }
 
   /// Registers/unregisters start-at-boot (Android) or login item (desktop).

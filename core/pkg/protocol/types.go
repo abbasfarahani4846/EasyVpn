@@ -30,10 +30,11 @@ const (
 // Capability names describe engine features a node needs. A node lists them in
 // ProxyNode.Requires and the engine picks a CoreAdapter that supports all.
 const (
-	CapXHTTP   = "xhttp" // VLESS XHTTP / SplitHTTP transport
-	CapMLKEM   = "mlkem" // VLESS post-quantum encryption
-	CapAWG     = "awg"   // AmneziaWG obfuscation
-	CapIKEv2   = "ikev2" // platform IKEv2/IPsec
+	CapXHTTP   = "xhttp"   // VLESS XHTTP / SplitHTTP transport
+	CapTCPHTTP = "tcphttp" // TCP with HTTP header camouflage
+	CapMLKEM   = "mlkem"   // VLESS post-quantum encryption
+	CapAWG     = "awg"     // AmneziaWG obfuscation
+	CapIKEv2   = "ikev2"   // platform IKEv2/IPsec
 	CapOpenVPN = "openvpn"
 )
 
@@ -274,6 +275,9 @@ func (n *ProxyNode) ComputeRequires() []string {
 	var out []string
 	if n.Transport != nil && strings.EqualFold(n.Transport.Type, "xhttp") {
 		out = append(out, CapXHTTP)
+	}
+	if n.Transport != nil && strings.EqualFold(n.Transport.Type, "tcp-http") {
+		out = append(out, CapTCPHTTP)
 	}
 	if strings.HasPrefix(strings.ToLower(n.Encryption), "mlkem") {
 		out = append(out, CapMLKEM)

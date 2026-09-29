@@ -20,6 +20,7 @@ import (
 	"easyvpn/core/pkg/router"
 
 	box "github.com/sagernet/sing-box"
+	sbadapter "github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/trafficcontrol"
 	"github.com/sagernet/sing-box/common/urltest"
 	C "github.com/sagernet/sing-box/constant"
@@ -67,9 +68,12 @@ func ParseConnMode(v string) ConnMode {
 
 // TunSettings configures the TUN inbound.
 type TunSettings struct {
-	MTU             uint32   `json:"mtu,omitempty"`
-	StrictRoute     bool     `json:"strict_route,omitempty"`
-	IPv6            bool     `json:"ipv6,omitempty"`
+	MTU         uint32 `json:"mtu,omitempty"`
+	StrictRoute bool   `json:"strict_route,omitempty"`
+	IPv6        bool   `json:"ipv6,omitempty"`
+	// FD is a host-provided TUN file descriptor (Android VpnService). When set the
+	// core uses it instead of creating its own interface.
+	FD              int      `json:"fd,omitempty"`
 	IncludePackages []string `json:"include_packages,omitempty"` // Android per-app allow list
 	ExcludePackages []string `json:"exclude_packages,omitempty"` // Android per-app deny list
 	ExcludeIfaces   []string `json:"exclude_ifaces,omitempty"`
@@ -207,11 +211,15 @@ func (a *SingBoxAdapter) Start(ctx context.Context, req *StartRequest) error {
 	boxCtx := include.Context(ctx)
 	// PlatformLogWriter captures log lines AND guarantees box.New registers
 	// the traffic manager (needClashAPI path includes PlatformLogWriter != nil).
-	instance, err := box.New(box.Options{
+	boxOpts := box.Options{
 		Context:           boxCtx,
 		Options:           opts,
 		PlatformLogWriter: &platformLogger{hook: req.LogHook},
-	})
+	}
+	if req.Tun.FD > 0 && req.Mode.NeedsTUN() {
+		service.MustRegister[sbadapter.PlatformInterface](boxCtx, newFDPlatform(req.Tun.FD))
+	}
+	instance, err := box.New(boxOpts)
 	if err != nil {
 		return fmt.Errorf("create box: %w", err)
 	}
@@ -492,7 +500,7 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 			Rules:                 router.BuildRouteRules(routing),
 			RuleSet:               router.BuildRuleSets(routing),
 			Final:                 router.RouteFinal(routing),
-			AutoDetectInterface:   mode.NeedsTUN(),
+			AutoDetectInterface:   mode.NeedsTUN() && req.Tun.FD <= 0,
 			DefaultDomainResolver: &option.DomainResolveOptions{Server: router.DNSLocalTag},
 		},
 		DNS: router.BuildDNSOptions(routing),
@@ -512,7 +520,7 @@ func tunOptions(t TunSettings) *option.TunInboundOptions {
 	o := &option.TunInboundOptions{
 		MTU:         mtu,
 		Address:     addrs,
-		AutoRoute:   true,
+		AutoRoute:   t.FD <= 0, // with a host fd the VpnService.Builder owns the routes
 		StrictRoute: t.StrictRoute,
 	}
 	o.IncludePackage = t.IncludePackages

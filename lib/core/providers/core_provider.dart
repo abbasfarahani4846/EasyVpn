@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bridge/core_bridge.dart';
 import '../models/models.dart';
+import '../util/platform_service.dart';
 import 'env.dart';
 import 'settings_provider.dart';
 
@@ -33,6 +34,15 @@ class CoreController extends Notifier<CoreState> {
       );
     }
     _sub = env.core.events.listen(_onEvents);
+    if (PlatformService.isAndroid) {
+      PlatformService.setHandlers(
+        onRevoked: () {
+          if (state.isConnected || state.status == CoreStatus.connecting)
+            disconnect();
+        },
+        onToggle: toggle,
+      );
+    }
     return const CoreState();
   }
 
@@ -80,6 +90,29 @@ class CoreController extends Notifier<CoreState> {
       );
       final cands = await env.repo.rawNodes(candIds);
       await env.core.setRouting(settings.routing);
+      if (PlatformService.isDesktop &&
+          settings.mode.usesTun &&
+          !await PlatformService.isElevated()) {
+        throw CoreException('needs_admin');
+      }
+      Map<String, dynamic>? tun;
+      if (PlatformService.isAndroid && settings.mode.usesTun) {
+        // The Android host creates the TUN device and hands its fd to the core.
+        if (!await PlatformService.prepareVpn())
+          throw CoreException('vpn_permission_denied');
+        final fd = await PlatformService.establishVpn(
+          mtu: settings.tunMtu,
+          ipv6: settings.tunIpv6,
+          include: settings.perAppMode == 'include'
+              ? settings.perAppPackages
+              : const [],
+          exclude: settings.perAppMode == 'exclude'
+              ? settings.perAppPackages
+              : const [],
+        );
+        if (fd == null) throw CoreException('vpn_establish_failed');
+        tun = {'fd': fd, 'mtu': settings.tunMtu, 'ipv6': settings.tunIpv6};
+      }
       final useAuth =
           settings.localAuth &&
           settings.mode == ConnMode.proxyOnly &&
@@ -90,6 +123,7 @@ class CoreController extends Notifier<CoreState> {
         settings: settings,
         authUser: useAuth ? 'easyvpn' : null,
         authPass: useAuth ? env.localPass : null,
+        tun: tun,
       );
       lastFailure = null;
     } on CoreException catch (e) {
@@ -120,6 +154,7 @@ class CoreController extends Notifier<CoreState> {
     } catch (_) {
       state = state.copyWith(status: CoreStatus.disconnected);
     }
+    if (PlatformService.isAndroid) await PlatformService.stopVpn();
   }
 
   Future<void> toggle() =>
