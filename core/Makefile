@@ -1,44 +1,53 @@
 # EasyVPN Go core build targets.
 #
-# easycoreproc (process-mode core, CGO_ENABLED=0):
-#   builds everywhere without a C compiler — the desktop default.
-# libeasycore (c-shared FFI library):
-#   requires a C toolchain (gcc/clang); used on Android (jniLibs) and as the
-#   desktop in-process fallback. CI sets CGO_ENABLED=1 with mingw/clang.
+# TAGS is mandatory: without it sing-box silently drops protocols ("uTLS is not
+# included in this build", QUIC/Hysteria2/TUIC, WireGuard, OpenVPN, ...).
+# `make test` runs the registration test against the same tag set.
+#
+# easycoreproc (process-mode core, CGO_ENABLED=0): builds everywhere without a C
+#   compiler — the desktop default.
+# libeasycore (c-shared FFI library): needs a C toolchain; used on Android
+#   (jniLibs) and as the desktop in-process fallback.
 
-.PHONY: all proc windows-proc linux-proc darwin-proc lib-windows lib-linux lib-darwin lib-android clean
+TAGS := with_quic,with_wireguard,with_openvpn,with_clash_api,with_gvisor,with_utls
+LDFLAGS := -s -w
+OUT := ../bin
+
+.PHONY: all test vet proc windows-proc linux-proc darwin-proc lib-windows lib-linux lib-darwin lib-android clean
 
 all: proc
 
-proc: windows-proc
+test:
+	go vet -tags $(TAGS) ./...
+	go test -tags $(TAGS) ./...
+
+vet:
+	go vet -tags $(TAGS) ./...
+
+proc: linux-proc windows-proc darwin-proc
 
 windows-proc:
-	@echo "Building Windows process core..."
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o ../bin/easycoreproc-windows-amd64.exe ./cmd/easycoreproc
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -o $(OUT)/easycoreproc-windows-amd64.exe ./cmd/easycoreproc
 
 linux-proc:
-	@echo "Building Linux process core..."
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../bin/easycoreproc-linux-amd64 ./cmd/easycoreproc
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -o $(OUT)/easycoreproc-linux-amd64 ./cmd/easycoreproc
 
 darwin-proc:
-	@echo "Building macOS process core..."
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o ../bin/easycoreproc-darwin-arm64 ./cmd/easycoreproc
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -o $(OUT)/easycoreproc-darwin-arm64 ./cmd/easycoreproc
 
 lib-windows:
-	@echo "Building Windows FFI DLL (requires gcc/mingw)..."
-	CGO_ENABLED=1 go build -ldflags="-s -w" -buildmode=c-shared -o ../bin/easycore.dll ./cmd/libeasycore
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -buildmode=c-shared -o $(OUT)/easycore.dll ./cmd/libeasycore
 
 lib-linux:
-	@echo "Building Linux FFI .so (requires gcc)..."
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -buildmode=c-shared -o ../bin/libeasycore.so ./cmd/libeasycore
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -buildmode=c-shared -o $(OUT)/libeasycore.so ./cmd/libeasycore
 
 lib-darwin:
-	@echo "Building macOS FFI .dylib (requires clang)..."
-	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -buildmode=c-shared -o ../bin/libeasycore.dylib ./cmd/libeasycore
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -buildmode=c-shared -o $(OUT)/libeasycore.dylib ./cmd/libeasycore
 
+# Android needs the NDK: NDK_BIN=<ndk>/toolchains/llvm/prebuilt/<host>/bin  API=24
 lib-android:
-	@echo "Building Android FFI .so (requires NDK toolchain in PATH)..."
-	CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$(NDK_CC)" go build -ldflags="-s -w" -buildmode=c-shared -o ../android/app/src/main/jniLibs/arm64-v8a/libeasycore.so ./cmd/libeasycore
+	CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC=$(NDK_BIN)/aarch64-linux-android$(API)-clang go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -buildmode=c-shared -o ../android/app/src/main/jniLibs/arm64-v8a/libeasycore.so ./cmd/libeasycore
+	CGO_ENABLED=1 GOOS=android GOARCH=amd64 CC=$(NDK_BIN)/x86_64-linux-android$(API)-clang go build -tags $(TAGS) -ldflags="$(LDFLAGS)" -buildmode=c-shared -o ../android/app/src/main/jniLibs/x86_64/libeasycore.so ./cmd/libeasycore
 
 clean:
-	rm -rf ../bin
+	rm -rf $(OUT)

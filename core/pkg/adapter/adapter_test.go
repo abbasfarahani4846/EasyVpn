@@ -1,10 +1,12 @@
 package adapter
 
 import (
+	"errors"
 	"testing"
 
 	"easyvpn/core/pkg/protocol"
 	"easyvpn/core/pkg/router"
+	"easyvpn/core/pkg/rulesync"
 )
 
 func sampleNode(pt protocol.ProtocolType) *protocol.ProxyNode {
@@ -39,8 +41,8 @@ func TestBuildOptionsAllProtocols(t *testing.T) {
 		if len(opts.Inbounds) != 1 || opts.Inbounds[0].Type != "mixed" {
 			t.Fatalf("%s: expected single mixed inbound", pt)
 		}
-		if len(opts.Outbounds) != 1 || opts.Outbounds[0].Tag != "proxy" {
-			t.Fatalf("%s: expected single proxy outbound", pt)
+		if len(opts.Outbounds) != 3 || opts.Outbounds[1].Tag != "proxy" || opts.Outbounds[1].Type != "selector" {
+			t.Fatalf("%s: expected node + selector + direct outbounds, got %d", pt, len(opts.Outbounds))
 		}
 		if opts.DNS == nil || len(opts.DNS.Servers) < 2 {
 			t.Fatalf("%s: expected remote+local DNS servers", pt)
@@ -87,8 +89,8 @@ func TestBuildOptionsWireGuard(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildOptions: %v", err)
 	}
-	if opts.Outbounds[0].Type != "wireguard" {
-		t.Fatalf("expected wireguard endpoint, got %s", opts.Outbounds[0].Type)
+	if len(opts.Endpoints) != 1 || opts.Endpoints[0].Type != "wireguard" {
+		t.Fatalf("expected wireguard endpoint, got %+v", opts.Endpoints)
 	}
 	b, _ := marshalJSON(&opts)
 	for _, want := range []string{"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=", "172.16.0.2/32"} {
@@ -110,10 +112,15 @@ func TestBuildOptionsRejectsInvalid(t *testing.T) {
 }
 
 func TestRoutingCompilationIranPreset(t *testing.T) {
+	rs, err := rulesync.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	m := router.Default()
+	m.RuleSetDir = rs.Dir
 	rules := router.BuildRouteRules(m)
-	// sniff + hijack-dns + ads block + LAN + IR direct = at least 5
-	if len(rules) < 5 {
+	// sniff + hijack-dns + block + LAN + service override + .ir suffix + IR sets = at least 7
+	if len(rules) < 7 {
 		t.Fatalf("expected >=5 rules for ir preset, got %d", len(rules))
 	}
 	sets := router.BuildRuleSets(m)
@@ -144,4 +151,66 @@ func contains(hay, needle string) bool {
 		}
 		return false
 	})()
+}
+
+func TestConnectionModesProduceInbounds(t *testing.T) {
+	cases := map[ConnMode][]string{
+		ModeTUN:         {"tun"},
+		ModeSystemProxy: {"mixed"},
+		ModeProxyOnly:   {"mixed"},
+		ModeBoth:        {"mixed", "tun"},
+	}
+	for mode, want := range cases {
+		opts, err := BuildOptions(&StartRequest{Node: sampleNode(protocol.ProtoTrojan), Routing: router.Default(), Mode: mode})
+		if err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		if len(opts.Inbounds) != len(want) {
+			t.Fatalf("%s: got %d inbounds, want %v", mode, len(opts.Inbounds), want)
+		}
+		for i, w := range want {
+			if opts.Inbounds[i].Type != w {
+				t.Fatalf("%s: inbound %d is %s, want %s", mode, i, opts.Inbounds[i].Type, w)
+			}
+		}
+		if mode.NeedsTUN() && !opts.Route.AutoDetectInterface {
+			t.Fatalf("%s: TUN needs auto_detect_interface", mode)
+		}
+	}
+	if ParseConnMode("bogus") != ModeProxyOnly {
+		t.Fatal("unknown mode must default to proxy_only")
+	}
+}
+
+func TestSelectorMaterializesCandidatesAndCapabilityErrors(t *testing.T) {
+	active := sampleNode(protocol.ProtoTrojan)
+	other := sampleNode(protocol.ProtoVLESS)
+	other.Server = "other.example.com"
+	xh := sampleNode(protocol.ProtoVLESS)
+	xh.Server = "xh.example.com"
+	xh.Transport = &protocol.TransportConfig{Type: "xhttp"}
+	req := &StartRequest{Node: active, Candidates: []*protocol.ProxyNode{other, xh}, Routing: router.Default()}
+	opts, tags, err := buildOptionsWithTags(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tags) != 2 { // active + other; xhttp candidate skipped, not fatal
+		t.Fatalf("expected 2 materialized nodes, got %d", len(tags))
+	}
+	// urltest "auto" group appears with >1 node
+	found := false
+	for _, o := range opts.Outbounds {
+		if o.Tag == "auto" && o.Type == "urltest" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("missing urltest group")
+	}
+	// An unsupported ACTIVE node is a typed error.
+	_, err = BuildOptions(&StartRequest{Node: xh, Routing: router.Default()})
+	var ue *UnsupportedError
+	if !errors.As(err, &ue) || ue.Capability != "xhttp" {
+		t.Fatalf("want UnsupportedError(xhttp), got %v", err)
+	}
 }

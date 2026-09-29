@@ -23,6 +23,18 @@ const (
 	ProtoHysteria2   ProtocolType = "hysteria2"
 	ProtoTUIC        ProtocolType = "tuic"
 	ProtoOpenVPN     ProtocolType = "openvpn"
+	ProtoAnyTLS      ProtocolType = "anytls"
+	ProtoSSH         ProtocolType = "ssh"
+)
+
+// Capability names describe engine features a node needs. A node lists them in
+// ProxyNode.Requires and the engine picks a CoreAdapter that supports all.
+const (
+	CapXHTTP   = "xhttp" // VLESS XHTTP / SplitHTTP transport
+	CapMLKEM   = "mlkem" // VLESS post-quantum encryption
+	CapAWG     = "awg"   // AmneziaWG obfuscation
+	CapIKEv2   = "ikev2" // platform IKEv2/IPsec
+	CapOpenVPN = "openvpn"
 )
 
 // TLSConfig holds outbound TLS / REALITY settings.
@@ -34,6 +46,11 @@ type TLSConfig struct {
 	Reality     *Reality `json:"reality,omitempty"`
 	UTLS        bool     `json:"utls,omitempty"`
 	Fingerprint string   `json:"fingerprint,omitempty"`
+	// Anti-DPI options (Hiddify "TLS tricks").
+	Fragment       bool     `json:"fragment,omitempty"`
+	RecordFragment bool     `json:"record_fragment,omitempty"`
+	ECH            bool     `json:"ech,omitempty"`
+	ECHConfig      []string `json:"ech_config,omitempty"`
 }
 
 // Reality holds REALITY-specific fields.
@@ -50,6 +67,69 @@ type TransportConfig struct {
 	Host        string            `json:"host,omitempty"`
 	ServiceName string            `json:"service_name,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
+	Method      string            `json:"method,omitempty"`
+	// XHTTP (not supported by mainline sing-box; requires an Xray-capable core).
+	Mode  string `json:"mode,omitempty"`
+	Extra string `json:"extra,omitempty"` // raw JSON of the xhttp "extra" object
+}
+
+// MuxConfig configures sing-box multiplexing for an outbound.
+type MuxConfig struct {
+	Enabled        bool   `json:"enabled"`
+	Protocol       string `json:"protocol,omitempty"` // smux, yamux, h2mux
+	MaxConnections int    `json:"max_connections,omitempty"`
+	Padding        bool   `json:"padding,omitempty"`
+}
+
+// OpenVPNConfig is the subset of an .ovpn profile mapped onto sing-box's
+// `openvpn-client` endpoint (see config.ParseOVPN).
+type OpenVPNConfig struct {
+	Mode                string       `json:"mode,omitempty"` // tls | static_key
+	Network             string       `json:"network,omitempty"`
+	Remotes             []OVPNRemote `json:"remotes,omitempty"`
+	RemoteRandom        bool         `json:"remote_random,omitempty"`
+	Username            string       `json:"username,omitempty"`
+	Password            string       `json:"password,omitempty"`
+	CA                  string       `json:"ca,omitempty"`   // PEM
+	Cert                string       `json:"cert,omitempty"` // PEM
+	Key                 string       `json:"key,omitempty"`  // PEM
+	StaticKey           string       `json:"static_key,omitempty"`
+	KeyDirection        string       `json:"key_direction,omitempty"`
+	ControlWrapType     string       `json:"control_wrap_type,omitempty"` // tls_auth|tls_crypt|tls_crypt_v2
+	ControlWrapKey      string       `json:"control_wrap_key,omitempty"`
+	ControlWrapDir      string       `json:"control_wrap_direction,omitempty"`
+	Cipher              string       `json:"cipher,omitempty"`
+	DataCiphers         []string     `json:"data_ciphers,omitempty"`
+	DataCiphersFallback string       `json:"data_ciphers_fallback,omitempty"`
+	Auth                string       `json:"auth,omitempty"`
+	Compression         string       `json:"compression,omitempty"`
+	CompressionLZO      string       `json:"compression_lzo,omitempty"`
+	RemoteCertTLS       string       `json:"remote_cert_tls,omitempty"`
+	ServerName          string       `json:"server_name,omitempty"`
+	RedirectGateway     bool         `json:"redirect_gateway,omitempty"`
+	RedirectFlags       []string     `json:"redirect_gateway_flags,omitempty"`
+	RouteNoPull         bool         `json:"route_no_pull,omitempty"`
+	Routes              []string     `json:"routes,omitempty"`
+	MSSFix              int          `json:"mss_fix,omitempty"`
+	Fragment            int          `json:"fragment,omitempty"`
+	PingRestartSec      int          `json:"ping_restart_sec,omitempty"`
+	RenegSec            int          `json:"reneg_sec,omitempty"`
+	Topology            string       `json:"topology,omitempty"`
+	Warnings            []string     `json:"warnings,omitempty"`
+}
+
+// OVPNRemote is one `remote` directive.
+type OVPNRemote struct {
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Network string `json:"network,omitempty"` // udp|tcp
+}
+
+// SSHConfig holds SSH outbound credentials.
+type SSHConfig struct {
+	PrivateKey string   `json:"private_key,omitempty"`
+	Passphrase string   `json:"passphrase,omitempty"`
+	HostKeys   []string `json:"host_keys,omitempty"`
 }
 
 // WireGuardConfig holds WireGuard endpoint settings.
@@ -60,6 +140,8 @@ type WireGuardConfig struct {
 	LocalAddress []string `json:"local_address"`
 	MTU          int      `json:"mtu,omitempty"`
 	Reserved     []uint8  `json:"reserved,omitempty"`
+	// AmneziaWG obfuscation parameters; presence adds the "awg" capability.
+	AWG map[string]string `json:"awg,omitempty"`
 }
 
 // Hysteria2Config holds Hysteria2-specific settings.
@@ -94,6 +176,11 @@ type ProxyNode struct {
 	WireGuard  *WireGuardConfig `json:"wireguard,omitempty"`
 	Hysteria2  *Hysteria2Config `json:"hysteria2,omitempty"`
 	TUIC       *TUICConfig      `json:"tuic,omitempty"`
+	Mux        *MuxConfig       `json:"mux,omitempty"`
+	OpenVPN    *OpenVPNConfig   `json:"openvpn,omitempty"`
+	SSH        *SSHConfig       `json:"ssh,omitempty"`
+	// Requires lists engine capabilities this node needs (CapXHTTP, ...).
+	Requires []string `json:"requires,omitempty"`
 
 	LatencyMs int64  `json:"latency_ms"`
 	Group     string `json:"group,omitempty"`
@@ -127,6 +214,15 @@ func (n *ProxyNode) IdentityFields() []string {
 	if n.Hysteria2 != nil {
 		fields = append(fields, n.Hysteria2.ObfsPassword)
 	}
+	if n.Transport != nil {
+		fields = append(fields, n.Transport.Mode)
+	}
+	if n.OpenVPN != nil {
+		for _, r := range n.OpenVPN.Remotes {
+			fields = append(fields, r.Host, itoa(r.Port), r.Network)
+		}
+		fields = append(fields, n.OpenVPN.Username, n.OpenVPN.Mode)
+	}
 	return fields
 }
 
@@ -141,6 +237,7 @@ func (n *ProxyNode) EnsureID() {
 	if n.ID == "" {
 		n.ID = n.ComputeID()
 	}
+	n.EnsureRequires()
 }
 
 func boolStr(b bool) string {
@@ -172,11 +269,33 @@ func itoa(i int) string {
 	return string(b[pos:])
 }
 
-// SupportedProtocols returns protocol types the Go core can actually dial.
-// OpenVPN is listed for completeness; its endpoint is compiled in via build tags.
+// ComputeRequires derives the capability list from the node's fields.
+func (n *ProxyNode) ComputeRequires() []string {
+	var out []string
+	if n.Transport != nil && strings.EqualFold(n.Transport.Type, "xhttp") {
+		out = append(out, CapXHTTP)
+	}
+	if strings.HasPrefix(strings.ToLower(n.Encryption), "mlkem") {
+		out = append(out, CapMLKEM)
+	}
+	if n.WireGuard != nil && len(n.WireGuard.AWG) > 0 {
+		out = append(out, CapAWG)
+	}
+	return out
+}
+
+// EnsureRequires fills Requires when empty.
+func (n *ProxyNode) EnsureRequires() {
+	if len(n.Requires) == 0 {
+		n.Requires = n.ComputeRequires()
+	}
+}
+
+// SupportedProtocols returns protocol types the sing-box adapter can dial.
 func SupportedProtocols() []ProtocolType {
 	return []ProtocolType{
 		ProtoVLESS, ProtoVMess, ProtoTrojan, ProtoShadowsocks,
-		ProtoSocks, ProtoHTTP, ProtoHysteria2, ProtoTUIC, ProtoWireGuard, ProtoOpenVPN,
+		ProtoSocks, ProtoHTTP, ProtoHysteria2, ProtoTUIC, ProtoWireGuard,
+		ProtoOpenVPN, ProtoAnyTLS, ProtoSSH,
 	}
 }

@@ -320,6 +320,7 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 		if x := ss.XHTTPSettings; x != nil {
 			tc.Path = x.Path
 			tc.Host = x.Host
+			tc.Mode = x.Mode
 		}
 	case "grpc":
 		if g := ss.GRPCSettings; g != nil {

@@ -15,6 +15,62 @@ import (
 	"github.com/sagernet/sing/common/json/badoption"
 )
 
+// UnsupportedError reports that the active core cannot honor a node feature.
+// The engine surfaces it as "unsupported_by_core:<capability>" so the UI can
+// offer another core instead of silently mis-building the node.
+type UnsupportedError struct {
+	Capability string
+	Detail     string
+}
+
+func (e *UnsupportedError) Error() string {
+	return "unsupported_by_core:" + e.Capability + " (" + e.Detail + ")"
+}
+
+// singboxCapabilities lists optional node capabilities sing-box 1.14 mainline
+// can honor. xhttp/mlkem/awg are deliberately absent (see docs/MASTER_PROMPT.md §2.1).
+var singboxCapabilities = map[string]bool{
+	protocol.CapOpenVPN: true,
+}
+
+// builtNode is the result of compiling one node: either an outbound or an
+// endpoint (WireGuard, OpenVPN are endpoints in sing-box >= 1.11).
+type builtNode struct {
+	Outbound *option.Outbound
+	Endpoint *option.Endpoint
+}
+
+// buildNode compiles a node under the given tag.
+func buildNode(node *protocol.ProxyNode, tag string) (*builtNode, error) {
+	node.EnsureID()
+	for _, c := range node.Requires {
+		if !singboxCapabilities[c] {
+			return nil, &UnsupportedError{Capability: c, Detail: "not available in sing-box " + "1.14"}
+		}
+	}
+	switch node.Type {
+	case protocol.ProtoWireGuard:
+		o, err := wireGuardEndpoint(node)
+		if err != nil {
+			return nil, err
+		}
+		return &builtNode{Endpoint: &option.Endpoint{Type: C.TypeWireGuard, Tag: tag, Options: o.Options}}, nil
+	case protocol.ProtoOpenVPN:
+		ep, err := openVPNEndpoint(node)
+		if err != nil {
+			return nil, err
+		}
+		ep.Tag = tag
+		return &builtNode{Endpoint: ep}, nil
+	}
+	o, err := buildOutbound(node)
+	if err != nil {
+		return nil, err
+	}
+	o.Tag = tag
+	return &builtNode{Outbound: &o}, nil
+}
+
 func buildOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
 	node.EnsureID()
 	switch node.Type {
@@ -34,10 +90,14 @@ func buildOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
 		return hysteria2Outbound(node)
 	case protocol.ProtoTUIC:
 		return tuicOutbound(node)
+	case protocol.ProtoAnyTLS:
+		return anyTLSOutbound(node)
+	case protocol.ProtoSSH:
+		return sshOutbound(node)
 	case protocol.ProtoWireGuard:
 		return wireGuardEndpoint(node)
 	default:
-		return option.Outbound{}, fmt.Errorf("protocol %q not supported by sing-box adapter yet", node.Type)
+		return option.Outbound{}, fmt.Errorf("protocol %q not supported by sing-box adapter", node.Type)
 	}
 }
 
@@ -61,6 +121,14 @@ func tlsOptions(t *protocol.TLSConfig) *option.OutboundTLSOptions {
 			PublicKey: t.Reality.PublicKey,
 			ShortID:   t.Reality.ShortID,
 		}
+		if !t.UTLS { // REALITY requires a uTLS fingerprint
+			o.UTLS = &option.OutboundUTLSOptions{Enabled: true, Fingerprint: orDefaultStr(t.Fingerprint, "chrome")}
+		}
+	}
+	o.Fragment = t.Fragment
+	o.RecordFragment = t.RecordFragment
+	if t.ECH {
+		o.ECH = &option.OutboundECHOptions{Enabled: true, Config: t.ECHConfig}
 	}
 	if t.UTLS {
 		fp := t.Fingerprint
@@ -119,6 +187,7 @@ func vlessOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
 		Flow:           node.Flow,
 		Transport:      transportOptions(node.Transport),
 		PacketEncoding: packetEncodingPtr("xudp"),
+		Multiplex:      muxOptions(node.Mux),
 	}
 	o.TLS = tlsOptions(node.TLS)
 	return option.Outbound{Type: C.TypeVLESS, Tag: "proxy", Options: o}, nil
@@ -154,6 +223,7 @@ func trojanOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
 		ServerOptions: serverOptions(node),
 		Password:      node.Password,
 		Transport:     transportOptions(node.Transport),
+		Multiplex:     muxOptions(node.Mux),
 	}
 	o.TLS = tlsOptions(tls)
 	return option.Outbound{Type: C.TypeTrojan, Tag: "proxy", Options: o}, nil
@@ -267,4 +337,51 @@ func wireGuardEndpoint(node *protocol.ProxyNode) (option.Outbound, error) {
 	}
 	ep.Peers = []option.WireGuardPeer{peer}
 	return option.Outbound{Type: C.TypeWireGuard, Tag: "proxy", Options: ep}, nil
+}
+
+func muxOptions(m *protocol.MuxConfig) *option.OutboundMultiplexOptions {
+	if m == nil || !m.Enabled {
+		return nil
+	}
+	return &option.OutboundMultiplexOptions{
+		Enabled:        true,
+		Protocol:       orDefaultStr(m.Protocol, "smux"),
+		MaxConnections: m.MaxConnections,
+		Padding:        m.Padding,
+	}
+}
+
+func anyTLSOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
+	if node.Password == "" {
+		return option.Outbound{}, fmt.Errorf("anytls: missing password")
+	}
+	tls := node.TLS
+	if tls == nil {
+		tls = &protocol.TLSConfig{Enabled: true, ServerName: node.Server}
+	}
+	o := &option.AnyTLSOutboundOptions{ServerOptions: serverOptions(node), Password: node.Password}
+	o.TLS = tlsOptions(tls)
+	return option.Outbound{Type: C.TypeAnyTLS, Tag: "proxy", Options: o}, nil
+}
+
+func sshOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
+	o := &option.SSHOutboundOptions{
+		ServerOptions: serverOptions(node),
+		User:          node.UUID,
+		Password:      node.Password,
+	}
+	if node.SSH != nil {
+		if node.SSH.PrivateKey != "" {
+			o.PrivateKey = []string{node.SSH.PrivateKey}
+		}
+		o.PrivateKeyPassphrase = node.SSH.Passphrase
+		o.HostKey = node.SSH.HostKeys
+	}
+	if o.User == "" {
+		o.User = "root"
+	}
+	if o.Password == "" && len(o.PrivateKey) == 0 {
+		return option.Outbound{}, fmt.Errorf("ssh: need password or private key")
+	}
+	return option.Outbound{Type: C.TypeSSH, Tag: "proxy", Options: o}, nil
 }
