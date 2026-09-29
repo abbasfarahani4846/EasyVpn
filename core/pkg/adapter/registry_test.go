@@ -6,6 +6,7 @@ import (
 
 	"easyvpn/core/pkg/protocol"
 	"easyvpn/core/pkg/router"
+	"easyvpn/core/pkg/rulesync"
 
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/include"
@@ -70,3 +71,40 @@ ttvXBp43rDCGB5Fwx5zEGbF4wDAKBggqhkjOPQQDAgNJADBGAiEA4IWSoxe3jfkr
 BqWTrBqYaGFy+uGh0PsceGCmQ5nFuMQCIQCcAu/xlJyzlvnrxir4tiz+OpAUFteM
 YyRIHN8wfdVoOw==
 -----END CERTIFICATE-----`
+
+// Every routing mode x country must yield a config that sing-box accepts,
+// with and without downloaded rule-sets (regression for undeclared tags).
+func TestAllModesAndCountriesCreateBox(t *testing.T) {
+	rs, err := rulesync.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	modes := []router.RoutingMode{router.ModeBypassLocalAndCountry, router.ModeBypassLANOnly, router.ModeGlobalProxy, router.ModeBypassProxy, router.ModeCustom}
+	for _, country := range []string{"IR", "CN", "RU", "", "ZZ"} {
+		for _, mode := range modes {
+			for _, withSets := range []bool{true, false} {
+				m := router.Default()
+				m.Mode, m.Country, m.FakeIPEnabled = mode, country, true
+				m.CustomRules = []router.Rule{{Kind: router.KindDomainSuffix, Values: []string{"example.com"}, Outbound: router.OutboundBlock}}
+				if withSets {
+					m.RuleSetDir = rs.Dir
+				} else {
+					m.RuleSetDir = t.TempDir()
+				}
+				n := sampleNode(protocol.ProtoTrojan)
+				n.Server = "203.0.113.10"
+				for _, cm := range []ConnMode{ModeProxyOnly, ModeBoth} {
+					opts, err := BuildOptions(&StartRequest{Node: n, Routing: m, Mode: cm})
+					if err != nil {
+						t.Fatalf("%s/%s/sets=%v: %v", country, mode, withSets, err)
+					}
+					b, err := box.New(box.Options{Context: include.Context(context.Background()), Options: opts})
+					if err != nil {
+						t.Fatalf("%s/%s/%s/sets=%v: box.New: %v", country, mode, cm, withSets, err)
+					}
+					_ = b.Close()
+				}
+			}
+		}
+	}
+}

@@ -135,3 +135,29 @@ func splitHostPort(t *testing.T, addr string) (string, int) {
 	}
 	return h, n
 }
+
+func TestURLTestBatchThroughSOCKS(t *testing.T) {
+	echoAddr, closeEcho := startEchoServer(t)
+	defer closeEcho()
+	serverAddr, closeServer := startSOCKSServerBox(t)
+	defer closeServer()
+	host, port := splitHostPort(t, serverAddr)
+
+	good := &protocol.ProxyNode{Name: "good", Type: protocol.ProtoSocks, Server: host, Port: port}
+	dead := &protocol.ProxyNode{Name: "dead", Type: protocol.ProtoSocks, Server: "127.0.0.1", Port: 1}
+	bad := &protocol.ProxyNode{Name: "bad", Type: protocol.ProtoVLESS, Server: "127.0.0.1", Port: 2} // missing uuid
+	var batches int
+	res := URLTestBatch(context.Background(), []*protocol.ProxyNode{good, dead, bad}, URLTestOptions{
+		URL: echoAddr + "/generate_204", Timeout: 3 * time.Second,
+		OnBatch: func([]URLTestResult) { batches++ },
+	})
+	if len(res) != 3 || batches != 1 {
+		t.Fatalf("results=%d batches=%d", len(res), batches)
+	}
+	if res[0].LatencyMs <= 0 {
+		t.Fatalf("good node should have latency: %+v", res[0])
+	}
+	if res[1].LatencyMs != -1 || res[2].LatencyMs != -1 || res[2].Error == "" {
+		t.Fatalf("dead/bad nodes must fail: %+v %+v", res[1], res[2])
+	}
+}

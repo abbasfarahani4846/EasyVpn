@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common/auth"
+	singjson "github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/service"
 )
@@ -59,22 +62,25 @@ func ParseConnMode(v string) ConnMode {
 
 // TunSettings configures the TUN inbound.
 type TunSettings struct {
-	MTU             uint32
-	StrictRoute     bool
-	IPv6            bool
-	IncludePackages []string // Android per-app allow list
-	ExcludePackages []string // Android per-app deny list
-	ExcludeIfaces   []string
+	MTU             uint32   `json:"mtu,omitempty"`
+	StrictRoute     bool     `json:"strict_route,omitempty"`
+	IPv6            bool     `json:"ipv6,omitempty"`
+	IncludePackages []string `json:"include_packages,omitempty"` // Android per-app allow list
+	ExcludePackages []string `json:"exclude_packages,omitempty"` // Android per-app deny list
+	ExcludeIfaces   []string `json:"exclude_ifaces,omitempty"`
 }
 
 // TLSTricks are global anti-DPI toggles applied to every TLS-enabled node.
 type TLSTricks struct {
-	Fragment       bool
-	RecordFragment bool
+	Fragment       bool `json:"fragment"`
+	RecordFragment bool `json:"record_fragment"`
 }
 
 // LocalAuth optionally protects the mixed inbound with username/password.
-type LocalAuth struct{ User, Pass string }
+type LocalAuth struct {
+	User string `json:"user"`
+	Pass string `json:"pass"`
+}
 
 // StartRequest fully describes a requested tunnel session.
 type StartRequest struct {
@@ -146,7 +152,16 @@ func NewSingBoxAdapter() *SingBoxAdapter { return &SingBoxAdapter{} }
 
 func (a *SingBoxAdapter) Name() string { return "sing-box" }
 
-func (a *SingBoxAdapter) Version() string { return C.Version }
+func (a *SingBoxAdapter) Version() string {
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		for _, d := range bi.Deps {
+			if d.Path == "github.com/sagernet/sing-box" {
+				return strings.TrimPrefix(d.Version, "v")
+			}
+		}
+	}
+	return C.Version
+}
 
 func (a *SingBoxAdapter) Capabilities() []string {
 	var out []string
@@ -506,4 +521,52 @@ func orDefaultStr(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+// DumpConfig renders the compiled sing-box configuration as JSON (secrets are
+// present — callers must redact before sharing).
+func DumpConfig(req *StartRequest) (string, error) {
+	opts, err := BuildOptions(req)
+	if err != nil {
+		return "", err
+	}
+	b, err := singjson.MarshalContext(include.Context(context.Background()), opts)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// ExportSingBox renders ALL given nodes as a standalone sing-box config
+// (outbounds/endpoints + selector), for the "export profile" feature. Unlike
+// the running core there is no materialization cap. Tags are node names.
+func ExportSingBox(nodes []*protocol.ProxyNode) (string, error) {
+	var opts option.Options
+	var tags []string
+	used := map[string]bool{}
+	for _, n := range nodes {
+		tag := n.Name
+		if tag == "" || used[tag] {
+			tag = nodeTag(n)
+		}
+		used[tag] = true
+		built, err := buildNode(n, tag)
+		if err != nil {
+			continue // unsupported nodes are skipped from the export
+		}
+		if built.Outbound != nil {
+			opts.Outbounds = append(opts.Outbounds, *built.Outbound)
+		} else {
+			opts.Endpoints = append(opts.Endpoints, *built.Endpoint)
+		}
+		tags = append(tags, tag)
+	}
+	if len(tags) == 0 {
+		return "", fmt.Errorf("no exportable nodes")
+	}
+	opts.Outbounds = append(opts.Outbounds,
+		option.Outbound{Type: C.TypeSelector, Tag: "proxy", Options: &option.SelectorOutboundOptions{Outbounds: tags, Default: tags[0]}},
+		option.Outbound{Type: C.TypeDirect, Tag: "direct", Options: &option.DirectOutboundOptions{}})
+	b, err := singjson.MarshalContext(include.Context(context.Background()), opts)
+	return string(b), err
 }
