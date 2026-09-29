@@ -9,11 +9,11 @@ import (
 
 func sampleNode(pt protocol.ProtocolType) *protocol.ProxyNode {
 	return &protocol.ProxyNode{
-		Name:   "test-" + string(pt),
-		Type:   pt,
-		Server: "srv.example.com",
-		Port:   443,
-		UUID:   "b831381d-6324-4d53-ad4f-8cda48b30811",
+		Name:     "test-" + string(pt),
+		Type:     pt,
+		Server:   "srv.example.com",
+		Port:     443,
+		UUID:     "b831381d-6324-4d53-ad4f-8cda48b30811",
 		Password: "pw",
 		Security: "aes-256-gcm",
 		TLS: &protocol.TLSConfig{

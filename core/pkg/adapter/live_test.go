@@ -70,10 +70,11 @@ func TestLiveBoxSOCKSChain(t *testing.T) {
 		t.Fatalf("adapter should be running")
 	}
 
-	// Real URL test through the live box's proxy outbound.
+	// Real URL test through the live box's proxy outbound, targeting the
+	// loopback echo server (hermetic: no DNS, no external network).
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	ms, err := a.UrlTest(ctx, node, 8000)
+	ms, err := a.UrlTest(ctx, node, echoAddr+"/generate_204", 8000)
 	if err != nil {
 		t.Fatalf("UrlTest through live box: %v", err)
 	}
@@ -98,10 +99,12 @@ func startSOCKSServerBox(t *testing.T) (addr string, stop func()) {
 	}
 	addr = ln.Addr().String()
 	host, port := splitHostPort(t, addr)
+	// Reserve then release the port; box binds it itself at start.
+	_ = ln.Close()
 
 	cfg := map[string]any{
-		"log":  map[string]any{"level": "warn"},
-		"dns":  map[string]any{"servers": []any{map[string]any{"type": "local", "tag": "local"}}},
+		"log": map[string]any{"level": "warn"},
+		"dns": map[string]any{"servers": []any{map[string]any{"type": "local", "tag": "local"}}},
 		"inbounds": []any{map[string]any{
 			"type": "socks", "tag": "socks-in", "listen": host, "listen_port": port,
 		}},

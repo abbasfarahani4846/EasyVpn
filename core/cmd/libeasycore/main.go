@@ -6,6 +6,14 @@ package main
 
 /*
 #include <stdlib.h>
+
+typedef void (*event_callback_t)(const char* json);
+
+static void invoke_event_callback(event_callback_t cb, const char* json) {
+	if (cb != NULL) {
+		cb(json);
+	}
+}
 */
 import "C"
 
@@ -24,7 +32,7 @@ import (
 var (
 	coreMu  sync.Mutex
 	coreEng *engine.Engine
-	eventFn unsafe.Pointer // C event callback: void (*fn)(const char* json)
+	eventFn C.event_callback_t // Dart NativeCallable: void fn(const char* json)
 )
 
 func main() {}
@@ -55,7 +63,7 @@ func pumpEvents(e *engine.Engine) {
 			continue
 		}
 		cstr := C.CString(string(payload))
-		(*[0]byte)(fn)(unsafe.Pointer(&struct{ p *C.char }{cstr}))
+		C.invoke_event_callback(fn, cstr)
 		C.free(unsafe.Pointer(cstr))
 	}
 }
@@ -70,10 +78,11 @@ func InitCore(cacheDir *C.char) {
 }
 
 //export RegisterEventCallback
-func RegisterEventCallback(cb *C.char) {
-	// cb is a C function pointer passed as char* from Dart (NativeCallable).
+func RegisterEventCallback(cb C.event_callback_t) {
+	// Dart registers a NativeCallable.listener whose C signature is
+	// void (*)(const char* json); batches arrive as JSON arrays.
 	coreMu.Lock()
-	eventFn = unsafe.Pointer(cb)
+	eventFn = cb
 	coreMu.Unlock()
 }
 

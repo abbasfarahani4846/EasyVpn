@@ -53,7 +53,8 @@ type CoreAdapter interface {
 	Stop(ctx context.Context) error
 	SwitchNode(ctx context.Context, node *protocol.ProxyNode) error
 	// UrlTest measures real proxy latency through a running instance.
-	UrlTest(ctx context.Context, node *protocol.ProxyNode, timeoutMs int) (int64, error)
+	// testURL may be empty (engine default) or a custom probe URL.
+	UrlTest(ctx context.Context, node *protocol.ProxyNode, testURL string, timeoutMs int) (int64, error)
 	Running() bool
 }
 
@@ -157,7 +158,7 @@ func (a *SingBoxAdapter) SwitchNode(_ context.Context, _ *protocol.ProxyNode) er
 
 // UrlTest measures real proxy round-trip latency through a running box by
 // dialing the test URL through the box's "proxy" outbound.
-func (a *SingBoxAdapter) UrlTest(ctx context.Context, node *protocol.ProxyNode, timeoutMs int) (int64, error) {
+func (a *SingBoxAdapter) UrlTest(ctx context.Context, node *protocol.ProxyNode, testURL string, timeoutMs int) (int64, error) {
 	a.mu.Lock()
 	b := a.instance
 	a.mu.Unlock()
@@ -173,7 +174,7 @@ func (a *SingBoxAdapter) UrlTest(ctx context.Context, node *protocol.ProxyNode, 
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(timeoutMs)*time.Millisecond)
 		defer cancel()
 	}
-	ms, err := urltest.URLTest(ctx, "", out)
+	ms, err := urltest.URLTest(ctx, testURL, out)
 	if err != nil {
 		return 0, err
 	}
@@ -230,7 +231,7 @@ func BuildOptions(req *StartRequest) (option.Options, error) {
 		Log: &option.LogOptions{
 			Level:     orDefaultStr(routing.LogLevel, req.LogLevel, "info"),
 			Timestamp: true,
-		},		Inbounds: []option.Inbound{
+		}, Inbounds: []option.Inbound{
 			{
 				Type: C.TypeMixed,
 				Tag:  "mixed-in",

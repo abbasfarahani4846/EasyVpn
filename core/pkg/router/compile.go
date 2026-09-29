@@ -197,14 +197,18 @@ func BuildDNSOptions(m Model) *option.DNSOptions {
 			},
 		},
 	}
-
 	dns.Servers = append(dns.Servers, option.DNSServerOptions{
 		Type: "https",
 		Tag:  "dns-remote",
-		Options: &option.RemoteDNSServerOptions{
-			DNSServerAddressOptions: option.DNSServerAddressOptions{
-				Server: "8.8.8.8", ServerPort: 443,
+		Options: &option.RemoteHTTPSDNSServerOptions{
+			RemoteTLSDNSServerOptions: option.RemoteTLSDNSServerOptions{
+				RemoteDNSServerOptions: option.RemoteDNSServerOptions{
+					DNSServerAddressOptions: option.DNSServerAddressOptions{
+						Server: "8.8.8.8", ServerPort: 443,
+					},
+				},
 			},
+			Path: "/dns-query",
 		},
 	})
 	dns.Servers = append(dns.Servers, option.DNSServerOptions{
