@@ -34,7 +34,11 @@ const (
 	CapTCPHTTP = "tcphttp" // TCP with HTTP header camouflage
 	CapMLKEM   = "mlkem"   // VLESS post-quantum encryption
 	CapAWG     = "awg"     // AmneziaWG obfuscation
-	CapIKEv2   = "ikev2"   // platform IKEv2/IPsec
+	// CapXrayRaw: an imported Xray outbound uses settings the sing-box model
+	// cannot express (fragment/noise dialer chains, sockopt tweaks, mux...);
+	// it must run verbatim in Xray-core to behave like it does in v2rayN.
+	CapXrayRaw = "xrayraw"
+	CapIKEv2   = "ikev2" // platform IKEv2/IPsec
 	CapOpenVPN = "openvpn"
 )
 
@@ -285,6 +289,9 @@ func (n *ProxyNode) ComputeRequires() []string {
 	if n.WireGuard != nil && len(n.WireGuard.AWG) > 0 {
 		out = append(out, CapAWG)
 	}
+	if XrayRawNeedsCore(n.RawConfig) {
+		out = append(out, CapXrayRaw)
+	}
 	return out
 }
 
@@ -302,4 +309,23 @@ func SupportedProtocols() []ProtocolType {
 		ProtoSocks, ProtoHTTP, ProtoHysteria2, ProtoTUIC, ProtoWireGuard,
 		ProtoOpenVPN, ProtoAnyTLS, ProtoSSH,
 	}
+}
+
+// XrayRawNeedsCore reports whether an original Xray outbound (RawConfig)
+// carries settings only Xray-core honours: a dependent dialer chain
+// ("_deps", e.g. a fragment/noise freedom outbound), sockopt tweaks, or mux.
+func XrayRawNeedsCore(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasPrefix(raw, "{") || !strings.Contains(raw, `"protocol"`) {
+		return false
+	}
+	for _, k := range []string{`"_deps"`, `"sockopt"`, `"fragment"`, `"noises"`, `"finalmask"`} {
+		if strings.Contains(raw, k) {
+			return true
+		}
+	}
+	if strings.Contains(raw, `"mux"`) && strings.Contains(raw, `"enabled":true`) {
+		return true
+	}
+	return false
 }

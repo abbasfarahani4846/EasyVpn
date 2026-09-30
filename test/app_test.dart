@@ -60,6 +60,55 @@ void main() {
     expect(t.calls, contains('SetCountry'));
   });
 
+  testWidgets('onboarding "add profile" imports on the FIRST try', (
+    tester,
+  ) async {
+    final t = FakeTransport(
+      handlers: {
+        'DetectCountry': (_) => {'country': 'ir', 'source': 'locale'},
+        'SetCountry': (_) => {
+          'routing': {},
+          'pack': {'tls_tricks': {}, 'service_overrides': {}},
+        },
+        'RuleSetStatus': (_) => {'statuses': []},
+        'SyncRuleSets': (_) => {'events': []},
+        'FetchSubscription': (a) => {
+          'nodes': [node(1), node(2)],
+          'via': 'direct',
+        },
+      },
+    );
+    final app = await pumpApp(
+      tester,
+      settings: const AppSettings(onboarded: false),
+      transport: t,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Add a profile now'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    await tester.enterText(
+      find.byType(TextField).first,
+      'https://sub.example.com/abc',
+    );
+    final import = tester.widget<ButtonStyleButton>(
+      find
+          .ancestor(
+            of: find.text('Import'),
+            matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+          )
+          .first,
+    );
+    import.onPressed!();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    expect(t.calls, contains('FetchSubscription'));
+    expect(await app.env.repo.count(), 2);
+    expect(find.byType(BottomSheet), findsNothing); // closed on success
+  });
+
   testWidgets(
     'dashboard reports core unavailable and never fakes a connection',
     (tester) async {

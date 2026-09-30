@@ -24,6 +24,7 @@ var XrayCapabilities = map[string]bool{
 	protocol.CapXHTTP:   true,
 	protocol.CapMLKEM:   true,
 	protocol.CapTCPHTTP: true,
+	protocol.CapXrayRaw: true,
 }
 
 // NeedsXray reports whether node must be served by Xray-core: it requires a
@@ -139,7 +140,7 @@ func buildXrayConfig(n *protocol.ProxyNode, listenPort int, o SidecarOptions) ([
 	// outbound, untouched: every provider-specific knob (xhttp extra/padding,
 	// headers, fingerprints, sockopt, mux...) reaches Xray exactly as the
 	// provider tested it with v2rayN. The model is only a fallback.
-	out := rawXrayOutbound(n)
+	out, deps := rawXrayOutboundWithDeps(n)
 	if out == nil {
 		var err error
 		if out, err = modelXrayOutbound(n); err != nil {
@@ -148,12 +149,13 @@ func buildXrayConfig(n *protocol.ProxyNode, listenPort int, o SidecarOptions) ([
 	}
 	out["tag"] = "proxy"
 	insecure := stripAllowInsecure(out)
-	outbounds := []any{out}
+	outbounds := append([]any{out}, deps...)
 	if o.BypassPort > 0 {
-		ss, _ := out["streamSettings"].(map[string]any)
+		end := chainEnd(out, deps)
+		ss, _ := end["streamSettings"].(map[string]any)
 		if ss == nil {
 			ss = map[string]any{}
-			out["streamSettings"] = ss
+			end["streamSettings"] = ss
 		}
 		so, _ := ss["sockopt"].(map[string]any)
 		if so == nil {
@@ -179,33 +181,77 @@ func buildXrayConfig(n *protocol.ProxyNode, listenPort int, o SidecarOptions) ([
 }
 
 // rawXrayOutbound returns a deep copy of the node's original Xray outbound when
-// it was imported from Xray JSON, else nil.
+// it was imported from Xray JSON, else nil. Dependent outbounds (a
+// sockopt.dialerProxy chain such as a fragment/noise "freedom") travel in the
+// "_deps" key and are returned separately so the chain keeps working.
 func rawXrayOutbound(n *protocol.ProxyNode) map[string]any {
+	m, _ := rawXrayOutboundWithDeps(n)
+	return m
+}
+
+func rawXrayOutboundWithDeps(n *protocol.ProxyNode) (map[string]any, []any) {
 	raw := strings.TrimSpace(n.RawConfig)
 	if !strings.HasPrefix(raw, "{") {
-		return nil
+		return nil, nil
 	}
 	var m map[string]any
 	if json.Unmarshal([]byte(raw), &m) != nil {
-		return nil
+		return nil, nil
 	}
 	p, _ := m["protocol"].(string)
 	switch p {
 	case "vless", "vmess", "trojan", "shadowsocks", "socks", "http":
 	default:
-		return nil
+		return nil, nil
 	}
 	if _, ok := m["settings"].(map[string]any); !ok {
-		return nil
+		return nil, nil
 	}
-	// A dialerProxy/forward chain would reference outbounds we do not have.
+	deps, _ := m["_deps"].([]any)
+	delete(m, "_deps")
 	delete(m, "proxySettings")
-	if ss, ok := m["streamSettings"].(map[string]any); ok {
-		if so, ok := ss["sockopt"].(map[string]any); ok {
-			delete(so, "dialerProxy")
+	known := map[string]bool{}
+	for _, d := range deps {
+		if dm, ok := d.(map[string]any); ok {
+			if tag, _ := dm["tag"].(string); tag != "" {
+				known[tag] = true
+			}
 		}
 	}
-	return m
+	// A dialerProxy we do not carry would make Xray refuse the config.
+	if ss, ok := m["streamSettings"].(map[string]any); ok {
+		if so, ok := ss["sockopt"].(map[string]any); ok {
+			if dp, _ := so["dialerProxy"].(string); dp != "" && !known[dp] {
+				delete(so, "dialerProxy")
+			}
+		}
+	}
+	return m, deps
+}
+
+// chainEnd follows sockopt.dialerProxy from out through deps and returns the
+// outbound that finally dials the network (where the bypass must attach).
+func chainEnd(out map[string]any, deps []any) map[string]any {
+	byTag := map[string]map[string]any{}
+	for _, d := range deps {
+		if dm, ok := d.(map[string]any); ok {
+			if tag, _ := dm["tag"].(string); tag != "" {
+				byTag[tag] = dm
+			}
+		}
+	}
+	cur := out
+	for i := 0; i < 8; i++ {
+		ss, _ := cur["streamSettings"].(map[string]any)
+		so, _ := ss["sockopt"].(map[string]any)
+		dp, _ := so["dialerProxy"].(string)
+		next, ok := byTag[dp]
+		if dp == "" || !ok {
+			return cur
+		}
+		cur = next
+	}
+	return cur
 }
 
 // stripAllowInsecure removes the "allowInsecure" key, which current Xray-core

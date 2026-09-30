@@ -66,9 +66,13 @@ class SubscriptionPage extends ConsumerWidget {
 }
 
 /// Shows the import options sheet; also used by deep links and onboarding.
+///
+/// The sheet reads providers through its OWN ref: the caller (e.g. the
+/// onboarding page) may be disposed while the sheet is open, and a dead
+/// WidgetRef made the first import silently fail.
 Future<void> showAddSheet(
   BuildContext context,
-  WidgetRef ref, {
+  WidgetRef _, {
   String? prefillUrl,
 }) async {
   await showModalBottomSheet<void>(
@@ -78,20 +82,19 @@ Future<void> showAddSheet(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: _AddSheet(ref: ref, prefillUrl: prefillUrl),
+      child: _AddSheet(prefillUrl: prefillUrl),
     ),
   );
 }
 
-class _AddSheet extends StatefulWidget {
-  const _AddSheet({required this.ref, this.prefillUrl});
-  final WidgetRef ref;
+class _AddSheet extends ConsumerStatefulWidget {
+  const _AddSheet({this.prefillUrl});
   final String? prefillUrl;
   @override
-  State<_AddSheet> createState() => _AddSheetState();
+  ConsumerState<_AddSheet> createState() => _AddSheetState();
 }
 
-class _AddSheetState extends State<_AddSheet> {
+class _AddSheetState extends ConsumerState<_AddSheet> {
   late final _url = TextEditingController(text: widget.prefillUrl ?? '');
   final _name = TextEditingController();
   bool _busy = false;
@@ -118,13 +121,19 @@ class _AddSheetState extends State<_AddSheet> {
       _busy = true;
       _error = null;
     });
-    await _report(await f());
+    ImportResult r;
+    try {
+      r = await f();
+    } catch (e) {
+      r = ImportResult(error: '$e'); // never leave the sheet spinning
+    }
+    await _report(r);
   }
 
   Future<void> _submitUrl() async {
     final v = _url.text.trim();
     if (v.isEmpty) return;
-    final notifier = widget.ref.read(profilesProvider.notifier);
+    final notifier = ref.read(profilesProvider.notifier);
     if (v.startsWith('http://') || v.startsWith('https://')) {
       await _run(() => notifier.addSubscription(v, name: _name.text.trim()));
     } else {
@@ -141,7 +150,7 @@ class _AddSheetState extends State<_AddSheet> {
       return;
     }
     await _run(
-      () => widget.ref
+      () => ref
           .read(profilesProvider.notifier)
           .importText(t, name: _name.text.trim()),
     );
@@ -151,7 +160,7 @@ class _AddSheetState extends State<_AddSheet> {
     final c = await pickTextFile();
     if (c == null || c.trim().isEmpty) return;
     await _run(
-      () => widget.ref
+      () => ref
           .read(profilesProvider.notifier)
           .importText(c, name: _name.text.trim()),
     );
@@ -162,7 +171,7 @@ class _AddSheetState extends State<_AddSheet> {
       context,
     ).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (v == null || !mounted) return;
-    final notifier = widget.ref.read(profilesProvider.notifier);
+    final notifier = ref.read(profilesProvider.notifier);
     if (v.startsWith('http://') || v.startsWith('https://')) {
       await _run(() => notifier.addSubscription(v, name: _name.text.trim()));
     } else {

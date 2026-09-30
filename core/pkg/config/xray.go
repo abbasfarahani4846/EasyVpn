@@ -83,6 +83,12 @@ func (p *Parser) parseJSONConfigs(content string) ([]*protocol.ProxyNode, error)
 			}
 		}
 	}
+	attachDeps(nodes, obj.Outbounds)
+	var rm struct {
+		Remarks string `json:"remarks"`
+	}
+	_ = json.Unmarshal([]byte(trimmed), &rm)
+	applyRemarks(nodes, rm.Remarks)
 	// A full Xray config whose only outbounds are freedom/block yields zero
 	// nodes; treat that as "not a proxy config" so callers can fall through.
 	if len(nodes) == 0 && !sawXrayShape {
@@ -113,6 +119,7 @@ type xrayStreamSettings struct {
 	} `json:"realitySettings"`
 	WSSettings *struct {
 		Path    string            `json:"path"`
+		Host    string            `json:"host"` // Xray >= 1.8.12
 		Headers map[string]string `json:"headers"`
 	} `json:"wsSettings"`
 	HTTPSettings *struct {
@@ -173,6 +180,7 @@ type xrayOutbound struct {
 func (p *Parser) parseXrayConfigObject(raw json.RawMessage) []*protocol.ProxyNode {
 	var obj struct {
 		Outbounds []json.RawMessage `json:"outbounds"`
+		Remarks   string            `json:"remarks"`
 	}
 	if err := json.Unmarshal(raw, &obj); err != nil {
 		return nil
@@ -183,6 +191,8 @@ func (p *Parser) parseXrayConfigObject(raw json.RawMessage) []*protocol.ProxyNod
 			nodes = append(nodes, n)
 		}
 	}
+	attachDeps(nodes, obj.Outbounds)
+	applyRemarks(nodes, obj.Remarks)
 	return nodes
 }
 
@@ -312,7 +322,9 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 	case "ws":
 		if w := ss.WSSettings; w != nil {
 			tc.Path = w.Path
-			if h, ok := w.Headers["Host"]; ok {
+			if w.Host != "" {
+				tc.Host = w.Host
+			} else if h, ok := w.Headers["Host"]; ok {
 				tc.Host = h
 			} else if h, ok := w.Headers["host"]; ok {
 				tc.Host = h
@@ -505,4 +517,74 @@ func ReparseXrayOutbound(raw string) *protocol.ProxyNode {
 		return nil
 	}
 	return (&Parser{}).parseXrayOutbound(json.RawMessage(raw))
+}
+
+// applyRemarks names nodes after the config-level "remarks" (what v2rayN
+// shows) when the outbound tag is a generic one like "proxy".
+func applyRemarks(nodes []*protocol.ProxyNode, remarks string) {
+	remarks = strings.TrimSpace(remarks)
+	if remarks == "" {
+		return
+	}
+	var generic []*protocol.ProxyNode
+	for _, n := range nodes {
+		switch strings.ToLower(n.Name) {
+		case "", "proxy", "out", "outbound", "vless", "vmess", "trojan", "shadowsocks":
+			generic = append(generic, n)
+		}
+	}
+	for i, n := range generic {
+		n.Name = remarks
+		if len(generic) > 1 {
+			n.Name = fmt.Sprintf("%s #%d", remarks, i+1)
+		}
+	}
+}
+
+// attachDeps embeds the outbounds a proxy outbound dials through
+// (streamSettings.sockopt.dialerProxy chains, e.g. a "fragment" freedom
+// outbound with fragment/noises settings) into its RawConfig under "_deps",
+// so the node stays self-contained and runs exactly as in v2rayN.
+func attachDeps(nodes []*protocol.ProxyNode, outbounds []json.RawMessage) {
+	byTag := map[string]map[string]any{}
+	for _, ob := range outbounds {
+		var m map[string]any
+		if json.Unmarshal(ob, &m) == nil {
+			if tag, _ := m["tag"].(string); tag != "" {
+				byTag[tag] = m
+			}
+		}
+	}
+	dialer := func(m map[string]any) string {
+		ss, _ := m["streamSettings"].(map[string]any)
+		so, _ := ss["sockopt"].(map[string]any)
+		dp, _ := so["dialerProxy"].(string)
+		return dp
+	}
+	for _, n := range nodes {
+		var m map[string]any
+		if json.Unmarshal([]byte(n.RawConfig), &m) != nil {
+			continue
+		}
+		var deps []any
+		seen := map[string]bool{}
+		for cur, i := m, 0; i < 8; i++ {
+			dp := dialer(cur)
+			next, ok := byTag[dp]
+			if dp == "" || !ok || seen[dp] {
+				break
+			}
+			seen[dp] = true
+			deps = append(deps, next)
+			cur = next
+		}
+		if len(deps) == 0 {
+			continue
+		}
+		m["_deps"] = deps
+		if b, err := json.Marshal(m); err == nil {
+			n.RawConfig = string(b)
+			n.Requires = n.ComputeRequires()
+		}
+	}
 }

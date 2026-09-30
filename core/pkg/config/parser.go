@@ -708,6 +708,10 @@ func clashProxyToNode(m map[string]any) (*protocol.ProxyNode, string) {
 		node.Type = protocol.ProtoVLESS
 		node.UUID = get("uuid")
 		node.Flow = get("flow")
+		// VLESS encryption (mlkem768x25519plus...): without it the server drops us.
+		if e := get("encryption"); e != "" && e != "none" {
+			node.Encryption = e
+		}
 	case "trojan":
 		node.Type = protocol.ProtoTrojan
 		node.Password = get("password")
@@ -767,10 +771,32 @@ func clashProxyToNode(m map[string]any) (*protocol.ProxyNode, string) {
 			tc.ServiceName = strVal(go_["grpc-service-name"])
 		}
 		node.Transport = tc
-	case "http", "h2":
-		tc := &protocol.TransportConfig{Type: "http", Path: get("path")}
+	case "http":
+		// mihomo "http" = HTTP/1.1 header camouflage over plain TCP (Xray
+		// tcpSettings.header.type=http), NOT the HTTP/2 transport ("h2").
+		tc := &protocol.TransportConfig{Type: "tcp-http", Path: "/"}
 		if ho, ok := m["http-opts"].(map[string]any); ok {
-			tc.Path = orDefault(strVal(ho["path"]), tc.Path)
+			tc.Path = orDefault(firstStr(ho["path"]), "/")
+			tc.Host = firstStr(ho["Host"])
+			if h, ok := ho["headers"].(map[string]any); ok && tc.Host == "" {
+				tc.Host = firstStr(h["Host"])
+			}
+		}
+		node.Transport = tc
+	case "h2":
+		tc := &protocol.TransportConfig{Type: "http", Path: get("path")}
+		if ho, ok := m["h2-opts"].(map[string]any); ok {
+			tc.Path = orDefault(firstStr(ho["path"]), tc.Path)
+			tc.Host = firstStr(ho["host"])
+		}
+		node.Transport = tc
+	case "xhttp", "splithttp":
+		tc := &protocol.TransportConfig{Type: "xhttp", Path: "/"}
+		if xo, ok := m["xhttp-opts"].(map[string]any); ok {
+			tc.Path = orDefault(strVal(xo["path"]), "/")
+			tc.Host = strVal(xo["host"])
+			tc.Mode = strVal(xo["mode"])
+			tc.Extra = clashXHTTPExtra(xo)
 		}
 		node.Transport = tc
 	case "httpupgrade":
@@ -779,6 +805,61 @@ func clashProxyToNode(m map[string]any) (*protocol.ProxyNode, string) {
 
 	node.EnsureID()
 	return node, ""
+}
+
+// clashXHTTPExtra maps mihomo xhttp-opts keys (kebab-case) onto Xray's
+// xhttpSettings "extra" object (camelCase): x-padding-bytes -> xPaddingBytes,
+// x-padding-obfs-mode -> xPaddingObfsMode, no-grpc-header -> noGRPCHeader...
+// An explicit "extra" map is merged last.
+func clashXHTTPExtra(xo map[string]any) string {
+	out := map[string]any{}
+	for k, v := range xo {
+		switch k {
+		case "path", "host", "mode", "extra":
+			continue
+		}
+		out[kebabToCamel(k)] = v
+	}
+	if ex, ok := xo["extra"].(map[string]any); ok {
+		for k, v := range ex {
+			out[k] = v
+		}
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+func kebabToCamel(s string) string {
+	parts := strings.Split(s, "-")
+	for i := 1; i < len(parts); i++ {
+		p := parts[i]
+		switch strings.ToLower(p) {
+		case "grpc", "id", "ip", "url", "http", "dns":
+			parts[i] = strings.ToUpper(p)
+		default:
+			if p != "" {
+				parts[i] = strings.ToUpper(p[:1]) + p[1:]
+			}
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// firstStr returns a string or the first element of a list.
+func firstStr(v any) string {
+	if l, ok := v.([]any); ok {
+		if len(l) == 0 {
+			return ""
+		}
+		return strVal(l[0])
+	}
+	return strVal(v)
 }
 
 // ---- small helpers ----

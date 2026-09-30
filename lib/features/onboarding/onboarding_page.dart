@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app.dart';
+
 import '../../core/providers/nav_provider.dart';
 import '../../core/providers/routing_actions.dart';
 import '../../core/providers/settings_provider.dart';
@@ -49,9 +51,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     ref
         .read(settingsProvider.notifier)
         .update((s) => s.copyWith(onboarded: true));
-    if (addProfile && mounted) {
+    if (addProfile) {
       ref.read(navProvider.notifier).go(Dest.profiles);
-      await showAddSheet(context, ref);
+      // This page is replaced as soon as onboarded=true; open the sheet from
+      // the app-level navigator once the new home is on screen.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = navigatorKey.currentContext;
+        if (ctx != null) showAddSheet(ctx, ref);
+      });
     }
   }
 

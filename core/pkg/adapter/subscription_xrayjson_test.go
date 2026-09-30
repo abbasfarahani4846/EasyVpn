@@ -176,3 +176,54 @@ func TestLegacyImportRepairedAndURLTested(t *testing.T) {
 		t.Fatalf("legacy node was not repaired from its raw JSON")
 	}
 }
+
+// Iranian "custom" configs commonly route the proxy through a fragment/noise
+// freedom outbound (sockopt.dialerProxy). That dependency must be kept and the
+// node run verbatim in Xray (other clients silently drop it).
+func TestSubscriptionXrayJSON_FragmentDialerChain(t *testing.T) {
+	cert, key := selfSigned(t)
+	port := freePort(t)
+	stop := startXrayServer(t, map[string]any{
+		"network": "tcp", "security": "tls",
+		"tlsSettings": map[string]any{"certificates": []any{map[string]any{"certificateFile": cert, "keyFile": key}}},
+	}, port)
+	defer stop()
+	time.Sleep(300 * time.Millisecond)
+
+	sub := []any{map[string]any{
+		"remarks": "🇩🇪 custom fragment",
+		"outbounds": []any{
+			map[string]any{"protocol": "vless", "tag": "proxy",
+				"settings": map[string]any{"vnext": []any{map[string]any{"address": "127.0.0.1", "port": port,
+					"users": []any{map[string]any{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "encryption": "none"}}}}},
+				"streamSettings": map[string]any{"network": "tcp", "security": "tls",
+					"tlsSettings": map[string]any{"serverName": "localhost", "allowInsecure": true},
+					"sockopt":     map[string]any{"dialerProxy": "fragment", "tcpNoDelay": true}}},
+			map[string]any{"protocol": "freedom", "tag": "fragment",
+				"settings": map[string]any{"fragment": map[string]any{"packets": "tlshello", "length": "10-20", "interval": "1-2"}}},
+			map[string]any{"protocol": "freedom", "tag": "direct"},
+		},
+	}}
+	b, _ := json.Marshal(sub)
+	nodes, err := config.NewParser().ParseContent(string(b))
+	if err != nil || len(nodes) != 1 {
+		t.Fatalf("import: %v %d", err, len(nodes))
+	}
+	n := nodes[0]
+	if n.Name != "🇩🇪 custom fragment" {
+		t.Errorf("name = %q", n.Name)
+	}
+	if !NeedsXray(n) || !strings.Contains(n.RawConfig, `"_deps"`) {
+		t.Fatalf("fragment chain must be kept and run in Xray: requires=%v", n.Requires)
+	}
+	cfg, _, err := buildXrayConfig(n, 1080, SidecarOptions{BypassPort: 1081})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Bypass attaches at the END of the chain (the fragment freedom), not the proxy.
+	if !strings.Contains(string(cfg), `"tag":"fragment"`) || strings.Count(string(cfg), `"dialerProxy":"via-box"`) != 1 ||
+		!strings.Contains(string(cfg), `"dialerProxy":"fragment"`) {
+		t.Fatalf("bad chain wiring: %s", cfg)
+	}
+	runThroughNode(t, n)
+}
