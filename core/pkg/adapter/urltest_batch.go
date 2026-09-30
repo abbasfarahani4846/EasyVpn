@@ -69,9 +69,15 @@ func testChunk(ctx context.Context, nodes []*protocol.ProxyNode, o URLTestOption
 	res := make([]URLTestResult, len(nodes))
 	var opts option.Options
 	tags := make([]string, len(nodes))
+	var xrayIdx []int
 	for i, n := range nodes {
 		n.EnsureID()
+		NormalizeNode(n)
 		res[i] = URLTestResult{NodeID: n.ID, LatencyMs: -1}
+		if NeedsXray(n) {
+			xrayIdx = append(xrayIdx, i)
+			continue
+		}
 		tag := fmt.Sprintf("t%d", i)
 		built, err := buildNode(n, tag)
 		if err != nil {
@@ -84,6 +90,9 @@ func testChunk(ctx context.Context, nodes []*protocol.ProxyNode, o URLTestOption
 		} else {
 			opts.Endpoints = append(opts.Endpoints, *built.Endpoint)
 		}
+	}
+	if len(xrayIdx) > 0 {
+		defer xrayURLTestMany(ctx, nodes, xrayIdx, res, o)
 	}
 	if len(opts.Outbounds)+len(opts.Endpoints) == 0 {
 		return res

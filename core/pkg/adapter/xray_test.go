@@ -28,6 +28,11 @@ func startXrayServer(t *testing.T, stream map[string]any, port int, decryption .
 		}},
 		"outbounds": []any{map[string]any{"protocol": "freedom"}},
 	}
+	return startXrayConfig(t, cfg)
+}
+
+func startXrayConfig(t *testing.T, cfg map[string]any) func() {
+	t.Helper()
 	b, _ := json.Marshal(cfg)
 	pb, err := serial.LoadJSONConfig(bytes.NewReader(b))
 	if err != nil {

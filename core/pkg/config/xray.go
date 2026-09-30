@@ -120,9 +120,10 @@ type xrayStreamSettings struct {
 		Host []string `json:"host"`
 	} `json:"httpSettings"`
 	XHTTPSettings *struct {
-		Path string `json:"path"`
-		Host string `json:"host"`
-		Mode string `json:"mode"`
+		Path  string          `json:"path"`
+		Host  string          `json:"host"`
+		Mode  string          `json:"mode"`
+		Extra json.RawMessage `json:"extra"`
 	} `json:"xhttpSettings"`
 	GRPCSettings *struct {
 		ServiceName string `json:"serviceName"`
@@ -216,6 +217,11 @@ func (p *Parser) parseXrayOutbound(raw json.RawMessage) *protocol.ProxyNode {
 		if len(v.Users) > 0 {
 			node.UUID = v.Users[0].ID
 			node.Flow = v.Users[0].Flow
+			// VLESS encryption (e.g. mlkem768x25519plus...) must survive import,
+			// otherwise the server drops the connection after the first packet.
+			if e := v.Users[0].Encryption; e != "" && e != "none" {
+				node.Encryption = e
+			}
 		}
 	case "trojan", "shadowsocks":
 		if len(ob.Settings.Servers) == 0 {
@@ -267,10 +273,15 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 		tls := ss.TLSSettings
 		if tls != nil {
 			node.TLS = &protocol.TLSConfig{
-				Enabled:    true,
-				ServerName: tls.ServerName,
-				Insecure:   tls.AllowInsecure,
-				ALPN:       tls.ALPN,
+				Enabled:     true,
+				ServerName:  tls.ServerName,
+				Insecure:    tls.AllowInsecure,
+				ALPN:        tls.ALPN,
+				Fingerprint: tls.Fingerprint,
+				UTLS:        tls.Fingerprint != "" && tls.Fingerprint != "none",
+			}
+			if node.TLS.ServerName == "" {
+				node.TLS.ServerName = node.Server
 			}
 		} else {
 			node.TLS = &protocol.TLSConfig{Enabled: true, ServerName: node.Server}
@@ -321,6 +332,9 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 			tc.Path = x.Path
 			tc.Host = x.Host
 			tc.Mode = x.Mode
+			if len(x.Extra) > 0 && string(x.Extra) != "null" {
+				tc.Extra = string(x.Extra)
+			}
 		}
 	case "grpc":
 		if g := ss.GRPCSettings; g != nil {
@@ -479,4 +493,16 @@ func decodeJSONStringOrArray(raw json.RawMessage) string {
 		return arr[0]
 	}
 	return ""
+}
+
+// ReparseXrayOutbound re-derives a node from its stored original Xray outbound
+// JSON (RawConfig). Nodes imported by older builds lost fields (VLESS
+// encryption, xhttp extra); re-deriving at use time fixes them without
+// requiring a subscription refresh. Returns nil when raw is not Xray JSON.
+func ReparseXrayOutbound(raw string) *protocol.ProxyNode {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasPrefix(raw, "{") || !strings.Contains(raw, `"protocol"`) {
+		return nil
+	}
+	return (&Parser{}).parseXrayOutbound(json.RawMessage(raw))
 }

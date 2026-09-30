@@ -175,6 +175,10 @@ func (e *Engine) Start(p StartParams) error {
 		return fmt.Errorf("no node")
 	}
 	node.EnsureID()
+	adapter.NormalizeNode(node)
+	for _, c := range p.Candidates {
+		adapter.NormalizeNode(c)
+	}
 	mode := adapter.ParseConnMode(p.Mode)
 	if mode == adapter.ModeSystemProxy && !e.sysProxy.Supported() {
 		return fmt.Errorf("%w: system_proxy (use tun or proxy_only)", ErrUnsupportedMode)
@@ -209,8 +213,12 @@ func (e *Engine) Start(p StartParams) error {
 	// in-process Xray sidecar exposed to sing-box as a loopback SOCKS upstream,
 	// so TUN, DNS and routing keep working unchanged.
 	runNode := node
+	bypassPort := 0
 	if adapter.NeedsXray(node) {
-		sc, err := adapter.StartXraySidecar(node)
+		if mode.NeedsTUN() {
+			bypassPort = freeTCPPort()
+		}
+		sc, err := adapter.StartXraySidecarWith(node, adapter.SidecarOptions{BypassPort: bypassPort})
 		if err != nil {
 			e.setState(StateError, err.Error())
 			cancel()
@@ -223,19 +231,20 @@ func (e *Engine) Start(p StartParams) error {
 	}
 
 	req := &adapter.StartRequest{
-		Node:       runNode,
-		Candidates: p.Candidates,
-		Routing:    e.currentRouting(),
-		Mode:       mode,
-		Tun:        p.Tun,
-		Tricks:     tricks,
-		Auth:       p.Auth,
-		LocalPort:  port,
-		BindLocal:  true,
-		AllowLAN:   p.AllowLAN,
-		CacheDir:   e.cacheDir,
-		LogLevel:   "info",
-		TestURL:    p.TestURL,
+		Node:           runNode,
+		Candidates:     p.Candidates,
+		Routing:        e.currentRouting(),
+		Mode:           mode,
+		Tun:            p.Tun,
+		Tricks:         tricks,
+		Auth:           p.Auth,
+		LocalPort:      port,
+		BindLocal:      true,
+		AllowLAN:       p.AllowLAN,
+		CacheDir:       e.cacheDir,
+		LogLevel:       "info",
+		TestURL:        p.TestURL,
+		XrayBypassPort: bypassPort,
 		StatsHook: func(s adapter.Stats) {
 			e.bus.Publish(transport.KindBulk, "stats", s)
 		},
@@ -412,6 +421,7 @@ func (e *Engine) SwitchNode(node *protocol.ProxyNode) error {
 		return fmt.Errorf("no node")
 	}
 	node.EnsureID()
+	adapter.NormalizeNode(node)
 	e.mu.Lock()
 	viaSidecar := e.sidecar != nil
 	e.mu.Unlock()
@@ -641,4 +651,13 @@ func ParseExitJSON(b []byte) *ExitInfo {
 		return nil
 	}
 	return info
+}
+
+func freeTCPPort() int {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port
 }

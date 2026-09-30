@@ -108,9 +108,13 @@ type StartRequest struct {
 	CacheDir   string
 	LogLevel   string
 	TestURL    string // connectivity/latency probe (urltest group); default gstatic 204
-	StatsHook  func(Stats)
-	LogHook    func(level, msg string)
-	StateHook  func(state, detail string)
+	// XrayBypassPort, when > 0, opens a loopback SOCKS inbound used only by the
+	// Xray sidecar to reach its server; it is routed to the interface-bound
+	// direct outbound so the sidecar never loops back into the TUN.
+	XrayBypassPort int
+	StatsHook      func(Stats)
+	LogHook        func(level, msg string)
+	StateHook      func(state, detail string)
 }
 
 // MaxMaterialized caps how many nodes are compiled into the running core.
@@ -490,6 +494,17 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 	if mode.NeedsTUN() {
 		inbounds = append(inbounds, option.Inbound{Type: C.TypeTun, Tag: "tun-in", Options: tunOptions(req.Tun)})
 	}
+	rules := router.BuildRouteRules(routing)
+	if req.XrayBypassPort > 0 {
+		lo := badoption.Addr(netip.AddrFrom4([4]byte{127, 0, 0, 1}))
+		inbounds = append(inbounds, option.Inbound{Type: C.TypeSOCKS, Tag: xrayBypassTag, Options: &option.SocksInboundOptions{
+			ListenOptions: option.ListenOptions{Listen: &lo, ListenPort: uint16(req.XrayBypassPort)},
+		}})
+		rules = append([]option.Rule{{Type: C.RuleTypeDefault, DefaultOptions: option.DefaultRule{
+			RawDefaultRule: option.RawDefaultRule{Inbound: badoption.Listable[string]{xrayBypassTag}},
+			RuleAction:     option.RuleAction{Action: C.RuleActionTypeRoute, RouteOptions: option.RouteActionOptions{Outbound: directTag}},
+		}}}, rules...)
+	}
 
 	opts := option.Options{
 		// The selector/urltest groups persist state in a cache file whose default
@@ -506,7 +521,7 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 		Outbounds: outbounds,
 		Endpoints: endpoints,
 		Route: &option.RouteOptions{
-			Rules:                 router.BuildRouteRules(routing),
+			Rules:                 rules,
 			RuleSet:               router.BuildRuleSets(routing),
 			Final:                 router.RouteFinal(routing),
 			AutoDetectInterface:   mode.NeedsTUN() && req.Tun.FD <= 0,
@@ -516,6 +531,8 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 	}
 	return opts, tags, nil
 }
+
+const xrayBypassTag = "xray-bypass-in"
 
 func tunOptions(t TunSettings) *option.TunInboundOptions {
 	mtu := t.MTU
