@@ -27,3 +27,15 @@ flutter build linux|windows|macos|apk --release
 
 ## Runtime layout
 Desktop: the app spawns `easycoreproc` (loopback TCP + per-launch token). Android: FFI into `libeasycore.so`.
+
+## Releases (GitHub Actions)
+`.github/workflows/release.yml` builds Linux (tar.gz + .deb), Windows (zip), macOS (zip), Android (arm64 + x86_64 APKs) and the raw Go cores,
+then publishes them with `SHA256SUMS.txt` as a GitHub Release.
+
+* **Stable**: `git tag v1.0.0 && git push origin v1.0.0` (version must be `x.y.z`).
+* **Nightly**: every push to `main` replaces the pre-release tagged `nightly`.
+* **Manual**: Actions → Release → Run workflow (optionally enter a version).
+
+Optional secrets (without them builds are unsigned / debug-signed):
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`;
+`MACOS_CERT_P12_BASE64`, `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`.
