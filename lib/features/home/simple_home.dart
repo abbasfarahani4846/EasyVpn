@@ -15,6 +15,7 @@ import '../../l10n/strings.dart';
 import '../../theme/brand.dart';
 import 'home_menu.dart';
 import 'location_picker.dart';
+import '../share/share_sheet.dart';
 
 /// The default, one-button experience: a state-colored night sky, a large
 /// animated power orb, the current location and a few quick actions. All
@@ -29,7 +30,7 @@ class SimpleHome extends ConsumerWidget {
     return Theme(
       data: Brand.theme(Theme.of(context)),
       child: Scaffold(
-        backgroundColor: Brand.night,
+        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
             // State-driven glow behind the orb.
@@ -54,17 +55,24 @@ class SimpleHome extends ConsumerWidget {
                   constraints: const BoxConstraints(maxWidth: 520),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Column(
-                      children: [
-                        _TopBar(core: core),
-                        const _UpdateBanner(),
-                        const Spacer(flex: 2),
-                        _Orb(core: core),
-                        const SizedBox(height: 22),
-                        _StatusText(core: core),
-                        const Spacer(flex: 3),
-                        const _BottomPanel(),
-                      ],
+                    child: LayoutBuilder(
+                      builder: (context, c) {
+                        // Windscribe-style compact arrangement for the mini
+                        // window / very short screens.
+                        final compact = c.maxHeight < 560;
+                        return Column(
+                          children: [
+                            _TopBar(core: core),
+                            if (!compact) const _UpdateBanner(),
+                            const Spacer(flex: 2),
+                            _Orb(core: core, size: compact ? 150 : 230),
+                            SizedBox(height: compact ? 10 : 22),
+                            _StatusText(core: core, compact: compact),
+                            const Spacer(flex: 3),
+                            _BottomPanel(compact: compact),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -145,7 +153,26 @@ class _TopBar extends StatelessWidget {
         Expanded(
           child: Align(alignment: AlignmentDirectional.centerEnd, child: pill),
         ),
-        const SizedBox(width: 6),
+        if (PlatformService.isDesktop)
+          Consumer(
+            builder: (context, ref, _) {
+              final mini = ref.watch(
+                settingsProvider.select((x) => x.miniWindow),
+              );
+              return IconButton(
+                tooltip: s.t('home.mini'),
+                icon: Icon(
+                  mini
+                      ? Icons.open_in_full_rounded
+                      : Icons.close_fullscreen_rounded,
+                  size: 20,
+                ),
+                onPressed: () => ref
+                    .read(settingsProvider.notifier)
+                    .update((x) => x.copyWith(miniWindow: !mini)),
+              );
+            },
+          ),
         IconButton(
           tooltip: s.t('home.menu'),
           icon: const Icon(Icons.grid_view_rounded),
@@ -159,8 +186,9 @@ class _TopBar extends StatelessWidget {
 /// Large animated power button. Rings rotate while connecting and breathe
 /// while connected.
 class _Orb extends ConsumerStatefulWidget {
-  const _Orb({required this.core});
+  const _Orb({required this.core, this.size = 230});
   final CoreState core;
+  final double size;
   @override
   ConsumerState<_Orb> createState() => _OrbState();
 }
@@ -190,17 +218,17 @@ class _OrbState extends ConsumerState<_Orb>
             ? () => ref.read(coreControllerProvider.notifier).toggle()
             : null,
         child: SizedBox(
-          width: 230,
-          height: 230,
+          width: widget.size,
+          height: widget.size,
           child: AnimatedBuilder(
             animation: _c,
             builder: (context, _) => CustomPaint(
-              painter: _OrbPainter(st, _c.value),
+              painter: _OrbPainter(st, _c.value, widget.size / 230),
               child: Center(
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
-                  width: 132,
-                  height: 132,
+                  width: widget.size * 0.574,
+                  height: widget.size * 0.574,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: Brand.orbGradient(st),
@@ -212,9 +240,9 @@ class _OrbState extends ConsumerState<_Orb>
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.power_settings_new_rounded,
-                    size: 58,
+                    size: widget.size * 0.25,
                     color: Brand.text,
                   ),
                 ),
@@ -228,9 +256,10 @@ class _OrbState extends ConsumerState<_Orb>
 }
 
 class _OrbPainter extends CustomPainter {
-  _OrbPainter(this.status, this.t);
+  _OrbPainter(this.status, this.t, [this.scale = 1]);
   final CoreStatus status;
   final double t;
+  final double scale;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -240,7 +269,7 @@ class _OrbPainter extends CustomPainter {
         status == CoreStatus.connecting || status == CoreStatus.disconnecting;
     final on = status == CoreStatus.connected;
     for (var i = 0; i < 3; i++) {
-      final base = 76.0 + i * 17;
+      final base = (76.0 + i * 17) * scale;
       final r = on ? base + math.sin((t + i / 3) * 2 * math.pi) * 3 : base;
       final paint = Paint()
         ..style = PaintingStyle.stroke
@@ -249,7 +278,7 @@ class _OrbPainter extends CustomPainter {
       canvas.drawCircle(c, r, paint);
     }
     if (busy) {
-      final rect = Rect.fromCircle(center: c, radius: 93);
+      final rect = Rect.fromCircle(center: c, radius: 93 * scale);
       final sweep = Paint()
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
@@ -263,12 +292,14 @@ class _OrbPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_OrbPainter o) => o.t != t || o.status != status;
+  bool shouldRepaint(_OrbPainter o) =>
+      o.t != t || o.status != status || o.scale != scale;
 }
 
 class _StatusText extends ConsumerStatefulWidget {
-  const _StatusText({required this.core});
+  const _StatusText({required this.core, this.compact = false});
   final CoreState core;
+  final bool compact;
   @override
   ConsumerState<_StatusText> createState() => _StatusTextState();
 }
@@ -316,6 +347,11 @@ class _StatusTextState extends ConsumerState<_StatusText> {
       sub = ip == null ? d : '$d  ·  ${flagEmoji(ip.countryCode)} ${ip.ip}';
     } else if (core.status == CoreStatus.error) {
       sub = core.detail == 'no_node' ? s.t('err.no_node') : s.t(core.detail);
+    } else if (core.status == CoreStatus.connecting) {
+      // Pressing the orb again cancels (also while "Fastest" is testing).
+      sub = core.detail == 'home.testing'
+          ? '${s.t('home.testing')}  ·  ${s.t('home.cancel')}'
+          : s.t('home.cancel');
     } else {
       sub = s.t('home.tap');
     }
@@ -323,7 +359,10 @@ class _StatusTextState extends ConsumerState<_StatusText> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            fontSize: widget.compact ? 22 : 30,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -343,7 +382,8 @@ class _StatusTextState extends ConsumerState<_StatusText> {
 }
 
 class _BottomPanel extends ConsumerWidget {
-  const _BottomPanel();
+  const _BottomPanel({this.compact = false});
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -358,33 +398,42 @@ class _BottomPanel extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _LocationTile(nodeId: settings.activeNodeId),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _Chip(
-                  icon: Icons.bolt_rounded,
-                  label: s.t('home.fastest'),
-                  onTap: () => ref
-                      .read(coreControllerProvider.notifier)
-                      .connectFastest(),
-                ),
-                const SizedBox(width: 8),
-                _Chip(
-                  icon: Icons.link_rounded,
-                  label: _chainLabel(s, settings),
-                  active:
-                      settings.chainNodeIds.isNotEmpty ||
-                      settings.exitNodeId.isNotEmpty,
-                  onTap: () => openMenuPage(context, MenuTarget.chain),
-                ),
-                const SizedBox(width: 8),
-                _ModeChip(mode: settings.mode),
-              ],
+          if (!compact) const SizedBox(height: 12),
+          if (!compact)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _Chip(
+                    icon: Icons.bolt_rounded,
+                    label: s.t('home.fastest'),
+                    onTap: () => ref
+                        .read(coreControllerProvider.notifier)
+                        .connectFastest(),
+                  ),
+                  const SizedBox(width: 8),
+                  _Chip(
+                    icon: Icons.link_rounded,
+                    label: _chainLabel(s, settings),
+                    active:
+                        settings.chainNodeIds.isNotEmpty ||
+                        settings.exitNodeId.isNotEmpty,
+                    onTap: () => openMenuPage(context, MenuTarget.chain),
+                  ),
+                  const SizedBox(width: 8),
+                  _ModeChip(mode: settings.mode),
+                  if (core.isConnected) ...[
+                    const SizedBox(width: 8),
+                    _Chip(
+                      icon: Icons.travel_explore_rounded,
+                      label: s.t('menu.sites'),
+                      onTap: () => openMenuPage(context, MenuTarget.sites),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          if (core.isConnected) ...[
+          if (core.isConnected && !compact) ...[
             const SizedBox(height: 12),
             Row(
               children: [
@@ -431,6 +480,9 @@ class _LocationTile extends ConsumerWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
             onTap: () => showLocationPicker(context),
+            onLongPress: nodeId == null
+                ? null
+                : () => showShareNode(context, ref, nodeId!),
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: Row(

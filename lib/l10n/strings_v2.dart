@@ -1,6 +1,44 @@
 // Strings for the v2 features (simple home, chains/WARP, Windscribe, updates).
 
 const enV2 = <String, String>{
+  'nav.tools': 'Tools',
+  'tools.add': 'Links, subscriptions, QR from camera or image, files',
+  'tools.sites': 'Do Gemini, ChatGPT, YouTube… work through this server?',
+  'tools.chain': 'Proxy-in-proxy, exit via WARP, WARP in WARP',
+  'tools.ws': 'All locations of your Windscribe account',
+  'tools.routing': 'Country bypass, ads blocking, custom rules',
+  'tools.updates': 'Check GitHub for a new version',
+  'tools.logs': 'Live core log and diagnostics',
+  'add.title': 'Add config',
+  'add.hint':
+      'Any single link (vless, vmess, trojan, ss, hy2, tuic, wireguard, ssh…), several links, a subscription URL, a Clash / sing-box / Xray config, .ovpn or .conf.',
+  'add.paste': 'Paste',
+  'add.camera': 'Scan QR',
+  'add.qr_image': 'QR from image',
+  'add.file': 'File',
+  'add.field': 'Link, subscription URL or config text',
+  'add.import': 'Add',
+  'add.clipboard_empty': 'The clipboard is empty.',
+  'add.desktop_qr_hint':
+      'Tip: save a screenshot of a QR code and use “QR from image”.',
+  'share.share': 'Share',
+  'share.too_long':
+      'This config is too long for a QR code; copy the link instead.',
+  'share.node': 'Share',
+  'sites.title': 'Site check',
+  'sites.run': 'Run again',
+  'sites.desc':
+      'Checks, through the current connection, whether services that are strict about your IP or region load or block you.',
+  'sites.summary': '{ok} of {n} services work',
+  'sites.ok': 'Works',
+  'sites.blocked': 'Blocked',
+  'sites.error': 'Failed',
+  'sites.connect_first': 'Connect first, then run the site check.',
+  'menu.sites': 'Site check',
+  'menu.add': 'Add config',
+  'home.testing': 'Finding the fastest server…',
+  'home.cancel': 'Tap to cancel',
+  'home.mini': 'Mini window',
   'err.core_restarted':
       'The core crashed and was restarted. Tap to reconnect; "Copy diagnostics" contains the crash report.',
   'ovpn.creds.title': 'OpenVPN sign-in',
@@ -96,6 +134,43 @@ const enV2 = <String, String>{
 };
 
 const faV2 = <String, String>{
+  'nav.tools': 'ابزارها',
+  'tools.add': 'لینک، اشتراک، QR با دوربین یا عکس، فایل',
+  'tools.sites': 'آیا Gemini، ChatGPT، YouTube… با این سرور کار می‌کنند؟',
+  'tools.chain': 'پروکسی در پروکسی، خروج از WARP، WARP در WARP',
+  'tools.ws': 'همه موقعیت‌های اکانت Windscribe شما',
+  'tools.routing': 'دورزدن کشور، مسدودسازی تبلیغ، قوانین دلخواه',
+  'tools.updates': 'بررسی نسخه جدید در گیت‌هاب',
+  'tools.logs': 'گزارش زنده هسته و عیب‌یابی',
+  'add.title': 'افزودن کانفیگ',
+  'add.hint':
+      'هر لینک تکی (vless، vmess، trojan، ss، hy2، tuic، wireguard، ssh…)، چند لینک، لینک اشتراک، کانفیگ Clash / sing-box / Xray، فایل ovpn یا conf.',
+  'add.paste': 'چسباندن',
+  'add.camera': 'اسکن QR',
+  'add.qr_image': 'QR از عکس',
+  'add.file': 'فایل',
+  'add.field': 'لینک، لینک اشتراک یا متن کانفیگ',
+  'add.import': 'افزودن',
+  'add.clipboard_empty': 'کلیپ‌بورد خالی است.',
+  'add.desktop_qr_hint':
+      'نکته: از کد QR اسکرین‌شات بگیرید و «QR از عکس» را بزنید.',
+  'share.share': 'اشتراک‌گذاری',
+  'share.too_long': 'این کانفیگ برای QR خیلی بلند است؛ لینک را کپی کنید.',
+  'share.node': 'اشتراک‌گذاری',
+  'sites.title': 'تست سایت‌ها',
+  'sites.run': 'اجرای دوباره',
+  'sites.desc':
+      'از طریق همین اتصال بررسی می‌کند سرویس‌هایی که به آی‌پی و منطقه حساس‌اند باز می‌شوند یا شما را مسدود می‌کنند.',
+  'sites.summary': '{ok} از {n} سرویس کار می‌کند',
+  'sites.ok': 'کار می‌کند',
+  'sites.blocked': 'مسدود',
+  'sites.error': 'ناموفق',
+  'sites.connect_first': 'اول وصل شوید، بعد تست سایت‌ها را اجرا کنید.',
+  'menu.sites': 'تست سایت‌ها',
+  'menu.add': 'افزودن کانفیگ',
+  'home.testing': 'در حال پیدا کردن سریع‌ترین سرور…',
+  'home.cancel': 'برای لغو بزنید',
+  'home.mini': 'پنجره کوچک',
   'err.core_restarted':
       'هسته کرش کرد و دوباره راه‌اندازی شد. برای اتصال دوباره بزنید؛ گزارش کرش در «Copy diagnostics» هست.',
   'ovpn.creds.title': 'ورود OpenVPN',

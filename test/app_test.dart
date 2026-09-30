@@ -248,7 +248,11 @@ void main() {
       },
     );
     final app = await pumpApp(tester, transport: t);
+    // Mobile layout: Routing lives under Tools.
+    await tester.tap(find.text('Tools').last);
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Routing').last);
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Global proxy'));
     await tester.pump(const Duration(milliseconds: 400));

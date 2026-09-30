@@ -57,6 +57,7 @@ class SubscriptionPage extends ConsumerWidget {
               ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => showAddSheet(context, ref),
         icon: const Icon(Icons.add),
         label: Text(s.t('subs.add')),

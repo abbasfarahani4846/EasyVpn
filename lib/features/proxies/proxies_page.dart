@@ -261,6 +261,7 @@ class _ProxiesPageState extends ConsumerState<ProxiesPage> {
           ],
         ],
         child: FloatingActionButton.extended(
+          heroTag: null,
           onPressed: null,
           icon: ping.running
               ? const SizedBox(

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../l10n/strings.dart';
 import '../../theme/brand.dart';
+import '../add/add_sheet.dart';
 import '../chain/chain_page.dart';
+import '../tools/site_check_page.dart';
 import '../logs/logs_page.dart';
 import '../proxies/proxies_page.dart';
 import '../routing/routing_page.dart';
@@ -14,6 +16,8 @@ import '../subscription/subscription_page.dart';
 import '../windscribe/windscribe_page.dart';
 
 enum MenuTarget {
+  add,
+  sites,
   servers,
   proxies,
   routing,
@@ -25,6 +29,8 @@ enum MenuTarget {
 }
 
 Widget _pageFor(MenuTarget t) => switch (t) {
+  MenuTarget.add => const SizedBox.shrink(), // a sheet, see openMenuPage
+  MenuTarget.sites => const SiteCheckPage(),
   MenuTarget.servers => const SubscriptionPage(),
   MenuTarget.proxies => const ProxiesPage(),
   MenuTarget.routing => const RoutingPage(),
@@ -37,6 +43,10 @@ Widget _pageFor(MenuTarget t) => switch (t) {
 
 /// Opens an advanced page on top of the simple home.
 void openMenuPage(BuildContext context, MenuTarget t) {
+  if (t == MenuTarget.add) {
+    showAddConfigSheet(context);
+    return;
+  }
   Navigator.of(context).push(MaterialPageRoute(builder: (_) => _pageFor(t)));
 }
 
@@ -57,6 +67,8 @@ class _MenuSheet extends ConsumerWidget {
   const _MenuSheet();
 
   static const _items = <(MenuTarget, IconData, String)>[
+    (MenuTarget.add, Icons.add_circle_rounded, 'menu.add'),
+    (MenuTarget.sites, Icons.travel_explore_rounded, 'menu.sites'),
     (MenuTarget.servers, Icons.cloud_download_rounded, 'menu.servers'),
     (MenuTarget.proxies, Icons.dns_rounded, 'menu.proxies'),
     (MenuTarget.chain, Icons.link_rounded, 'menu.chain'),

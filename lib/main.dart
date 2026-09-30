@@ -20,6 +20,7 @@ Future<void> main(List<String> args) async {
   if (isDesktopPlatform) {
     await initDesktopWindow(
       startMinimized: startMinimized || env.initialSettings.startMinimized,
+      profile: WindowProfile.of(env.initialSettings),
     );
   }
 

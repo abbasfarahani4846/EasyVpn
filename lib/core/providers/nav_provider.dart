@@ -15,4 +15,5 @@ class Dest {
   static const profiles = 2;
   static const routing = 3;
   static const settings = 4;
+  static const tools = 5;
 }

@@ -11,3 +11,8 @@ GNU General Public License v3.0 (see LICENSE). It embeds:
 
 Rule lists downloaded at runtime come from community projects:
 Chocolate4U/Iran-sing-box-rules, MetaCubeX/meta-rules-dat and others (each under its own license).
+
+Twemoji Country Flags font (assets/fonts/TwemojiCountryFlags.ttf)
+  Code: MIT, Copyright (c) 2022 TalkJS (country-flag-emoji-polyfill)
+  Art: Twemoji, Copyright Twitter, Inc and other contributors, CC-BY-4.0
+  https://github.com/talkjs/country-flag-emoji-polyfill  https://github.com/twitter/twemoji

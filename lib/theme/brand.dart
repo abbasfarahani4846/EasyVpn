@@ -59,26 +59,212 @@ class Brand {
   );
 
   /// Theme used inside the simple experience (always dark, brand colors).
-  static ThemeData theme(ThemeData base) => base.copyWith(
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: night,
-    colorScheme: base.colorScheme.copyWith(
+  static ThemeData theme(ThemeData base) => glassTheme(base);
+
+  /// The app-wide "liquid glass" theme: night background (painted once by
+  /// [GlassBackground]), translucent surfaces with hairline borders, large
+  /// radii, teal accent. Used for every page in simple AND advanced layout.
+  static ThemeData glassTheme(ThemeData base) {
+    final scheme = base.colorScheme.copyWith(
       brightness: Brightness.dark,
       primary: on,
+      onPrimary: night,
       secondary: on2,
+      onSecondary: night,
       surface: night2,
       onSurface: text,
+      onSurfaceVariant: textDim,
+      surfaceContainerLowest: const Color(0xFF0B1020),
+      surfaceContainerLow: const Color(0xFF111831),
+      surfaceContainer: const Color(0xFF141C38),
+      surfaceContainerHigh: const Color(0xFF18213F),
+      surfaceContainerHighest: const Color(0xFF1C2647),
+      outline: const Color(0x40F4F7FF),
+      outlineVariant: panelBorder,
       error: bad,
+      primaryContainer: on.withValues(alpha: 0.18),
+      onPrimaryContainer: text,
+      secondaryContainer: on2.withValues(alpha: 0.18),
+      onSecondaryContainer: text,
+      errorContainer: bad.withValues(alpha: 0.18),
+      onErrorContainer: text,
+    );
+    final r16 = BorderRadius.circular(16);
+    final r22 = BorderRadius.circular(22);
+    return base.copyWith(
+      brightness: Brightness.dark,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: Colors.transparent,
+      canvasColor: night2,
+      textTheme: base.textTheme.apply(bodyColor: text, displayColor: text),
+      iconTheme: const IconThemeData(color: text),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: text,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: text,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: panel,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: r22,
+          side: const BorderSide(color: panelBorder),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: textDim,
+        textColor: text,
+        selectedColor: on,
+      ),
+      dividerTheme: const DividerThemeData(color: panelBorder, space: 1),
+      dialogTheme: DialogThemeData(
+        backgroundColor: night2,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: r22,
+          side: const BorderSide(color: panelBorder),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: night2,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: textDim,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: night2,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: r16,
+          side: const BorderSide(color: panelBorder),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: panel,
+        border: OutlineInputBorder(
+          borderRadius: r16,
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: r16,
+          borderSide: const BorderSide(color: panelBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: r16,
+          borderSide: const BorderSide(color: on),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: on,
+          foregroundColor: night,
+          shape: RoundedRectangleBorder(borderRadius: r16),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: text,
+          side: const BorderSide(color: panelBorder),
+          shape: RoundedRectangleBorder(borderRadius: r16),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: night2.withValues(alpha: 0.92),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: on.withValues(alpha: 0.18),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (s) => IconThemeData(
+            color: s.contains(WidgetState.selected) ? on : textDim,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (s) => TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: s.contains(WidgetState.selected) ? text : textDim,
+          ),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: Colors.transparent,
+        indicatorColor: on.withValues(alpha: 0.18),
+        selectedIconTheme: const IconThemeData(color: on),
+        unselectedIconTheme: const IconThemeData(color: textDim),
+        selectedLabelTextStyle: const TextStyle(
+          color: text,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+        unselectedLabelTextStyle: const TextStyle(color: textDim, fontSize: 12),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? night : textDim,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? on : panel,
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected)
+                ? on.withValues(alpha: 0.2)
+                : Colors.transparent,
+          ),
+          foregroundColor: const WidgetStatePropertyAll(text),
+          side: const WidgetStatePropertyAll(BorderSide(color: panelBorder)),
+        ),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        backgroundColor: panel,
+        selectedColor: on.withValues(alpha: 0.22),
+        checkmarkColor: on,
+        labelStyle: const TextStyle(color: text),
+        side: const BorderSide(color: panelBorder),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF1C2647),
+        contentTextStyle: const TextStyle(color: text),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: r16),
+      ),
+    );
+  }
+}
+
+/// Paints the brand night background behind every route, once, so glass
+/// surfaces (translucent cards, bars) look the same on every page.
+class GlassBackground extends StatelessWidget {
+  const GlassBackground({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF0C1330), Brand.night, Color(0xFF071A1F)],
+        stops: [0, 0.55, 1],
+      ),
     ),
-    textTheme: base.textTheme.apply(bodyColor: text, displayColor: text),
-    iconTheme: const IconThemeData(color: text),
-    chipTheme: base.chipTheme.copyWith(
-      backgroundColor: panel,
-      selectedColor: on.withValues(alpha: 0.22),
-      checkmarkColor: on,
-      labelStyle: const TextStyle(color: text),
-      side: const BorderSide(color: panelBorder),
-    ),
+    child: child,
   );
 }
 

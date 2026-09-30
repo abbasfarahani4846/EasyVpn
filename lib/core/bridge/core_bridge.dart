@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import '../models/models.dart';
 import 'core_transport.dart';
@@ -69,6 +70,21 @@ class CoreBridge {
   }
 
   Future<void> stop() => _t.call('Stop');
+
+  /// Decodes a QR code from an image (file path or raw bytes).
+  Future<String> decodeQr({String path = '', List<int>? bytes}) async {
+    final r = await _t.call('DecodeQR', {
+      'path': path,
+      if (bytes != null) 'data': base64Encode(bytes),
+    });
+    return (r['text'] as String?) ?? '';
+  }
+
+  /// Probes IP/region-sensitive sites through the running tunnel.
+  Future<List<Map<String, dynamic>>> siteCheck() async {
+    final r = await _t.call('SiteCheck', {});
+    return ((r['results'] as List?) ?? const []).cast<Map<String, dynamic>>();
+  }
 
   /// Registers a free WARP device; returns {node, account}.
   Future<Map<String, dynamic>> warpRegister({

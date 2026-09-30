@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../util/display_text.dart';
+
 /// Connection mode chosen by the user (FlClash-style).
 enum ConnMode {
   tun('tun'),
@@ -125,7 +127,7 @@ class NodeRow {
   factory NodeRow.fromMap(Map<String, Object?> m) => NodeRow(
     id: m['id'] as String,
     profileId: m['profile_id'] as String,
-    name: m['name'] as String,
+    name: plainName(m['name'] as String),
     protocol: m['protocol'] as String,
     server: m['server'] as String,
     port: m['port'] as int,
@@ -497,6 +499,7 @@ class AppSettings {
     this.testUrl = 'https://www.gstatic.com/generate_204',
     this.ipCheckUrl = '',
     this.uiMode = 'simple',
+    this.miniWindow = false,
     this.updateChannel = '',
     this.autoUpdateCheck = true,
     this.chainNodeIds = const [],
@@ -530,6 +533,9 @@ class AppSettings {
 
   /// 'simple' (one-button home, default) or 'advanced' (tabs).
   final String uiMode;
+
+  /// Desktop: Windscribe-style small fixed window (simple layout only).
+  final bool miniWindow;
 
   /// '' = the channel this build came from; 'stable' | 'nightly'.
   final String updateChannel;
@@ -567,6 +573,7 @@ class AppSettings {
     String? testUrl,
     String? ipCheckUrl,
     String? uiMode,
+    bool? miniWindow,
     String? updateChannel,
     bool? autoUpdateCheck,
     List<String>? chainNodeIds,
@@ -596,6 +603,7 @@ class AppSettings {
     testUrl: testUrl ?? this.testUrl,
     ipCheckUrl: ipCheckUrl ?? this.ipCheckUrl,
     uiMode: uiMode ?? this.uiMode,
+    miniWindow: miniWindow ?? this.miniWindow,
     updateChannel: updateChannel ?? this.updateChannel,
     autoUpdateCheck: autoUpdateCheck ?? this.autoUpdateCheck,
     chainNodeIds: chainNodeIds ?? this.chainNodeIds,
@@ -633,6 +641,7 @@ class AppSettings {
     'testUrl': testUrl,
     'ipCheckUrl': ipCheckUrl,
     'uiMode': uiMode,
+    'miniWindow': miniWindow,
     'updateChannel': updateChannel,
     'autoUpdateCheck': autoUpdateCheck,
     'chainNodeIds': chainNodeIds,
@@ -671,6 +680,7 @@ class AppSettings {
       testUrl: (j['testUrl'] as String?) ?? d.testUrl,
       ipCheckUrl: (j['ipCheckUrl'] as String?) ?? d.ipCheckUrl,
       uiMode: (j['uiMode'] as String?) ?? d.uiMode,
+      miniWindow: (j['miniWindow'] as bool?) ?? d.miniWindow,
       updateChannel: (j['updateChannel'] as String?) ?? d.updateChannel,
       autoUpdateCheck: (j['autoUpdateCheck'] as bool?) ?? d.autoUpdateCheck,
       chainNodeIds:

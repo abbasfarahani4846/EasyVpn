@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -15,15 +15,60 @@ import '../l10n/strings.dart';
 bool get isDesktopPlatform =>
     Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
+/// Desktop window geometry per layout. Sizes are bounded so the UI keeps a
+/// fixed, predictable arrangement instead of stretching across the screen.
+class WindowProfile {
+  const WindowProfile(this.size, this.min, this.max);
+  final Size size;
+  final Size min;
+  final Size max;
+
+  static const simple = WindowProfile(
+    Size(400, 740),
+    Size(360, 620),
+    Size(520, 900),
+  );
+  static const mini = WindowProfile(
+    Size(320, 440),
+    Size(320, 440),
+    Size(320, 440),
+  );
+  static const advanced = WindowProfile(
+    Size(1060, 720),
+    Size(820, 600),
+    Size(1440, 960),
+  );
+
+  static WindowProfile of(AppSettings s) =>
+      s.uiMode == 'advanced' ? advanced : (s.miniWindow ? mini : simple);
+}
+
+Future<void> applyWindowProfile(WindowProfile p) async {
+  // Order matters: relax bounds first so the new size is accepted.
+  await windowManager.setMinimumSize(const Size(200, 200));
+  await windowManager.setMaximumSize(const Size(8000, 8000));
+  await windowManager.setSize(p.size);
+  await windowManager.setMinimumSize(p.min);
+  await windowManager.setMaximumSize(p.max);
+  // Note: no setResizable(false): on Linux/GTK it snaps the window to its
+  // default size. min == max already makes the mini window fixed.
+  await windowManager.setSize(p.size);
+}
+
 /// Call once before `runApp` on desktop.
-Future<void> initDesktopWindow({required bool startMinimized}) async {
+Future<void> initDesktopWindow({
+  required bool startMinimized,
+  WindowProfile profile = WindowProfile.simple,
+}) async {
   await windowManager.ensureInitialized();
-  const opts = WindowOptions(
-    size: Size(1100, 760),
-    minimumSize: Size(420, 640),
+  final opts = WindowOptions(
+    size: profile.size,
+    minimumSize: profile.min,
+    maximumSize: profile.max,
     center: true,
     title: 'EasyVPN',
     titleBarStyle: TitleBarStyle.normal,
+    backgroundColor: const Color(0xFF070B16),
   );
   await windowManager.waitUntilReadyToShow(opts, () async {
     if (!startMinimized) {
@@ -166,6 +211,11 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
   Widget build(BuildContext context) {
     // Keep the tray menu label in sync with the connection state.
     ref.listen<CoreState>(coreControllerProvider, (_, _) => _rebuildMenu());
+    // Resize the window when the layout changes (simple / mini / advanced).
+    ref.listen<WindowProfile>(
+      settingsProvider.select(WindowProfile.of),
+      (_, p) => applyWindowProfile(p).catchError((_) {}),
+    );
     return widget.child;
   }
 }

@@ -35,6 +35,8 @@ class AppTheme {
         : VisualDensity.standard;
     return ThemeData(
       useMaterial3: true,
+      // Flags in node names: Windows has no flag emoji glyphs.
+      fontFamilyFallback: const ['FlagEmoji'],
       colorScheme: scheme,
       brightness: brightness,
       visualDensity: density,

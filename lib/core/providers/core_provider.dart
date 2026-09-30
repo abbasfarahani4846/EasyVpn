@@ -7,6 +7,7 @@ import '../bridge/core_bridge.dart';
 import '../models/models.dart';
 import '../util/platform_service.dart';
 import 'env.dart';
+import 'ping_provider.dart';
 import 'settings_provider.dart';
 
 /// Result of the last failed connect, used by the UI to offer fixes.
@@ -182,6 +183,12 @@ class CoreController extends Notifier<CoreState> {
       lastFailure = null;
     } on CoreException catch (e) {
       if (rev != _revision) return;
+      if (e.message == 'cancelled') {
+        // The user pressed the button again while connecting.
+        lastFailure = null;
+        state = CoreState(status: CoreStatus.disconnected, mode: settings.mode);
+        return;
+      }
       lastFailure = ConnectFailure(e.message, capability: e.capability);
       state = CoreState(
         status: CoreStatus.error,
@@ -202,6 +209,12 @@ class CoreController extends Notifier<CoreState> {
   Future<void> disconnect() async {
     if (state.status == CoreStatus.unavailable) return;
     _revision++;
+    if (state.detail == 'home.testing') {
+      // Cancel "Fastest" while it is still testing (nothing started yet).
+      await ref.read(pingProvider.notifier).cancel();
+      state = state.copyWith(status: CoreStatus.disconnected, detail: '');
+      return;
+    }
     state = state.copyWith(status: CoreStatus.disconnecting);
     try {
       await ref.read(envProvider).core.stop();
@@ -260,8 +273,25 @@ class CoreController extends Notifier<CoreState> {
   /// Connects to the lowest-latency node of the active profile (shortcut,
   /// widget, tray "Fastest").
   Future<void> connectFastest() async {
+    if (state.status == CoreStatus.unavailable || state.isBusy) return;
     final env = ref.read(envProvider);
     final s = ref.read(settingsProvider);
+    final rev = ++_revision;
+    // Real (through-proxy) test of the active profile first, like the
+    // "Fastest" button in commercial apps; TCP ping alone proves nothing.
+    if (!state.isConnected) {
+      state = state.copyWith(
+        status: CoreStatus.connecting,
+        detail: 'home.testing',
+      );
+      try {
+        await ref
+            .read(pingProvider.notifier)
+            .run(profileId: s.activeProfileId, mode: 'url');
+      } catch (_) {}
+      if (rev != _revision) return; // cancelled while testing
+      state = state.copyWith(status: CoreStatus.disconnected, detail: '');
+    }
     final ids = await env.repo.topNodeIds(
       profileId: s.activeProfileId,
       limit: 1,

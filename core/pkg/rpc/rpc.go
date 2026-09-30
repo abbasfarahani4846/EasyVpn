@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"easyvpn/core/pkg/adapter"
@@ -18,6 +19,7 @@ import (
 	"easyvpn/core/pkg/geoip"
 	"easyvpn/core/pkg/pinger"
 	"easyvpn/core/pkg/protocol"
+	"easyvpn/core/pkg/qr"
 	"easyvpn/core/pkg/router"
 	"easyvpn/core/pkg/rulesync"
 	"easyvpn/core/pkg/transport"
@@ -79,6 +81,27 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 	switch method {
 	case "Init", "Info":
 		return e.Info(), nil
+	case "DecodeQR":
+		a, err := decode[struct {
+			Path string `json:"path"`
+			Data string `json:"data"` // base64 image bytes
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		var img []byte
+		if a.Path != "" {
+			if img, err = os.ReadFile(a.Path); err != nil {
+				return nil, err
+			}
+		} else if img, err = base64.StdEncoding.DecodeString(a.Data); err != nil {
+			return nil, fmt.Errorf("bad image data: %w", err)
+		}
+		text, err := qr.Decode(img)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"text": text}, nil
 	case "SiteCheck":
 		a, err := decode[struct {
 			Sites []engine.Site `json:"sites"`

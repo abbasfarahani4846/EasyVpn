@@ -48,3 +48,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+  fonts:
+    # Twemoji country flags (MIT code / CC-BY-4.0 art, see NOTICE): Windows and
+    # some Linux desktops have no flag emoji, so flags rendered as letters.
+    - family: FlagEmoji
+      fonts:
+        - asset: assets/fonts/TwemojiCountryFlags.ttf

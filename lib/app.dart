@@ -11,6 +11,7 @@ import 'core/providers/nav_provider.dart';
 import 'core/providers/profiles_provider.dart';
 import 'core/providers/settings_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'theme/brand.dart';
 import 'core/update/update_service.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/home/simple_home.dart';
@@ -20,6 +21,7 @@ import 'features/proxies/proxies_page.dart';
 import 'features/routing/routing_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/subscription/subscription_page.dart';
+import 'features/tools/tools_page.dart';
 import 'l10n/strings.dart';
 import 'platform/desktop_shell.dart';
 
@@ -50,9 +52,11 @@ class EasyVpnApp extends ConsumerWidget {
         navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         title: 'EasyVPN',
-        theme: AppTheme.build(a, Brightness.light, dynamicScheme: light),
-        darkTheme: AppTheme.build(a, Brightness.dark, dynamicScheme: dark),
-        themeMode: AppTheme.mode(a.themeMode),
+        // One consistent "liquid glass" look on every page and platform;
+        // AppTheme still supplies the user's font scale / radius / density.
+        theme: Brand.glassTheme(AppTheme.build(a, Brightness.dark)),
+        darkTheme: Brand.glassTheme(AppTheme.build(a, Brightness.dark)),
+        themeMode: ThemeMode.dark,
         locale: locale,
         supportedLocales: S.supported,
         localizationsDelegates: const [
@@ -74,7 +78,7 @@ class EasyVpnApp extends ConsumerWidget {
                 mq.textScaler.scale(1) * a.fontScale,
               ),
             ),
-            child: child ?? const SizedBox.shrink(),
+            child: GlassBackground(child: child ?? const SizedBox.shrink()),
           );
         },
         routes: {'/logs': (_) => const LogsPage()},
@@ -232,100 +236,239 @@ class _RootState extends ConsumerState<_Root> {
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
+  // Page index == navProvider value (Dest.*); order of the sidebar/bottom
+  // bar is defined separately below.
   static const _pages = <Widget>[
     DashboardPage(),
     ProxiesPage(),
     SubscriptionPage(),
     RoutingPage(),
     SettingsPage(),
+    ToolsPage(),
   ];
-  static const _icons = [
-    Icons.home_outlined,
-    Icons.dns_outlined,
-    Icons.cloud_outlined,
-    Icons.alt_route,
-    Icons.settings_outlined,
+
+  static const _desktop = <(int, IconData, IconData, String)>[
+    (Dest.dashboard, Icons.home_outlined, Icons.home_rounded, 'nav.dashboard'),
+    (Dest.proxies, Icons.dns_outlined, Icons.dns_rounded, 'nav.proxies'),
+    (
+      Dest.profiles,
+      Icons.cloud_outlined,
+      Icons.cloud_rounded,
+      'nav.subscriptions',
+    ),
+    (
+      Dest.routing,
+      Icons.alt_route_outlined,
+      Icons.alt_route_rounded,
+      'nav.routing',
+    ),
+    (Dest.tools, Icons.handyman_outlined, Icons.handyman_rounded, 'nav.tools'),
+    (
+      Dest.settings,
+      Icons.settings_outlined,
+      Icons.settings_rounded,
+      'nav.settings',
+    ),
   ];
-  static const _selIcons = [
-    Icons.home,
-    Icons.dns,
-    Icons.cloud,
-    Icons.alt_route,
-    Icons.settings,
-  ];
-  static const _keys = [
-    'nav.dashboard',
-    'nav.proxies',
-    'nav.subscriptions',
-    'nav.routing',
-    'nav.settings',
+
+  // Mobile keeps five tabs; Routing lives under Tools there.
+  static const _mobile = <(int, IconData, IconData, String)>[
+    (Dest.dashboard, Icons.home_outlined, Icons.home_rounded, 'nav.dashboard'),
+    (Dest.proxies, Icons.dns_outlined, Icons.dns_rounded, 'nav.proxies'),
+    (
+      Dest.profiles,
+      Icons.cloud_outlined,
+      Icons.cloud_rounded,
+      'nav.subscriptions',
+    ),
+    (Dest.tools, Icons.handyman_outlined, Icons.handyman_rounded, 'nav.tools'),
+    (
+      Dest.settings,
+      Icons.settings_outlined,
+      Icons.settings_rounded,
+      'nav.settings',
+    ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(navProvider);
-    final style = ref.watch(
-      settingsProvider.select((s) => s.appearance.navStyle),
-    );
     final s = context.s;
-    final core = ref.watch(coreControllerProvider);
-
     return LayoutBuilder(
       builder: (context, c) {
-        final rail = style == 'rail' || (style == 'auto' && c.maxWidth >= 800);
+        final wide = c.maxWidth >= 760;
         final body = IndexedStack(index: index, children: _pages);
-        final connectedDot = core.status == CoreStatus.connected;
-
-        if (rail) {
+        if (wide) {
           return Scaffold(
             body: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: index,
-                  onDestinationSelected: ref.read(navProvider.notifier).go,
-                  labelType: c.maxWidth >= 1000
-                      ? NavigationRailLabelType.all
-                      : NavigationRailLabelType.selected,
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Icon(
-                      Icons.shield_moon,
-                      color: connectedDot
-                          ? const Color(0xFF22C55E)
-                          : Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                  destinations: [
-                    for (var i = 0; i < 5; i++)
-                      NavigationRailDestination(
-                        icon: Icon(_icons[i]),
-                        selectedIcon: Icon(_selIcons[i]),
-                        label: Text(s.t(_keys[i])),
-                      ),
-                  ],
-                ),
-                const VerticalDivider(width: 1),
+                _Sidebar(items: _desktop, index: index),
                 Expanded(child: body),
               ],
             ),
           );
         }
+        final items = _mobile;
+        final sel = items.indexWhere((e) => e.$1 == index);
         return Scaffold(
           body: body,
           bottomNavigationBar: NavigationBar(
-            selectedIndex: index,
-            onDestinationSelected: ref.read(navProvider.notifier).go,
+            height: 66,
+            selectedIndex: sel < 0 ? 0 : sel,
+            onDestinationSelected: (i) =>
+                ref.read(navProvider.notifier).go(items[i].$1),
             destinations: [
-              for (var i = 0; i < 5; i++)
+              for (final (_, icon, selIcon, key) in items)
                 NavigationDestination(
-                  icon: Icon(_icons[i]),
-                  selectedIcon: Icon(_selIcons[i]),
-                  label: s.t(_keys[i]),
+                  icon: Icon(icon),
+                  selectedIcon: Icon(selIcon),
+                  label: s.t(key),
                 ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// Desktop sidebar: brand, sections, and a live connection card with a
+/// one-click connect/cancel/disconnect button (Hiddify / Karing style).
+class _Sidebar extends ConsumerWidget {
+  const _Sidebar({required this.items, required this.index});
+  final List<(int, IconData, IconData, String)> items;
+  final int index;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.s;
+    final core = ref.watch(coreControllerProvider);
+    final c = Brand.forStatus(core.status);
+    return Container(
+      width: 232,
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+      decoration: Brand.glass(radius: 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  gradient: Brand.orbGradient(
+                    core.isConnected
+                        ? CoreStatus.connected
+                        : CoreStatus.disconnected,
+                  ),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(Icons.shield_rounded, size: 19),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'EasyVPN',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          for (final (dest, icon, selIcon, key) in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Material(
+                color: dest == index
+                    ? Brand.on.withValues(alpha: 0.14)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => ref.read(navProvider.notifier).go(dest),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          dest == index ? selIcon : icon,
+                          size: 21,
+                          color: dest == index ? Brand.on : Brand.textDim,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          s.t(key),
+                          style: TextStyle(
+                            fontWeight: dest == index
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: dest == index ? Brand.text : Brand.textDim,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: c.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: c.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  core.isConnected
+                      ? Icons.lock_rounded
+                      : Icons.lock_open_rounded,
+                  color: c,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    core.isConnected
+                        ? s.t('home.protected')
+                        : (core.status == CoreStatus.connecting
+                              ? s.t('home.connecting')
+                              : s.t('home.unprotected')),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton.filled(
+                  style: IconButton.styleFrom(
+                    backgroundColor: c.withValues(alpha: 0.25),
+                    foregroundColor: Brand.text,
+                  ),
+                  iconSize: 20,
+                  onPressed: core.status == CoreStatus.unavailable
+                      ? null
+                      : () =>
+                            ref.read(coreControllerProvider.notifier).toggle(),
+                  icon: const Icon(Icons.power_settings_new_rounded),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            icon: const Icon(Icons.radio_button_checked, size: 18),
+            label: Text(s.t('home.simple')),
+            onPressed: () => ref
+                .read(settingsProvider.notifier)
+                .update((x) => x.copyWith(uiMode: 'simple')),
+          ),
+        ],
+      ),
     );
   }
 }
