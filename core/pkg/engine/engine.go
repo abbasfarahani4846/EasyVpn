@@ -276,7 +276,33 @@ func (e *Engine) Start(p StartParams) error {
 	e.localPort = port
 	e.mu.Unlock()
 	e.setState(StateConnected, "")
+	if mode.NeedsTUN() {
+		go e.selfCheck(p.TestURL)
+	}
 	return nil
+}
+
+// selfCheck fetches the test URL through the fresh tunnel and writes the verdict
+// to the log, so "Copy diagnostics" tells whether the node or the tunnel is at fault.
+func (e *Engine) selfCheck(url string) {
+	if url == "" {
+		url = "https://www.gstatic.com/generate_204"
+	}
+	pub := func(level, msg string) {
+		e.bus.Publish(transport.KindPriority, "log", map[string]string{"level": level, "msg": msg})
+	}
+	var err error
+	for i := 0; i < 3; i++ {
+		time.Sleep(time.Duration(1+i) * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
+		_, err = e.core.HTTPGet(ctx, url)
+		cancel()
+		if err == nil {
+			pub("info", "tunnel self-check ok: "+url)
+			return
+		}
+	}
+	pub("error", "tunnel self-check FAILED for "+url+": "+err.Error())
 }
 
 // StartWithNode is the legacy convenience wrapper (proxy_only / tun).

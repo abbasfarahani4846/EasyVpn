@@ -9,6 +9,8 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 
@@ -31,17 +33,34 @@ class EasyVpnService : VpnService() {
         @Volatile var active: Boolean = false
             private set
 
-        /** Establishes the interface and returns the raw fd (or -1). Runs on the UI thread. */
-        fun establishFromActivity(ctx: Context, mtu: Int, ipv6: Boolean, include: List<String>, exclude: List<String>): Int {
-            // Start the service first so a foreground notification exists; then establish.
-            val intent = Intent(ctx, EasyVpnService::class.java)
-            ctx.startService(intent)
-            var svc = instance
-            var waited = 0
-            while (svc == null && waited < 2000) {
-                Thread.sleep(25); waited += 25; svc = instance
+        /**
+         * Establishes the interface and reports the raw fd (or a negative code) through
+         * [done]. Must NOT block the main thread: Service.onCreate() runs on it, so a
+         * sleep-and-wait here would always time out on the first start.
+         */
+        fun establishFromActivity(
+            ctx: Context, mtu: Int, ipv6: Boolean, include: List<String>, exclude: List<String>,
+            done: (fd: Int, error: String?) -> Unit,
+        ) {
+            val handler = Handler(Looper.getMainLooper())
+            fun attempt(svc: EasyVpnService) {
+                val fd = runCatching { svc.establish(mtu, ipv6, include, exclude) }.getOrDefault(-1)
+                if (fd > 0) done(fd, null) else done(-1, "establish_null")
             }
-            return svc?.establish(mtu, ipv6, include, exclude) ?: -1
+            instance?.let { attempt(it); return }
+            ctx.startService(Intent(ctx, EasyVpnService::class.java))
+            var waited = 0
+            val poll = object : Runnable {
+                override fun run() {
+                    val svc = instance
+                    when {
+                        svc != null -> attempt(svc)
+                        waited >= 5000 -> done(-1, "no_service")
+                        else -> { waited += 50; handler.postDelayed(this, 50) }
+                    }
+                }
+            }
+            handler.post(poll)
         }
 
         fun stopFromActivity(ctx: Context) {
@@ -71,7 +90,7 @@ class EasyVpnService : VpnService() {
         teardown()
         val b = Builder()
             .setSession("EasyVPN")
-            .setMtu(mtu)
+            .setMtu(if (mtu in 576..1500) mtu else 1500)
             .addAddress("172.19.0.1", 30)
             .addRoute("0.0.0.0", 0)
             .addDnsServer("172.19.0.2")

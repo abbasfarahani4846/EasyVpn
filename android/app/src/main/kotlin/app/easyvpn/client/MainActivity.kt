@@ -52,12 +52,13 @@ class MainActivity : FlutterActivity() {
                 "timezone" -> result.success(TimeZone.getDefault().id)
                 "prepareVpn" -> prepareVpn(result)
                 "establishVpn" -> {
-                    val mtu = call.argument<Int>("mtu") ?: 9000
+                    val mtu = call.argument<Int>("mtu") ?: 1500
                     val ipv6 = call.argument<Boolean>("ipv6") ?: false
                     val include = call.argument<List<String>>("include") ?: emptyList()
                     val exclude = call.argument<List<String>>("exclude") ?: emptyList()
-                    val fd = EasyVpnService.establishFromActivity(this, mtu, ipv6, include, exclude)
-                    if (fd > 0) result.success(fd) else result.error("vpn", "VpnService.establish() failed", null)
+                    EasyVpnService.establishFromActivity(this, mtu, ipv6, include, exclude) { fd, err ->
+                        if (fd > 0) result.success(fd) else result.error("vpn", err ?: "establish failed", null)
+                    }
                 }
                 "stopVpn" -> {
                     EasyVpnService.stopFromActivity(this)

@@ -522,6 +522,9 @@ func tunOptions(t TunSettings) *option.TunInboundOptions {
 	if mtu == 0 {
 		mtu = 9000
 	}
+	if t.FD > 0 && (mtu > 1500 || mtu < 576) {
+		mtu = 1500
+	}
 	addrs := badoption.Listable[netip.Prefix]{netip.MustParsePrefix("172.19.0.1/30")}
 	if t.IPv6 {
 		addrs = append(addrs, netip.MustParsePrefix("fdfe:dcba:9876::1/126"))
@@ -531,6 +534,12 @@ func tunOptions(t TunSettings) *option.TunInboundOptions {
 		Address:     addrs,
 		AutoRoute:   t.FD <= 0, // with a host fd the VpnService.Builder owns the routes
 		StrictRoute: t.StrictRoute,
+	}
+	if t.FD > 0 {
+		// Host-owned fd (Android): the app itself is excluded from the VPN, so the
+		// kernel-socket "system" stack cannot see its own replies. gVisor runs
+		// entirely inside the process and needs no routing help from the OS.
+		o.Stack = "gvisor"
 	}
 	o.IncludePackage = t.IncludePackages
 	o.ExcludePackage = t.ExcludePackages

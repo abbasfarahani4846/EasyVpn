@@ -100,8 +100,12 @@ class CoreController extends Notifier<CoreState> {
         // The Android host creates the TUN device and hands its fd to the core.
         if (!await PlatformService.prepareVpn())
           throw CoreException('vpn_permission_denied');
-        final fd = await PlatformService.establishVpn(
-          mtu: settings.tunMtu,
+        // Mobile links carry ~1500-byte packets; larger values only hurt.
+        final mtu = settings.tunMtu > 1500 || settings.tunMtu < 576
+            ? 1500
+            : settings.tunMtu;
+        Future<int?> establish() => PlatformService.establishVpn(
+          mtu: mtu,
           ipv6: settings.tunIpv6,
           include: settings.perAppMode == 'include'
               ? settings.perAppPackages
@@ -110,8 +114,13 @@ class CoreController extends Notifier<CoreState> {
               ? settings.perAppPackages
               : const [],
         );
+        var fd = await establish();
+        if (fd == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+          fd = await establish();
+        }
         if (fd == null) throw CoreException('vpn_establish_failed');
-        tun = {'fd': fd, 'mtu': settings.tunMtu, 'ipv6': settings.tunIpv6};
+        tun = {'fd': fd, 'mtu': mtu, 'ipv6': settings.tunIpv6};
       }
       final useAuth =
           settings.localAuth &&
