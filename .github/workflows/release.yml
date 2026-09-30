@@ -241,6 +241,8 @@ jobs:
   # -------------------------------------------------------------- publish
   publish:
     needs: [version, linux, windows, macos, android, cores]
+    # Publish whatever built successfully: one failing platform must not block the others.
+    if: ${{ !cancelled() && needs.version.result == 'success' }}
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -251,6 +253,14 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/download-artifact@v4
         with: { path: dist, pattern: dist-*, merge-multiple: true }
+      - name: Fail if nothing was built
+        run: test -n "$(ls -A dist 2>/dev/null)" || { echo 'no artifacts'; exit 1; }
+      - name: Note failed platforms
+        run: |
+          {
+            echo "Linux: ${{ needs.linux.result }}, Windows: ${{ needs.windows.result }}, macOS: ${{ needs.macos.result }}, Android: ${{ needs.android.result }}"
+          } > platforms.txt
+          cat platforms.txt
       - name: Checksums
         working-directory: dist
         run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
@@ -261,8 +271,8 @@ jobs:
             gh release delete "$TAG" --cleanup-tag --yes || true
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" --prerelease \
               --title "Nightly ${GITHUB_SHA::7}" \
-              --notes "Automated build of \`${GITHUB_SHA}\`. Unsigned / debug-signed unless signing secrets are configured. Not for production use."
+              --notes "Automated build of \`${GITHUB_SHA}\`. $(cat platforms.txt). Unsigned / debug-signed unless signing secrets are configured."
           else
             gh release delete "$TAG" --yes || true   # re-run of the same version replaces it
-            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "EasyVPN ${TAG}" --generate-notes
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "EasyVPN ${TAG}" --notes "$(cat platforms.txt)" --generate-notes
           fi

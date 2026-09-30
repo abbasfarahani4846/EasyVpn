@@ -1,3 +1,6 @@
+import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -15,9 +18,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
 
     defaultConfig {
         applicationId = "app.easyvpn.client"
@@ -31,7 +31,7 @@ android {
 
     // The Go core is bundled as jniLibs/<abi>/libeasycore.so (build with `make -C core lib-android`).
     // Release signing: create android/key.properties (storeFile, storePassword, keyAlias, keyPassword).
-    val keyProps = java.util.Properties().apply {
+    val keyProps = Properties().apply {
         val f = rootProject.file("key.properties")
         if (f.exists()) load(f.inputStream())
     }
@@ -56,6 +56,12 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 flutter {
