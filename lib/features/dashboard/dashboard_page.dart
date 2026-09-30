@@ -204,7 +204,7 @@ class _ErrorDetail extends ConsumerWidget {
         ? s.t('err.no_node')
         : (failure?.capability != null
               ? s.t('err.needs_core', {'cap': failure!.capability})
-              : detail);
+              : s.t(detail));
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Column(

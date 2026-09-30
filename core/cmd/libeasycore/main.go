@@ -45,6 +45,7 @@ func getServer(cacheDir string) *rpc.Server {
 	coreMu.Lock()
 	defer coreMu.Unlock()
 	if coreEng == nil {
+		engine.InstallCrashLog(cacheDir)
 		coreEng = engine.NewEngine(cacheDir)
 		server = &rpc.Server{Eng: coreEng}
 		go pumpEvents(coreEng)

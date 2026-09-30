@@ -95,6 +95,7 @@ func ParseOVPN(content, name string) (*protocol.ProxyNode, error) {
 		case "auth":
 			c.Auth = arg(0)
 		case "auth-user-pass":
+			c.AuthUserPass = true
 			if len(args) == 0 {
 				warn("auth-user-pass: username/password must be provided by the user")
 			} else {

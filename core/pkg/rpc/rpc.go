@@ -79,6 +79,8 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 	switch method {
 	case "Init", "Info":
 		return e.Info(), nil
+	case "LastCrash":
+		return map[string]any{"text": e.LastCrash()}, nil
 	case "GetState":
 		return map[string]any{"state": e.GetState(), "stats": e.GetStats()}, nil
 

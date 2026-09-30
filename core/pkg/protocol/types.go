@@ -93,6 +93,7 @@ type OpenVPNConfig struct {
 	Network             string       `json:"network,omitempty"`
 	Remotes             []OVPNRemote `json:"remotes,omitempty"`
 	RemoteRandom        bool         `json:"remote_random,omitempty"`
+	AuthUserPass        bool         `json:"auth_user_pass,omitempty"` // profile has auth-user-pass
 	Username            string       `json:"username,omitempty"`
 	Password            string       `json:"password,omitempty"`
 	CA                  string       `json:"ca,omitempty"`   // PEM

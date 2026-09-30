@@ -22,23 +22,21 @@ func openVPNEndpoint(node *protocol.ProxyNode) (*option.Endpoint, error) {
 	if len(c.Remotes) == 0 {
 		return nil, fmt.Errorf("openvpn: profile has no remote")
 	}
+	if c.AuthUserPass && c.Username == "" {
+		// Stable code: the app asks for the credentials and retries.
+		return nil, fmt.Errorf("openvpn_needs_credentials")
+	}
 	o := &option.OpenVPNClientEndpointOptions{
 		Mode:                 orDefaultStr(c.Mode, "tls"),
 		Network:              c.Network,
 		RemoteRandom:         c.RemoteRandom,
-		Username:             c.Username,
-		Password:             c.Password,
 		Topology:             c.Topology,
-		Cipher:               c.Cipher,
-		DataCiphers:          c.DataCiphers,
-		DataCiphersFallback:  c.DataCiphersFallback,
 		Auth:                 c.Auth,
 		Compression:          c.Compression,
 		CompressionLZO:       c.CompressionLZO,
 		RouteNoPull:          c.RouteNoPull,
 		RedirectGateway:      c.RedirectGateway,
 		RedirectGatewayFlags: c.RedirectFlags,
-		KeyDirection:         c.KeyDirection,
 	}
 	if c.MSSFix > 0 {
 		o.MSSFix = uint32(c.MSSFix)
@@ -76,6 +74,10 @@ func openVPNEndpoint(node *protocol.ProxyNode) (*option.Endpoint, error) {
 			return nil, fmt.Errorf("openvpn: static_key mode without key")
 		}
 		o.StaticKey = []string{c.StaticKey}
+		o.Cipher = c.Cipher
+		// key-direction belongs to static-key mode only; for tls-auth it is
+		// carried by tls.control_wrap.direction (sing-box rejects it otherwise).
+		o.KeyDirection = c.KeyDirection
 	} else {
 		tls := &option.OpenVPNOutboundTLSOptions{
 			ServerName:           c.ServerName,
@@ -101,6 +103,20 @@ func openVPNEndpoint(node *protocol.ProxyNode) (*option.Endpoint, error) {
 			return nil, fmt.Errorf("openvpn: profile has no CA certificate")
 		}
 		o.TLS = tls
+		// TLS mode: credentials + negotiated data ciphers. A legacy
+		// `cipher` line becomes the fallback (or joins the list), as in
+		// OpenVPN 2.5+ which ignores `cipher` for negotiation.
+		o.Username, o.Password = c.Username, c.Password
+		o.DataCiphers = c.DataCiphers
+		o.DataCiphersFallback = c.DataCiphersFallback
+		if c.Cipher != "" {
+			if len(o.DataCiphers) == 0 {
+				o.DataCiphers = []string{c.Cipher}
+			}
+			if o.DataCiphersFallback == "" {
+				o.DataCiphersFallback = c.Cipher
+			}
+		}
 	}
 	return &option.Endpoint{Type: C.TypeOpenVPNClient, Tag: "proxy", Options: o}, nil
 }

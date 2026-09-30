@@ -40,6 +40,7 @@ func main() {
 		os.Exit(2)
 	}
 
+	engine.InstallCrashLog(*cacheDir)
 	eng := engine.NewEngine(*cacheDir)
 	srv := &rpc.Server{Eng: eng}
 

@@ -101,3 +101,6 @@ func (e *Engine) UpdateDownload(ctx context.Context, assetURL, name, sha string)
 	})
 	return path, err
 }
+
+// LastCrash returns the panic/fatal output of a previous crashed core run.
+func (e *Engine) LastCrash() string { return LastCrash(e.cacheDir) }

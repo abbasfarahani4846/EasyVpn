@@ -329,6 +329,11 @@ func (a *SingBoxAdapter) UrlTest(ctx context.Context, node *protocol.ProxyNode, 
 }
 
 func (a *SingBoxAdapter) statsLoop(stop chan struct{}) {
+	defer func() { // stats are cosmetic; never crash the core over them
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "stats loop panic:", r)
+		}
+	}()
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
 	var lastUp, lastDown int64
@@ -679,7 +684,7 @@ func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, er
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 { // generate_204 answers 204
 		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, u.Host)
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))

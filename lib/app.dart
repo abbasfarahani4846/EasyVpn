@@ -102,6 +102,7 @@ class _RootState extends ConsumerState<_Root> {
   void initState() {
     super.initState();
     _initLinks();
+    openVpnCredentialPrompt = _askOpenVpnCredentials;
     // Optional auto-connect on launch.
     Future.microtask(() {
       final s = ref.read(settingsProvider);
@@ -119,6 +120,57 @@ class _RootState extends ConsumerState<_Root> {
     } catch (_) {
       // deep links unsupported on this platform build
     }
+  }
+
+  Future<({String user, String pass})?> _askOpenVpnCredentials(
+    String nodeName,
+  ) async {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return null;
+    final s = ctx.s;
+    final u = TextEditingController();
+    final p = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: ctx,
+      builder: (c) => AlertDialog(
+        title: Text(s.t('ovpn.creds.title')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(nodeName, style: Theme.of(c).textTheme.labelLarge),
+            const SizedBox(height: 6),
+            Text(
+              s.t('ovpn.creds.hint'),
+              style: Theme.of(c).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: u,
+              autofocus: true,
+              decoration: InputDecoration(labelText: s.t('ovpn.creds.user')),
+            ),
+            TextField(
+              controller: p,
+              obscureText: true,
+              decoration: InputDecoration(labelText: s.t('ovpn.creds.pass')),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(s.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(s.t('common.ok')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || u.text.trim().isEmpty) return null;
+    return (user: u.text.trim(), pass: p.text);
   }
 
   @override

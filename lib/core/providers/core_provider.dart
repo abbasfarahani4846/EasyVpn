@@ -62,8 +62,28 @@ class CoreController extends Notifier<CoreState> {
         );
       } else if (e.type == 'crash') {
         state = CoreState(status: CoreStatus.error, detail: 'core crashed');
+      } else if (e.type == 'restarted') {
+        // A fresh core is running (OS proxy restored). Reconnect is one tap
+        // away; pull the previous run's crash report into the logs.
+        state = const CoreState(
+          status: CoreStatus.error,
+          detail: 'err.core_restarted',
+        );
+        _pullCrashReport();
       }
     }
+  }
+
+  Future<void> _pullCrashReport() async {
+    try {
+      final r = await ref.read(envProvider).core.raw('LastCrash');
+      final text = (r['text'] as String?) ?? '';
+      if (text.isNotEmpty) {
+        ref
+            .read(logProvider.notifier)
+            .add('error', 'core crash report:\n$text');
+      }
+    } catch (_) {}
   }
 
   /// Connects using the active node from settings (or [nodeId]).
@@ -89,6 +109,7 @@ class CoreController extends Notifier<CoreState> {
     try {
       var node = await env.repo.rawNode(id);
       if (node == null) throw CoreException('node not found');
+      node = await _ensureOpenVpnCredentials(id, node);
       // Chain: hops before the active node; an exit node (e.g. WARP) turns
       // the active node into the last hop.
       final chain = <Map<String, dynamic>>[];
@@ -194,6 +215,37 @@ class CoreController extends Notifier<CoreState> {
       state.isConnected || state.status == CoreStatus.connecting
       ? disconnect()
       : connect();
+
+  /// OpenVPN profiles with `auth-user-pass` need a username/password that the
+  /// .ovpn file does not contain (e.g. Windscribe's Config Generator
+  /// credentials). Ask once and store them with the node (encrypted at rest).
+  Future<Map<String, dynamic>> _ensureOpenVpnCredentials(
+    String id,
+    Map<String, dynamic> node,
+  ) async {
+    final o = (node['openvpn'] as Map?)?.cast<String, dynamic>();
+    if (node['type'] != 'openvpn' ||
+        o == null ||
+        o['auth_user_pass'] != true ||
+        ((o['username'] as String?) ?? '').isNotEmpty) {
+      return node;
+    }
+    final ask = openVpnCredentialPrompt;
+    final creds = ask == null
+        ? null
+        : await ask((node['name'] as String?) ?? '');
+    if (creds == null) throw CoreException('openvpn_needs_credentials');
+    final updated = {
+      ...node,
+      'openvpn': {...o, 'username': creds.user, 'password': creds.pass},
+    };
+    final env = ref.read(envProvider);
+    final row = await env.repo.nodeRow(id);
+    if (row != null) {
+      await env.repo.importNodes(row.profileId, [updated], replace: false);
+    }
+    return updated;
+  }
 
   Future<void> _pushWidget(bool connected) async {
     final env = ref.read(envProvider);
@@ -331,6 +383,7 @@ class LogNotifier extends Notifier<List<LogLine>> {
       }
     });
     // Publish at most 4x per second so a log storm never rebuilds the UI per line.
+    // (see also [add] for app-generated lines)
     _flush = Timer.periodic(const Duration(milliseconds: 250), (_) {
       if (_dirty) {
         _dirty = false;
@@ -346,9 +399,23 @@ class LogNotifier extends Notifier<List<LogLine>> {
   }
 }
 
+extension LogNotifierAdd on LogNotifier {
+  /// Appends an app-side line (e.g. a crash report fetched from the core).
+  void add(String level, String msg) {
+    _ring.add(LogLine(DateTime.now(), level, msg));
+    if (_ring.length > LogNotifier.max) _ring.removeFirst();
+    _dirty = true;
+  }
+}
+
 final logProvider = NotifierProvider<LogNotifier, List<LogLine>>(
   LogNotifier.new,
 );
+
+/// Asks the user for OpenVPN credentials; installed by the app shell (it owns
+/// the navigator). Returns null when cancelled.
+Future<({String user, String pass})?> Function(String nodeName)?
+openVpnCredentialPrompt;
 
 /// Real exit IP / country through the tunnel (refreshed on connect).
 class ExitInfo {

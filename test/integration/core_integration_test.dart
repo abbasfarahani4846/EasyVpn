@@ -189,6 +189,37 @@ void main() {
     timeout: const Timeout(Duration(seconds: 90)),
   );
 
+  test(
+    'process transport restarts a crashed core and keeps working',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('ezcore');
+      final t = await ProcessTransport.open(
+        executable: _proc.absolute.path,
+        cacheDir: dir.path,
+      );
+      try {
+        final events = <String>[];
+        final sub = t.events.listen((b) => events.addAll(b.map((e) => e.type)));
+        final first = t.pid;
+        Process.killPid(first, ProcessSignal.sigkill);
+        final deadline = DateTime.now().add(const Duration(seconds: 15));
+        while (!events.contains('restarted') &&
+            DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+        expect(events, containsAllInOrder(['crash', 'restarted']));
+        expect(t.pid, isNot(first));
+        final info = await CoreBridge(t).info();
+        expect(info, isNotEmpty); // the new core answers
+        await sub.cancel();
+      } finally {
+        await t.dispose();
+      }
+    },
+    skip: skip,
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
+
   test('process transport rejects a wrong token', () async {
     final proc = await Process.start(_proc.absolute.path, [
       '-cache',

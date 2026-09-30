@@ -315,7 +315,7 @@ class _StatusTextState extends ConsumerState<_StatusText> {
       final d = fmtDuration(DateTime.now().difference(_since!));
       sub = ip == null ? d : '$d  ·  ${flagEmoji(ip.countryCode)} ${ip.ip}';
     } else if (core.status == CoreStatus.error) {
-      sub = core.detail == 'no_node' ? s.t('err.no_node') : core.detail;
+      sub = core.detail == 'no_node' ? s.t('err.no_node') : s.t(core.detail);
     } else {
       sub = s.t('home.tap');
     }

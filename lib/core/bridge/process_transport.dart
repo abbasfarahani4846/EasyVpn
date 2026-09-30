@@ -10,13 +10,24 @@ import 'core_transport.dart';
 /// Closing this transport closes the child's stdin, which makes it restore the
 /// OS proxy and exit.
 class ProcessTransport implements CoreTransport {
-  ProcessTransport._(this._proc, this._socket);
+  ProcessTransport._(this._exe, this._cacheDir);
 
-  final Process _proc;
-  final Socket _socket;
+  final String _exe;
+  final String _cacheDir;
+  late Process _proc;
+  late Socket _socket;
   final _events = StreamController<List<CoreEvent>>.broadcast();
   final _pending = <String, Completer<Map<String, dynamic>>>{};
   int _next = 1;
+  bool _disposed = false;
+
+  /// PID of the current core process (tests / diagnostics).
+  int get pid => _proc.pid;
+  int _restarts = 0;
+
+  /// Last lines the core wrote to stderr (Go panics land here); attached to
+  /// the "crash" event so "Copy diagnostics" shows the real cause.
+  final _stderrTail = <String>[];
 
   static Future<ProcessTransport> open({
     required String executable,
@@ -25,8 +36,19 @@ class ProcessTransport implements CoreTransport {
     if (!File(executable).existsSync()) {
       throw CoreUnavailable('core binary not found: $executable');
     }
-    final proc = await Process.start(executable, ['-cache', cacheDir]);
-    proc.stderr.drain<void>(); // sing-box logs come through the event stream
+    final t = ProcessTransport._(executable, cacheDir);
+    await t._spawn();
+    return t;
+  }
+
+  Future<void> _spawn() async {
+    final proc = await Process.start(_exe, ['-cache', _cacheDir]);
+    proc.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen((
+      l,
+    ) {
+      _stderrTail.add(l);
+      if (_stderrTail.length > 120) _stderrTail.removeAt(0);
+    }, onError: (_) {});
     final readyC = Completer<Map<String, dynamic>>();
     // A single listener keeps draining stdout for the process lifetime.
     proc.stdout
@@ -63,13 +85,52 @@ class ProcessTransport implements CoreTransport {
       ready['port'] as int,
     );
     socket.write('${jsonEncode({'auth': ready['token']})}\n');
-    final t = ProcessTransport._(proc, socket);
-    t._listen();
-    return t;
+    _proc = proc;
+    _socket = socket;
+    _listen(socket);
   }
 
-  void _listen() {
-    _socket
+  /// The core died: fail pending calls, report the crash with its stderr
+  /// tail, then start a fresh core so the user can reconnect without
+  /// restarting the app (the new core also restores the OS proxy).
+  Future<void> _onExit() async {
+    for (final c in _pending.values) {
+      c.completeError(CoreUnavailable('core process exited'));
+    }
+    _pending.clear();
+    if (_disposed || _events.isClosed) return;
+    var code = -1;
+    try {
+      code = await _proc.exitCode.timeout(const Duration(seconds: 3));
+    } catch (_) {}
+    final tail = _stderrTail.join('\n');
+    _events.add([
+      CoreEvent('log', {
+        'level': 'error',
+        'msg': 'core process exited (code $code)\n$tail',
+      }),
+      CoreEvent('crash', {
+        'reason': 'core process exited (code $code)',
+        'stderr': tail,
+      }),
+    ]);
+    _stderrTail.clear();
+    if (_restarts >= 5) return; // crash loop: stop respawning
+    _restarts++;
+    for (var attempt = 0; attempt < 3 && !_disposed; attempt++) {
+      try {
+        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
+        await _spawn();
+        if (!_events.isClosed) {
+          _events.add([const CoreEvent('restarted', {})]);
+        }
+        return;
+      } catch (_) {}
+    }
+  }
+
+  void _listen(Socket socket) {
+    socket
         .cast<List<int>>()
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -99,17 +160,8 @@ class ProcessTransport implements CoreTransport {
               );
             }
           },
-          onDone: () {
-            for (final c in _pending.values) {
-              c.completeError(CoreUnavailable('core process exited'));
-            }
-            _pending.clear();
-            if (!_events.isClosed) {
-              _events.add([
-                const CoreEvent('crash', {'reason': 'core process exited'}),
-              ]);
-            }
-          },
+          onError: (_) {},
+          onDone: _onExit,
         );
   }
 
@@ -135,6 +187,7 @@ class ProcessTransport implements CoreTransport {
 
   @override
   Future<void> dispose() async {
+    _disposed = true;
     await _events.close();
     try {
       await _proc.stdin.close(); // triggers restore + exit inside the core

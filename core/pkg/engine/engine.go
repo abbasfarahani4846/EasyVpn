@@ -306,6 +306,11 @@ func (e *Engine) Start(p StartParams) error {
 // selfCheck fetches the test URL through the fresh tunnel and writes the verdict
 // to the log, so "Copy diagnostics" tells whether the node or the tunnel is at fault.
 func (e *Engine) selfCheck(url string) {
+	defer func() { // a diagnostic must never take the core down
+		if r := recover(); r != nil {
+			e.bus.Publish(transport.KindPriority, "log", map[string]string{"level": "error", "msg": fmt.Sprint("self-check panic: ", r)})
+		}
+	}()
 	if url == "" {
 		url = "https://www.gstatic.com/generate_204"
 	}

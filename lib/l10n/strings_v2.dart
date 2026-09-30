@@ -1,6 +1,15 @@
 // Strings for the v2 features (simple home, chains/WARP, Windscribe, updates).
 
 const enV2 = <String, String>{
+  'err.core_restarted':
+      'The core crashed and was restarted. Tap to reconnect; "Copy diagnostics" contains the crash report.',
+  'ovpn.creds.title': 'OpenVPN sign-in',
+  'ovpn.creds.hint':
+      'This profile needs a username and password (auth-user-pass). For Windscribe use the OpenVPN credentials shown in Config Generator, not your account login.',
+  'ovpn.creds.user': 'Username',
+  'ovpn.creds.pass': 'Password',
+  'openvpn_needs_credentials':
+      'This OpenVPN profile needs a username and password.',
   'status.unavailable': 'Core unavailable',
   'home.protected': 'Protected',
   'home.unprotected': 'Not protected',
@@ -87,6 +96,15 @@ const enV2 = <String, String>{
 };
 
 const faV2 = <String, String>{
+  'err.core_restarted':
+      'هسته کرش کرد و دوباره راه‌اندازی شد. برای اتصال دوباره بزنید؛ گزارش کرش در «Copy diagnostics» هست.',
+  'ovpn.creds.title': 'ورود OpenVPN',
+  'ovpn.creds.hint':
+      'این پروفایل نام کاربری و رمز می‌خواهد (auth-user-pass). برای Windscribe از «OpenVPN credentials» در صفحه Config Generator استفاده کنید، نه رمز اکانت.',
+  'ovpn.creds.user': 'نام کاربری',
+  'ovpn.creds.pass': 'رمز عبور',
+  'openvpn_needs_credentials':
+      'این پروفایل OpenVPN نام کاربری و رمز لازم دارد.',
   'status.unavailable': 'هسته در دسترس نیست',
   'home.protected': 'محافظت‌شده',
   'home.unprotected': 'محافظت نشده',
