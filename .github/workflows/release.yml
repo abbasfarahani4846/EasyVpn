@@ -79,6 +79,9 @@ jobs:
           B=build/linux/x64/release/bundle
           mkdir -p dist
           tar -C "$B" -czf "dist/EasyVPN-$L-linux-x64.tar.gz" .
+          echo "Portable mode: data is stored in the data folder next to this file." > "$B/portable"
+          tar -C "$B" -czf "dist/EasyVPN-$L-linux-x64-portable.tar.gz" .
+          rm "$B/portable"
           P=debroot
           mkdir -p $P/opt/easyvpn $P/usr/share/applications $P/DEBIAN $P/usr/bin
           cp -r "$B"/. $P/opt/easyvpn/
@@ -131,7 +134,11 @@ jobs:
           L: ${{ needs.version.outputs.label }}
         run: |
           mkdir dist
-          powershell -NoProfile -Command "Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath dist/EasyVPN-$env:L-windows-x64.zip"
+          R=build/windows/x64/runner/Release
+          # Installer-less zip and an explicit portable build (data stays beside the exe)
+          powershell -NoProfile -Command "Compress-Archive -Path $R/* -DestinationPath dist/EasyVPN-${L}-windows-x64.zip"
+          echo "Portable mode: settings and data are stored in the data folder next to easyvpn.exe." > $R/portable
+          powershell -NoProfile -Command "Compress-Archive -Path $R/* -DestinationPath dist/EasyVPN-${L}-windows-x64-portable.zip"
       - uses: actions/upload-artifact@v4
         with: { name: dist-windows, path: dist/*, if-no-files-found: error }
 
