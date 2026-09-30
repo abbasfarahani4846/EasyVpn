@@ -495,6 +495,7 @@ class AppSettings {
     this.autoLaunch = false,
     this.autoFailover = false,
     this.testUrl = 'https://www.gstatic.com/generate_204',
+    this.ipCheckUrl = '',
     this.activeNodeId,
     this.activeProfileId,
     this.onboarded = false,
@@ -519,6 +520,8 @@ class AppSettings {
   final bool autoLaunch;
   final bool autoFailover;
   final String testUrl;
+  final String
+  ipCheckUrl; // '' = automatic (ipwho.is, ipinfo.io, ip-api.com, ipify)
   final String? activeNodeId;
   final String? activeProfileId;
   final bool onboarded;
@@ -543,6 +546,7 @@ class AppSettings {
     bool? autoLaunch,
     bool? autoFailover,
     String? testUrl,
+    String? ipCheckUrl,
     Object? activeNodeId = _keep,
     Object? activeProfileId = _keep,
     bool? onboarded,
@@ -629,6 +633,7 @@ class AppSettings {
       autoLaunch: (j['autoLaunch'] as bool?) ?? d.autoLaunch,
       autoFailover: (j['autoFailover'] as bool?) ?? d.autoFailover,
       testUrl: (j['testUrl'] as String?) ?? d.testUrl,
+      ipCheckUrl: (j['ipCheckUrl'] as String?) ?? d.ipCheckUrl,
       activeNodeId: j['activeNodeId'] as String?,
       activeProfileId: j['activeProfileId'] as String?,
       onboarded: (j['onboarded'] as bool?) ?? d.onboarded,

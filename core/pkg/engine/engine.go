@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -47,6 +48,7 @@ type StartParams struct {
 	LocalPort  int                   `json:"local_port,omitempty"`
 	AllowLAN   bool                  `json:"allow_lan,omitempty"`
 	Bypass     []string              `json:"bypass,omitempty"` // system-proxy bypass list
+	TestURL    string                `json:"test_url,omitempty"`
 }
 
 // Engine is the single orchestrator instance owned by the C/RPC entry points.
@@ -80,6 +82,7 @@ type Engine struct {
 
 // NewEngine creates the engine and recovers any crash-leftover system proxy.
 func NewEngine(cacheDir string) *Engine {
+	PrepareRuntime(cacheDir)
 	e := &Engine{
 		state:    StateDisconnected,
 		cacheDir: cacheDir,
@@ -232,6 +235,7 @@ func (e *Engine) Start(p StartParams) error {
 		AllowLAN:   p.AllowLAN,
 		CacheDir:   e.cacheDir,
 		LogLevel:   "info",
+		TestURL:    p.TestURL,
 		StatsHook: func(s adapter.Stats) {
 			e.bus.Publish(transport.KindBulk, "stats", s)
 		},
@@ -530,15 +534,85 @@ func (e *Engine) DumpConfig(p StartParams) (string, error) {
 	})
 }
 
-// ExitInfo looks up the real exit IP/country through the running tunnel.
-func (e *Engine) ExitInfo(ctx context.Context) (map[string]any, error) {
-	b, err := e.core.HTTPGet(ctx, "http://ip-api.com/json/?fields=status,country,countryCode,city,query,isp")
-	if err != nil {
-		return nil, err
+// ExitInfo describes the address the internet sees for the tunnel.
+type ExitInfo struct {
+	IP          string `json:"ip"`
+	Country     string `json:"country"`
+	CountryCode string `json:"countryCode"`
+	City        string `json:"city"`
+	ISP         string `json:"isp"`
+	Source      string `json:"source"`
+}
+
+// defaultExitURLs are tried in order when the user did not set a custom URL.
+var defaultExitURLs = []string{
+	"https://ipwho.is/",
+	"https://ipinfo.io/json",
+	"http://ip-api.com/json/?fields=status,country,countryCode,city,query,isp",
+	"https://api.ipify.org?format=json",
+}
+
+// LookupExit queries the user's URL first, then the defaults, through the running
+// tunnel and normalizes the JSON of the well-known providers.
+func (e *Engine) LookupExit(ctx context.Context, custom string) (*ExitInfo, error) {
+	urls := defaultExitURLs
+	if strings.TrimSpace(custom) != "" {
+		urls = append([]string{strings.TrimSpace(custom)}, defaultExitURLs...)
 	}
-	var out map[string]any
-	if err := json.Unmarshal(b, &out); err != nil {
-		return nil, err
+	var lastErr error
+	for _, u := range urls {
+		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		b, err := e.core.HTTPGet(cctx, u)
+		cancel()
+		if err != nil {
+			lastErr = fmt.Errorf("%s: %w", u, err)
+			continue
+		}
+		if info := ParseExitJSON(b); info != nil {
+			info.Source = u
+			return info, nil
+		}
+		lastErr = fmt.Errorf("%s: unrecognized response", u)
 	}
-	return out, nil
+	return nil, lastErr
+}
+
+// ParseExitJSON normalizes ipwho.is / ipinfo.io / ip-api.com / ipify style answers.
+func ParseExitJSON(b []byte) *ExitInfo {
+	var m map[string]any
+	if json.Unmarshal(b, &m) != nil {
+		// a plain-text IP is acceptable too
+		if ip := strings.TrimSpace(string(b)); net.ParseIP(ip) != nil {
+			return &ExitInfo{IP: ip}
+		}
+		return nil
+	}
+	str := func(keys ...string) string {
+		for _, k := range keys {
+			if v, ok := m[k].(string); ok && v != "" {
+				return v
+			}
+		}
+		return ""
+	}
+	info := &ExitInfo{
+		IP:          str("ip", "query", "origin"),
+		Country:     str("country_name", "country"),
+		CountryCode: str("country_code", "countryCode"),
+		City:        str("city"),
+		ISP:         str("isp", "org", "organization"),
+	}
+	if c, ok := m["connection"].(map[string]any); ok && info.ISP == "" {
+		if v, ok := c["isp"].(string); ok {
+			info.ISP = v
+		}
+	}
+	// ipinfo.io returns the 2-letter code in "country"
+	if info.CountryCode == "" && len(info.Country) == 2 {
+		info.CountryCode, info.Country = info.Country, ""
+	}
+	if info.IP == "" || net.ParseIP(info.IP) == nil {
+		return nil
+	}
+	return info
 }

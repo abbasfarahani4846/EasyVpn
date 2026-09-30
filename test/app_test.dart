@@ -97,8 +97,7 @@ void main() {
           return {};
         },
         'ExitInfo': (_) => {
-          'status': 'success',
-          'query': '1.2.3.4',
+          'ip': '1.2.3.4',
           'country': 'Germany',
           'countryCode': 'DE',
           'city': 'Berlin',
@@ -121,6 +120,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
     expect(find.text('Connected'), findsOneWidget);
     expect(t.calls, contains('Start'));
+
+    // Real exit IP card appears after connect.
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('1.2.3.4'), findsOneWidget);
+    expect(t.calls, contains('ExitInfo'));
 
     await tester.tap(find.byIcon(Icons.power_settings_new_rounded));
     await tester.pump(const Duration(milliseconds: 300));

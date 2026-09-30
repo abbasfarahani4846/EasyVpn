@@ -99,7 +99,13 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 		}
 		return map[string]any{}, e.SwitchNode(a.Node)
 	case "ExitInfo":
-		return e.ExitInfo(ctx)
+		a, err := decode[struct {
+			URL string `json:"url"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		return e.LookupExit(ctx, a.URL)
 	case "GetStats":
 		return e.GetStats(), nil
 	case "DumpConfig":

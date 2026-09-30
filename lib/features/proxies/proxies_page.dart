@@ -76,11 +76,29 @@ class _ProxiesPageState extends ConsumerState<ProxiesPage> {
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list),
-            onSelected: (v) {
+            onSelected: (v) async {
+              if (v == 'url') {
+                final cur = ref.read(settingsProvider).testUrl;
+                final t = await promptText(
+                  context,
+                  title: s.t('proxies.test_url'),
+                  initial: cur,
+                );
+                final u = Uri.tryParse(t?.trim() ?? '');
+                if (t != null &&
+                    u != null &&
+                    (u.scheme == 'http' || u.scheme == 'https') &&
+                    u.host.isNotEmpty) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .update((x) => x.copyWith(testUrl: t.trim()));
+                }
+              }
               if (v == 'fav') ctl.setFavoritesFirst(!list.favoritesFirst);
               if (v == 'only') ctl.setOnlyFavorites(!list.onlyFavorites);
             },
             itemBuilder: (_) => [
+              PopupMenuItem(value: 'url', child: Text(s.t('proxies.test_url'))),
               CheckedPopupMenuItem(
                 value: 'fav',
                 checked: list.favoritesFirst,
@@ -272,7 +290,9 @@ class _NodeTile extends ConsumerWidget {
     final s = context.s;
     final cs = Theme.of(context).colorScheme;
     final caps = ref.watch(supportedCapsProvider).value;
-    final missing = caps == null ? const <String>[] : row.requires.where((c) => !caps.contains(c)).toList();
+    final missing = caps == null
+        ? const <String>[]
+        : row.requires.where((c) => !caps.contains(c)).toList();
     final needs = missing.isNotEmpty ? missing.join(', ') : null;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),

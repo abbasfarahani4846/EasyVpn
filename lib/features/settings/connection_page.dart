@@ -10,6 +10,13 @@ import '../../l10n/strings.dart';
 import '../../widgets/common.dart';
 import '../dashboard/dashboard_page.dart';
 
+bool _isHttpUrl(String v) {
+  final u = Uri.tryParse(v);
+  return u != null &&
+      (u.scheme == 'http' || u.scheme == 'https') &&
+      u.host.isNotEmpty;
+}
+
 class ConnectionPage extends ConsumerWidget {
   const ConnectionPage({super.key});
 
@@ -80,8 +87,26 @@ class ConnectionPage extends ConsumerWidget {
                 title: s.t('conn.test_url'),
                 initial: st.testUrl,
               );
-              if (t != null && t.startsWith('http'))
-                set.update((x) => x.copyWith(testUrl: t));
+              if (t != null && _isHttpUrl(t.trim()))
+                set.update((x) => x.copyWith(testUrl: t.trim()));
+            },
+          ),
+          ListTile(
+            title: Text(s.t('conn.ip_url')),
+            subtitle: Text(
+              st.ipCheckUrl.isEmpty ? s.t('conn.url.auto') : st.ipCheckUrl,
+            ),
+            onTap: () async {
+              final t = await promptText(
+                context,
+                title: s.t('conn.ip_url'),
+                initial: st.ipCheckUrl,
+              );
+              if (t == null) return;
+              final v = t.trim();
+              if (v.isEmpty || _isHttpUrl(v)) {
+                set.update((x) => x.copyWith(ipCheckUrl: v));
+              }
             },
           ),
           ListTile(

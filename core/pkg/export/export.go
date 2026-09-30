@@ -119,7 +119,12 @@ func tlsTransportQuery(n *protocol.ProxyNode) url.Values {
 		}
 	}
 	if tr := n.Transport; tr != nil && tr.Type != "" {
-		q.Set("type", tr.Type)
+		if tr.Type == "tcp-http" { // Xray share-link convention: type=tcp&headerType=http
+			q.Set("type", "tcp")
+			q.Set("headerType", "http")
+		} else {
+			q.Set("type", tr.Type)
+		}
 		if tr.Path != "" {
 			q.Set("path", tr.Path)
 		}

@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -105,6 +107,7 @@ type StartRequest struct {
 	AllowLAN   bool
 	CacheDir   string
 	LogLevel   string
+	TestURL    string // connectivity/latency probe (urltest group); default gstatic 204
 	StatsHook  func(Stats)
 	LogHook    func(level, msg string)
 	StateHook  func(state, detail string)
@@ -454,7 +457,7 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 			Type: C.TypeURLTest, Tag: autoTag,
 			Options: &option.URLTestOutboundOptions{
 				Outbounds: tagList,
-				URL:       "https://www.gstatic.com/generate_204",
+				URL:       orDefaultStr(req.TestURL, "https://www.gstatic.com/generate_204"),
 				Interval:  badoption.Duration(10 * time.Minute),
 				Tolerance: 50,
 			},
@@ -489,6 +492,12 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 	}
 
 	opts := option.Options{
+		// The selector/urltest groups persist state in a cache file whose default
+		// path is the relative "cache.db". The working directory is read-only on
+		// Android, so the path must always point into the app cache directory.
+		Experimental: &option.ExperimentalOptions{
+			CacheFile: &option.CacheFileOptions{Enabled: true, Path: cacheFilePath(req.CacheDir)},
+		},
 		Log: &option.LogOptions{
 			Level:     orDefaultStr(routing.LogLevel, req.LogLevel, "info"),
 			Timestamp: true,
@@ -586,8 +595,8 @@ func ExportSingBox(nodes []*protocol.ProxyNode) (string, error) {
 	return string(b), err
 }
 
-// HTTPGet performs a plain-HTTP GET through the running tunnel's "proxy"
-// selector (used for the real exit-IP lookup). https targets are not supported.
+// HTTPGet performs a GET (http or https) through the running tunnel's "proxy"
+// selector: this is how the app shows the REAL exit IP as seen from the internet.
 func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, error) {
 	a.mu.Lock()
 	b := a.instance
@@ -600,18 +609,15 @@ func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, er
 		return nil, fmt.Errorf("proxy outbound not found")
 	}
 	u, err := url.Parse(rawURL)
-	if err != nil || u.Scheme != "http" {
-		return nil, fmt.Errorf("only http:// URLs are supported")
-	}
-	host := u.Host
-	if u.Port() == "" {
-		host += ":80"
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return nil, fmt.Errorf("URL must start with http:// or https://")
 	}
 	client := &http.Client{
-		Timeout: 8 * time.Second,
+		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
+			// The net/http transport layers TLS on top of the tunnel connection for https.
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return out.DialContext(ctx, network, M.ParseSocksaddr(host))
+				return out.DialContext(ctx, network, M.ParseSocksaddr(addr))
 			},
 			DisableKeepAlives: true,
 		},
@@ -620,10 +626,23 @@ func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", "EasyVPN/1.0")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, u.Host)
+	}
 	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+}
+
+// cacheFilePath returns an absolute, writable location for sing-box's cache file.
+func cacheFilePath(dir string) string {
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	_ = os.MkdirAll(dir, 0o755)
+	return filepath.Join(dir, "singbox-cache.db")
 }

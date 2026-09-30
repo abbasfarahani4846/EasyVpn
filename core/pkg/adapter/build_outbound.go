@@ -293,6 +293,11 @@ func tuicOutbound(node *protocol.ProxyNode) (option.Outbound, error) {
 		UUID:          node.UUID,
 		Password:      node.Password,
 	}
+	if len(tls.ALPN) == 0 {
+		c := *tls
+		c.ALPN = []string{"h3"} // TUIC runs over QUIC; servers expect the h3 ALPN
+		tls = &c
+	}
 	o.TLS = tlsOptions(tls)
 	if node.TUIC != nil {
 		o.CongestionControl = node.TUIC.CongestionControl

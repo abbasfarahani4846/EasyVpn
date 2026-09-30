@@ -298,34 +298,57 @@ class ExitInfo {
     this.countryCode = '',
     this.city = '',
     this.isp = '',
+    this.source = '',
   });
   final String ip;
   final String country;
   final String countryCode;
   final String city;
   final String isp;
+  final String source;
 }
 
+/// Looks up the address the internet sees, THROUGH the tunnel. Uses the user's
+/// custom URL when set (Settings ▸ Connection), else the built-in providers.
+/// Retries a few times because a fresh tunnel needs a moment to carry traffic.
 class ExitInfoNotifier extends AsyncNotifier<ExitInfo?> {
   @override
   Future<ExitInfo?> build() async {
     final st = ref.watch(coreControllerProvider.select((s) => s.status));
+    final url = ref.watch(settingsProvider.select((s) => s.ipCheckUrl));
     if (st != CoreStatus.connected) return null;
-    // Give the tunnel a moment to settle before probing.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    try {
-      final j = await ref.read(envProvider).core.exitInfo();
-      if (j['status'] != 'success') return null;
-      return ExitInfo(
-        ip: (j['query'] as String?) ?? '',
-        country: (j['country'] as String?) ?? '',
-        countryCode: (j['countryCode'] as String?) ?? '',
-        city: (j['city'] as String?) ?? '',
-        isp: (j['isp'] as String?) ?? '',
-      );
-    } catch (_) {
-      return null;
+    return _lookup(url);
+  }
+
+  Future<ExitInfo?> _lookup(String url) async {
+    final core = ref.read(envProvider).core;
+    Object? lastError;
+    for (var i = 0; i < 4; i++) {
+      await Future<void>.delayed(Duration(milliseconds: i == 0 ? 500 : 1500));
+      try {
+        final j = await core.exitInfo(url: url);
+        if ((j['ip'] as String?)?.isNotEmpty ?? false) {
+          return ExitInfo(
+            ip: j['ip'] as String,
+            country: (j['country'] as String?) ?? '',
+            countryCode: (j['countryCode'] as String?) ?? '',
+            city: (j['city'] as String?) ?? '',
+            isp: (j['isp'] as String?) ?? '',
+            source: (j['source'] as String?) ?? '',
+          );
+        }
+      } catch (e) {
+        lastError = e;
+      }
     }
+    throw lastError ?? 'no answer';
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => _lookup(ref.read(settingsProvider).ipCheckUrl),
+    );
   }
 }
 

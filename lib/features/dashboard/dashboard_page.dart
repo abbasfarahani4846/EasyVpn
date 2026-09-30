@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/models.dart';
@@ -67,6 +68,10 @@ class DashboardPage extends ConsumerWidget {
                       left,
                       const SizedBox(height: 16),
                       right,
+                    ],
+                    if (core.isConnected) ...[
+                      const SizedBox(height: 16),
+                      const _ExitIpCard(),
                     ],
                     const SizedBox(height: 16),
                     _ModeCard(current: settings.mode, core: core),
@@ -202,10 +207,31 @@ class _ErrorDetail extends ConsumerWidget {
               : detail);
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      child: Column(
+        children: [
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.copy, size: 16),
+            label: Text(s.t('diag.copy')),
+            onPressed: () {
+              final logs = ref.read(logProvider);
+              final tail = logs.length > 200
+                  ? logs.sublist(logs.length - 200)
+                  : logs;
+              final buf = StringBuffer('error: $text\n\n');
+              for (final l in tail) {
+                buf.writeln(
+                  '${l.time.toIso8601String()} ${l.level} ${l.message}',
+                );
+              }
+              Clipboard.setData(ClipboardData(text: buf.toString()));
+            },
+          ),
+        ],
       ),
     );
   }
@@ -672,6 +698,114 @@ class _ModeCard extends ConsumerWidget {
                 s.t('mode.unsupported'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Real exit address (as seen from the internet) with a manual refresh.
+class _ExitIpCard extends ConsumerWidget {
+  const _ExitIpCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.s;
+    final cs = Theme.of(context).colorScheme;
+    final v = ref.watch(exitInfoProvider);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Text(
+              v.value == null ? '🌐' : flagEmoji(v.value!.countryCode),
+              style: const TextStyle(fontSize: 34),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: v.when(
+                loading: () => Row(
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(child: Text(s.t('dash.exit_checking'))),
+                  ],
+                ),
+                error: (e, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.t('dash.exit_ip'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      s.t('dash.exit_failed'),
+                      style: TextStyle(
+                        color: cs.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '$e',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: cs.outline),
+                    ),
+                  ],
+                ),
+                data: (i) => i == null
+                    ? Text(s.t('dash.exit_failed'))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.t('dash.exit_ip'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                          SelectableText(
+                            i.ip,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          Text(
+                            [
+                              i.country.isNotEmpty ? i.country : i.countryCode,
+                              i.city,
+                              i.isp,
+                            ].where((e) => e.isNotEmpty).join(' · '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+            IconButton(
+              tooltip: s.t('dash.exit_refresh'),
+              icon: const Icon(Icons.refresh),
+              onPressed: v.isLoading
+                  ? null
+                  : ref.read(exitInfoProvider.notifier).refresh,
+            ),
           ],
         ),
       ),

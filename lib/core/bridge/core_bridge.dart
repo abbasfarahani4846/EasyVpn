@@ -25,7 +25,8 @@ class CoreBridge {
   ]) => _t.call(method, args);
 
   Future<Map<String, dynamic>> info() => _t.call('Info');
-  Future<Map<String, dynamic>> exitInfo() => _t.call('ExitInfo');
+  Future<Map<String, dynamic>> exitInfo({String url = ''}) =>
+      _t.call('ExitInfo', {'url': url});
 
   Future<void> start({
     required Map<String, dynamic> node,
@@ -41,6 +42,7 @@ class CoreBridge {
       'mode': settings.mode.wire,
       'local_port': settings.localPort,
       'allow_lan': settings.allowLan,
+      'test_url': settings.testUrl,
       'auth': ?(authUser == null
           ? null
           : {'user': authUser, 'pass': authPass ?? ''}),

@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -206,5 +208,32 @@ func TestMixedInboundEnforcesLocalAuth(t *testing.T) {
 	}
 	if err := get("http://easyvpn:wrong@" + base); err == nil {
 		t.Fatal("HTTP proxy with wrong credentials must be rejected")
+	}
+}
+
+// Regression (Android): the working directory is read-only, so no relative
+// cache.db may be created; the cache file must live in the configured cache dir.
+func TestCacheFileUsesCacheDirNotCWD(t *testing.T) {
+	cwd := t.TempDir()
+	cache := t.TempDir()
+	old, _ := os.Getwd()
+	if err := os.Chdir(cwd); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(old)
+
+	_, serverAddr := func() (struct{}, string) { a, _ := startSOCKSServerBox(t); return struct{}{}, a }()
+	host, port := splitHostPort(t, serverAddr)
+	node := &protocol.ProxyNode{Name: "up", Type: protocol.ProtoSocks, Server: host, Port: port}
+	a := NewSingBoxAdapter()
+	if err := a.Start(context.Background(), &StartRequest{Node: node, Routing: routerGlobal(), Mode: ModeProxyOnly, LocalPort: freePort(t), CacheDir: cache}); err != nil {
+		t.Fatal(err)
+	}
+	_ = a.Stop(context.Background())
+	if _, err := os.Stat(filepath.Join(cwd, "cache.db")); err == nil {
+		t.Fatal("cache.db must not be created in the working directory")
+	}
+	if _, err := os.Stat(filepath.Join(cache, "singbox-cache.db")); err != nil {
+		t.Fatalf("cache file missing in cache dir: %v", err)
 	}
 }

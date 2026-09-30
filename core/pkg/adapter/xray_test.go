@@ -14,12 +14,16 @@ import (
 	"github.com/xtls/xray-core/infra/conf/serial"
 )
 
-func startXrayServer(t *testing.T, stream map[string]any, port int) func() {
+func startXrayServer(t *testing.T, stream map[string]any, port int, decryption ...string) func() {
+	dec := "none"
+	if len(decryption) > 0 {
+		dec = decryption[0]
+	}
 	cfg := map[string]any{
 		"log": map[string]any{"loglevel": "warning"},
 		"inbounds": []any{map[string]any{
 			"listen": "127.0.0.1", "port": port, "protocol": "vless",
-			"settings":       map[string]any{"clients": []any{map[string]any{"id": "b831381d-6324-4d53-ad4f-8cda48b30811"}}, "decryption": "none"},
+			"settings":       map[string]any{"clients": []any{map[string]any{"id": "b831381d-6324-4d53-ad4f-8cda48b30811"}}, "decryption": dec},
 			"streamSettings": stream,
 		}},
 		"outbounds": []any{map[string]any{"protocol": "freedom"}},
