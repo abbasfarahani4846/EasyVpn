@@ -35,10 +35,12 @@ class CoreBridge {
     String? authUser,
     String? authPass,
     Map<String, dynamic>? tun,
+    List<Map<String, dynamic>> chain = const [],
   }) async {
     await _t.call('Start', {
       'node': node,
       'candidates': candidates,
+      if (chain.isNotEmpty) 'chain': chain,
       'mode': settings.mode.wire,
       'local_port': settings.localPort,
       'allow_lan': settings.allowLan,
@@ -67,6 +69,52 @@ class CoreBridge {
   }
 
   Future<void> stop() => _t.call('Stop');
+
+  /// Registers a free WARP device; returns {node, account}.
+  Future<Map<String, dynamic>> warpRegister({
+    String name = 'WARP',
+    String endpoint = '',
+    String license = '',
+  }) => _t.call('WarpRegister', {
+    'name': name,
+    'endpoint': endpoint,
+    'license': license,
+  });
+
+  /// Expands one Windscribe WireGuard config to every location of the account.
+  Future<List<Map<String, dynamic>>> windscribeExpand(
+    Map<String, dynamic> template, {
+    bool pro = false,
+  }) async {
+    final r = await _t.call('WindscribeExpand', {
+      'template': template,
+      'pro': pro,
+    });
+    return ((r['nodes'] as List?) ?? const []).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> updateCheck({
+    required String channel,
+    required String current,
+    required Map<String, dynamic> target,
+  }) => _t.call('UpdateCheck', {
+    'channel': channel,
+    'current': current,
+    'target': target,
+  });
+
+  /// Downloads + verifies an update; returns the local file path.
+  Future<String> updateDownload({
+    required String url,
+    required String name,
+    required String sha256,
+  }) async =>
+      (await _t.call('UpdateDownload', {
+            'url': url,
+            'name': name,
+            'sha256': sha256,
+          }))['path']
+          as String;
   Future<void> switchNode(Map<String, dynamic> node) =>
       _t.call('SwitchNode', {'node': node});
 

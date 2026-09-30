@@ -112,6 +112,7 @@ class EasyVpnService : VpnService() {
         startForegroundCompat()
         active = true
         VpnTileService.refresh(this)
+        VpnWidget.refresh(this)
         return pfd.fd
     }
 
@@ -142,6 +143,7 @@ class EasyVpnService : VpnService() {
         runCatching { tun?.close() }
         tun = null
         VpnTileService.refresh(this)
+        VpnWidget.refresh(this)
     }
 
     override fun onRevoke() {

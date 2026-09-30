@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'strings_v2.dart';
+
 /// Minimal hand-rolled localization (en + fa). Keys live in [_en] and [_fa];
 /// a missing Persian key falls back to English so the UI never shows blanks.
 class S {
@@ -15,7 +17,8 @@ class S {
   bool get isFa => locale.languageCode == 'fa';
 
   String t(String key, [Map<String, Object?> args = const {}]) {
-    var s = (isFa ? _fa[key] : null) ?? _en[key] ?? key;
+    var s =
+        (isFa ? (_fa[key] ?? faV2[key]) : null) ?? _en[key] ?? enV2[key] ?? key;
     args.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
     return s;
   }

@@ -54,7 +54,9 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Dashboard'), findsWidgets);
+    // New users land on the one-button home.
+    expect(find.text('Not protected'), findsWidgets);
+    expect(find.byIcon(Icons.power_settings_new_rounded), findsOneWidget);
     expect(t.calls, contains('SetCountry'));
   });
 
@@ -110,6 +112,7 @@ void main() {
         onboarded: true,
         activeNodeId: 'id1',
         activeProfileId: 'p1',
+        uiMode: 'advanced',
       ),
       transport: t,
       seed: (repo) async => repo.importNodes('p1', [node(1)]),
@@ -147,6 +150,7 @@ void main() {
           onboarded: true,
           activeNodeId: 'id1',
           activeProfileId: 'p1',
+          uiMode: 'advanced',
         ),
         transport: t,
         seed: (repo) async => repo.importNodes('p1', [node(1)]),
@@ -164,6 +168,7 @@ void main() {
   ) async {
     final s = const AppSettings(
       onboarded: true,
+      uiMode: 'advanced',
       appearance: AppearanceSettings(locale: 'fa'),
     );
     await pumpApp(tester, settings: s);
@@ -207,6 +212,69 @@ void main() {
     expect(jsonDecode(stored!)['routing']['mode'], 'global_proxy');
   });
 
+  testWidgets('simple home: one tap connects, shows exit IP, then stops', (
+    tester,
+  ) async {
+    late FakeTransport t;
+    t = FakeTransport(
+      handlers: {
+        'SetRouting': (_) => {},
+        'Start': (a) {
+          t.emit('state', {'state': 'connected', 'detail': '', 'mode': 'tun'});
+          return {};
+        },
+        'Stop': (_) {
+          t.emit('state', {
+            'state': 'disconnected',
+            'detail': '',
+            'mode': 'tun',
+          });
+          return {};
+        },
+        'ExitInfo': (_) => {'ip': '9.9.9.9', 'countryCode': 'DE'},
+      },
+    );
+    await pumpApp(
+      tester,
+      settings: const AppSettings(
+        onboarded: true,
+        activeNodeId: 'id1',
+        activeProfileId: 'p1',
+        mode: ConnMode.proxyOnly,
+      ),
+      transport: t,
+      seed: (repo) async => repo.importNodes('p1', [node(1)]),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Node 1'), findsOneWidget); // location card
+    expect(find.text('Not protected'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.power_settings_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(find.text('Protected'), findsOneWidget);
+    expect(find.textContaining('9.9.9.9'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.power_settings_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Not protected'), findsOneWidget);
+  });
+
+  testWidgets('simple home menu opens advanced pages', (tester) async {
+    await pumpApp(
+      tester,
+      settings: const AppSettings(onboarded: true),
+      transport: FakeTransport(handlers: {}),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(Icons.grid_view_rounded));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('Chains & WARP'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Exit via WARP'), findsWidgets);
+    expect(find.text('WARP in WARP'), findsOneWidget);
+  });
+
   test('AppSettings JSON round trip keeps every field', () {
     const s = AppSettings(
       mode: ConnMode.both,
@@ -230,6 +298,22 @@ void main() {
       ),
     );
     final r = AppSettings.decode(s.encode());
+    final r2 = AppSettings.decode(
+      const AppSettings(
+        ipCheckUrl: 'https://x/ip',
+        uiMode: 'advanced',
+        chainNodeIds: ['a', 'b'],
+        exitNodeId: 'w',
+        updateChannel: 'stable',
+        autoUpdateCheck: false,
+      ).encode(),
+    );
+    expect(r2.ipCheckUrl, 'https://x/ip');
+    expect(r2.uiMode, 'advanced');
+    expect(r2.chainNodeIds, ['a', 'b']);
+    expect(r2.exitNodeId, 'w');
+    expect(r2.updateChannel, 'stable');
+    expect(r2.autoUpdateCheck, isFalse);
     expect(r.mode, ConnMode.both);
     expect(r.localPort, 3000);
     expect(r.perAppPackages, ['a.b']);

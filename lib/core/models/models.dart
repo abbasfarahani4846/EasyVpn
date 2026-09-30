@@ -496,6 +496,11 @@ class AppSettings {
     this.autoFailover = false,
     this.testUrl = 'https://www.gstatic.com/generate_204',
     this.ipCheckUrl = '',
+    this.uiMode = 'simple',
+    this.updateChannel = '',
+    this.autoUpdateCheck = true,
+    this.chainNodeIds = const [],
+    this.exitNodeId = '',
     this.activeNodeId,
     this.activeProfileId,
     this.onboarded = false,
@@ -522,6 +527,20 @@ class AppSettings {
   final String testUrl;
   final String
   ipCheckUrl; // '' = automatic (ipwho.is, ipinfo.io, ip-api.com, ipify)
+
+  /// 'simple' (one-button home, default) or 'advanced' (tabs).
+  final String uiMode;
+
+  /// '' = the channel this build came from; 'stable' | 'nightly'.
+  final String updateChannel;
+  final bool autoUpdateCheck;
+
+  /// Chain hops dialed before the active node (proxy-in-proxy, WARP-in-WARP).
+  final List<String> chainNodeIds;
+
+  /// When set, the active node becomes the last hop and this node is the exit
+  /// ("exit via WARP": the destination sees the exit's address).
+  final String exitNodeId;
   final String? activeNodeId;
   final String? activeProfileId;
   final bool onboarded;
@@ -547,6 +566,11 @@ class AppSettings {
     bool? autoFailover,
     String? testUrl,
     String? ipCheckUrl,
+    String? uiMode,
+    String? updateChannel,
+    bool? autoUpdateCheck,
+    List<String>? chainNodeIds,
+    String? exitNodeId,
     Object? activeNodeId = _keep,
     Object? activeProfileId = _keep,
     bool? onboarded,
@@ -570,6 +594,12 @@ class AppSettings {
     autoLaunch: autoLaunch ?? this.autoLaunch,
     autoFailover: autoFailover ?? this.autoFailover,
     testUrl: testUrl ?? this.testUrl,
+    ipCheckUrl: ipCheckUrl ?? this.ipCheckUrl,
+    uiMode: uiMode ?? this.uiMode,
+    updateChannel: updateChannel ?? this.updateChannel,
+    autoUpdateCheck: autoUpdateCheck ?? this.autoUpdateCheck,
+    chainNodeIds: chainNodeIds ?? this.chainNodeIds,
+    exitNodeId: exitNodeId ?? this.exitNodeId,
     activeNodeId: identical(activeNodeId, _keep)
         ? this.activeNodeId
         : activeNodeId as String?,
@@ -601,6 +631,12 @@ class AppSettings {
     'autoLaunch': autoLaunch,
     'autoFailover': autoFailover,
     'testUrl': testUrl,
+    'ipCheckUrl': ipCheckUrl,
+    'uiMode': uiMode,
+    'updateChannel': updateChannel,
+    'autoUpdateCheck': autoUpdateCheck,
+    'chainNodeIds': chainNodeIds,
+    'exitNodeId': exitNodeId,
     'activeNodeId': activeNodeId,
     'activeProfileId': activeProfileId,
     'onboarded': onboarded,
@@ -634,6 +670,12 @@ class AppSettings {
       autoFailover: (j['autoFailover'] as bool?) ?? d.autoFailover,
       testUrl: (j['testUrl'] as String?) ?? d.testUrl,
       ipCheckUrl: (j['ipCheckUrl'] as String?) ?? d.ipCheckUrl,
+      uiMode: (j['uiMode'] as String?) ?? d.uiMode,
+      updateChannel: (j['updateChannel'] as String?) ?? d.updateChannel,
+      autoUpdateCheck: (j['autoUpdateCheck'] as bool?) ?? d.autoUpdateCheck,
+      chainNodeIds:
+          (j['chainNodeIds'] as List?)?.cast<String>() ?? d.chainNodeIds,
+      exitNodeId: (j['exitNodeId'] as String?) ?? d.exitNodeId,
       activeNodeId: j['activeNodeId'] as String?,
       activeProfileId: j['activeProfileId'] as String?,
       onboarded: (j['onboarded'] as bool?) ?? d.onboarded,

@@ -41,7 +41,12 @@ class CoreController extends Notifier<CoreState> {
             disconnect();
         },
         onToggle: toggle,
+        onFastest: connectFastest,
       );
+      listenSelf((prev, next) {
+        if (prev?.status == next.status) return;
+        _pushWidget(next.isConnected);
+      });
     }
     return const CoreState();
   }
@@ -82,13 +87,31 @@ class CoreController extends Notifier<CoreState> {
       detail: '',
     );
     try {
-      final node = await env.repo.rawNode(id);
+      var node = await env.repo.rawNode(id);
       if (node == null) throw CoreException('node not found');
+      // Chain: hops before the active node; an exit node (e.g. WARP) turns
+      // the active node into the last hop.
+      final chain = <Map<String, dynamic>>[];
+      for (final hid in settings.chainNodeIds) {
+        if (hid == id) continue;
+        final h = await env.repo.rawNode(hid);
+        if (h != null) chain.add(h);
+      }
+      if (settings.exitNodeId.isNotEmpty && settings.exitNodeId != id) {
+        final exit = await env.repo.rawNode(settings.exitNodeId);
+        if (exit != null) {
+          chain.add(node);
+          node = exit;
+        }
+      }
       final candIds = await env.repo.topNodeIds(
         profileId: settings.activeProfileId,
         exclude: id,
       );
-      final cands = await env.repo.rawNodes(candIds);
+      // Candidates (hot switch / auto group) only make sense without a chain.
+      final cands = chain.isEmpty
+          ? await env.repo.rawNodes(candIds)
+          : const <Map<String, dynamic>>[];
       await env.core.setRouting(settings.routing);
       if (PlatformService.isDesktop &&
           settings.mode.usesTun &&
@@ -133,6 +156,7 @@ class CoreController extends Notifier<CoreState> {
         authUser: useAuth ? 'easyvpn' : null,
         authPass: useAuth ? env.localPass : null,
         tun: tun,
+        chain: chain,
       );
       lastFailure = null;
     } on CoreException catch (e) {
@@ -170,6 +194,33 @@ class CoreController extends Notifier<CoreState> {
       state.isConnected || state.status == CoreStatus.connecting
       ? disconnect()
       : connect();
+
+  Future<void> _pushWidget(bool connected) async {
+    final env = ref.read(envProvider);
+    final id = ref.read(settingsProvider).activeNodeId;
+    final row = id == null ? null : await env.repo.nodeRow(id);
+    await PlatformService.setWidgetInfo(
+      connected: connected,
+      node: row?.name ?? '',
+    );
+  }
+
+  /// Connects to the lowest-latency node of the active profile (shortcut,
+  /// widget, tray "Fastest").
+  Future<void> connectFastest() async {
+    final env = ref.read(envProvider);
+    final s = ref.read(settingsProvider);
+    final ids = await env.repo.topNodeIds(
+      profileId: s.activeProfileId,
+      limit: 1,
+    );
+    if (ids.isEmpty) return connect();
+    if (state.isConnected) return selectNode(ids.first);
+    ref
+        .read(settingsProvider.notifier)
+        .update((x) => x.copyWith(activeNodeId: ids.first));
+    await connect(nodeId: ids.first);
+  }
 
   /// Selects a node; hot-switches while connected (no teardown when possible).
   Future<void> selectNode(String id) async {

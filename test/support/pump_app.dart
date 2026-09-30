@@ -20,7 +20,7 @@ class TestApp {
 
 Future<TestApp> pumpApp(
   WidgetTester tester, {
-  AppSettings settings = const AppSettings(onboarded: true),
+  AppSettings settings = const AppSettings(onboarded: true, uiMode: 'advanced'),
   CoreTransport? transport,
   Size size = const Size(420, 900),
   Future<void> Function(NodeRepository repo)? seed,

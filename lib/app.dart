@@ -11,7 +11,9 @@ import 'core/providers/nav_provider.dart';
 import 'core/providers/profiles_provider.dart';
 import 'core/providers/settings_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/update/update_service.dart';
 import 'features/dashboard/dashboard_page.dart';
+import 'features/home/simple_home.dart';
 import 'features/logs/logs_page.dart';
 import 'features/onboarding/onboarding_page.dart';
 import 'features/proxies/proxies_page.dart';
@@ -165,8 +167,13 @@ class _RootState extends ConsumerState<_Root> {
   @override
   Widget build(BuildContext context) {
     ref.watch(subscriptionSchedulerProvider);
+    ref.watch(updateProvider); // starts the periodic update check
     final onboarded = ref.watch(settingsProvider.select((s) => s.onboarded));
-    return onboarded ? const AppShell() : const OnboardingPage();
+    final simple = ref.watch(
+      settingsProvider.select((s) => s.uiMode != 'advanced'),
+    );
+    if (!onboarded) return const OnboardingPage();
+    return simple ? const SimpleHome() : const AppShell();
   }
 }
 

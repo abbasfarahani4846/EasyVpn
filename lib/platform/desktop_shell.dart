@@ -92,6 +92,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
         key: 'toggle',
         label: connected ? s.t('tray.disconnect') : s.t('tray.connect'),
       ),
+      MenuItem(key: 'fastest', label: '⚡ ${s.t('home.fastest')}'),
       MenuItem.separator(),
     ];
     for (final id in top) {
@@ -131,6 +132,8 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
       await _show();
     } else if (key == 'toggle') {
       await ctl.toggle();
+    } else if (key == 'fastest') {
+      await ctl.connectFastest();
     } else if (key == 'quit') {
       await _quit();
     } else if (key.startsWith('node:')) {

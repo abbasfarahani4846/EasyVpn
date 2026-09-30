@@ -3,4 +3,12 @@
     <string name="vpn_connected">Connected</string>
     <string name="vpn_disconnect">Disconnect</string>
     <string name="tap_to_connect">Tap to connect</string>
+    <string name="widget_on">Protected</string>
+    <string name="widget_off">Not protected</string>
+    <string name="widget_toggle">Connect or disconnect</string>
+    <string name="widget_desc">One-tap VPN toggle with status</string>
+    <string name="shortcut_toggle">Connect / Disconnect</string>
+    <string name="shortcut_toggle_long">Connect or disconnect EasyVPN</string>
+    <string name="shortcut_fastest">Fastest server</string>
+    <string name="shortcut_fastest_long">Connect to the fastest server</string>
 </resources>

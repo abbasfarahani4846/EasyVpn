@@ -59,12 +59,34 @@ class PlatformService {
   static void setHandlers({
     required void Function() onRevoked,
     required void Function() onToggle,
+    void Function()? onFastest,
   }) {
+    void run(String? m) {
+      if (m == 'vpnRevoked') onRevoked();
+      if (m == 'toggle') onToggle();
+      if (m == 'fastest') onFastest?.call();
+    }
+
     _ch.setMethodCallHandler((call) async {
-      if (call.method == 'vpnRevoked') onRevoked();
-      if (call.method == 'toggle') onToggle();
+      run(call.method);
       return null;
     });
+    // Replays a widget/shortcut tap that cold-started the app.
+    _try<String>('ready').then(run);
+  }
+
+  /// Updates the Android home-screen widget label.
+  static Future<void> setWidgetInfo({
+    required bool connected,
+    required String node,
+  }) async {
+    if (!isAndroid) return;
+    await _try<bool>('setWidgetInfo', {'connected': connected, 'node': node});
+  }
+
+  /// Opens the system installer for a verified update APK.
+  static Future<void> installApk(String path) async {
+    await _ch.invokeMethod('installApk', {'path': path});
   }
 
   /// Returns launchable apps (Android) for the per-app tunneling picker.

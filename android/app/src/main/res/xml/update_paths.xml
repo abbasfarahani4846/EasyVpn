@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Verified update APKs downloaded by the core into the app's files/cache dirs. -->
+<paths>
+    <files-path name="files" path="." />
+    <cache-path name="cache" path="." />
+</paths>

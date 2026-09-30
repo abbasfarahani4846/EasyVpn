@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/update/update_service.dart';
+import '../chain/chain_page.dart';
+import '../windscribe/windscribe_page.dart';
+import 'updates_page.dart';
+
 import '../../core/models/models.dart';
 import '../../core/providers/core_provider.dart';
 import '../../core/providers/env.dart';
@@ -53,6 +58,14 @@ class SettingsPage extends ConsumerWidget {
               ),
             ),
           SectionHeader(s.t('settings.appearance')),
+          SwitchListTile(
+            secondary: const Icon(Icons.radio_button_checked),
+            title: Text(s.t('home.simple')),
+            value: st.uiMode != 'advanced',
+            onChanged: (v) => ref
+                .read(settingsProvider.notifier)
+                .update((x) => x.copyWith(uiMode: v ? 'simple' : 'advanced')),
+          ),
           tile(
             Icons.palette_outlined,
             s.t('settings.appearance'),
@@ -72,6 +85,18 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).pushNamed('/logs'),
           ),
+          tile(
+            Icons.link_rounded,
+            s.t('menu.chain'),
+            null,
+            () => const ChainPage(),
+          ),
+          tile(
+            Icons.air_rounded,
+            s.t('menu.windscribe'),
+            null,
+            () => const WindscribePage(),
+          ),
           SectionHeader(s.t('settings.data')),
           tile(
             Icons.backup_outlined,
@@ -80,6 +105,12 @@ class SettingsPage extends ConsumerWidget {
             () => const BackupPage(),
           ),
           SectionHeader(s.t('settings.about')),
+          tile(
+            Icons.system_update_rounded,
+            s.t('upd.title'),
+            buildLabel,
+            () => const UpdatesPage(),
+          ),
           tile(
             Icons.info_outline,
             s.t('settings.about'),

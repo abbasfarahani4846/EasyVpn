@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_connected">متصل</string>
+    <string name="vpn_disconnect">قطع اتصال</string>
+    <string name="tap_to_connect">برای اتصال بزنید</string>
+    <string name="widget_on">محافظت‌شده</string>
+    <string name="widget_off">محافظت نشده</string>
+    <string name="widget_toggle">اتصال یا قطع اتصال</string>
+    <string name="widget_desc">اتصال با یک لمس و نمایش وضعیت</string>
+    <string name="shortcut_toggle">اتصال / قطع</string>
+    <string name="shortcut_toggle_long">اتصال یا قطع EasyVPN</string>
+    <string name="shortcut_fastest">سریع‌ترین سرور</string>
+    <string name="shortcut_fastest_long">اتصال به سریع‌ترین سرور</string>
+</resources>

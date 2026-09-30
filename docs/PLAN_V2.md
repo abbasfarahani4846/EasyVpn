@@ -45,6 +45,8 @@ Status legend: [x] done in this branch · [~] in progress · [ ] planned
 
 ## 3. Windscribe servers (your account + the free locations)
 
+> Implemented as the config-generator approach below; the API table is kept as research notes.
+
 Windscribe's official clients are open source (GPL): `Windscribe/wsnet`, `Desktop-App`, `Android-App`.
 Endpoints used (all against `https://api.windscribe.com`, `assets.windscribe.com` for lists):
 
@@ -103,10 +105,16 @@ Plan:
 
 ## Order of work
 
-1. [~] Core: chains (detour) + WARP registration + WARP node, with tests.
-2. [~] Core: update checker/downloader with SHA256 verification, with tests (httptest).
-3. [~] Core: Windscribe provider, with tests against a fake API (httptest). A live test needs the user's account.
-4. [ ] UI: new Home + location picker + brand tokens; Advanced drawer.
-5. [ ] UI: Updates settings/banner; Windscribe account dialog; Chain page.
-6. [ ] Android: widget, app shortcuts, install-update flow; Desktop: hotkey, CLI toggle, single instance.
-7. [ ] CI: dart-defines for build label/channel; APK signing key is stable across releases (needed for updates).
+1. [x] Core: chains (detour) + WARP registration + WARP node, with tests (live WARP registration verified).
+2. [x] Core: update checker/downloader with SHA256 verification, with tests (httptest).
+3. [x] Core: Windscribe via ONE user-generated WireGuard config + public server list (tested live against
+   the public list). Account login via Windscribe's private API was dropped: it requires the official
+   client's signing secret, and impersonating that client is not acceptable.
+4. [x] UI: Simple home (orb, state glow, location card, quick chips) + location picker + brand tokens + menu.
+5. [x] UI: Updates page/banner; Windscribe page; Chains & WARP page (presets: exit via WARP, WARP in WARP).
+6. [~] Android: widget, launcher shortcuts (toggle, fastest), install-update flow, cold-start action replay
+   (Kotlin compiled only in CI). Desktop: tray "Fastest". Still to do: global hotkey, `--toggle` CLI via a
+   single-instance socket, and a status-colored tray icon.
+7. [~] CI: dart-defines for build label/channel done. **Needed from the owner:** repository secrets
+   `ANDROID_KEYSTORE_BASE64/…PASSWORD/ANDROID_KEY_ALIAS/…PASSWORD`. Without a stable signing key each CI APK
+   is signed by a throw-away debug key, and Android refuses to install it over the previous one.

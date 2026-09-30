@@ -81,6 +81,68 @@ class ProfilesNotifier extends AsyncNotifier<List<Profile>> {
     }
   }
 
+  /// Stores already-built nodes (WARP, Windscribe locations...) in a local
+  /// profile; [profileId] is fixed so re-running replaces the old set.
+  Future<ImportResult> importNodes(
+    String profileId,
+    String name,
+    List<Map<String, dynamic>> nodes, {
+    bool replace = true,
+  }) async {
+    final env = ref.read(envProvider);
+    try {
+      await env.repo.saveProfile(
+        byId(profileId) ??
+            Profile(id: profileId, name: name, updatedAt: DateTime.now()),
+      );
+      final r = await env.repo.importNodes(profileId, nodes, replace: replace);
+      await _adoptActive(profileId);
+      await reload();
+      return ImportResult(
+        profileId: profileId,
+        added: r.added,
+        removed: r.removed,
+        total: r.total,
+      );
+    } catch (e) {
+      return ImportResult(error: e is CoreException ? e.message : '$e');
+    }
+  }
+
+  /// Registers a new free WARP device and adds it to the "WARP" profile.
+  /// Returns the new node id (for chains) or throws.
+  Future<String> addWarp({String name = 'WARP', String license = ''}) async {
+    final env = ref.read(envProvider);
+    final r = await env.core.warpRegister(name: name, license: license);
+    final node = (r['node'] as Map).cast<String, dynamic>();
+    final res = await importNodes('warp', 'Cloudflare WARP', [
+      node,
+    ], replace: false);
+    if (!res.ok) throw CoreException(res.error ?? 'warp');
+    return node['id'] as String;
+  }
+
+  /// Expands a Windscribe WireGuard config (pasted text) to every location.
+  Future<ImportResult> addWindscribe(
+    String wgConfig, {
+    bool pro = false,
+  }) async {
+    final env = ref.read(envProvider);
+    try {
+      final parsed = await env.core.parseContent(wgConfig);
+      final tpl = parsed.nodes
+          .where((n) => n['type'] == 'wireguard')
+          .firstOrNull;
+      if (tpl == null) {
+        return const ImportResult(error: 'windscribe_need_wg');
+      }
+      final nodes = await env.core.windscribeExpand(tpl, pro: pro);
+      return await importNodes('windscribe', 'Windscribe', nodes);
+    } on CoreException catch (e) {
+      return ImportResult(error: e.message);
+    }
+  }
+
   String _autoName(List<Map<String, dynamic>> nodes) => nodes.length == 1
       ? (nodes.first['name'] as String? ?? 'Imported')
       : 'Imported (${nodes.length})';

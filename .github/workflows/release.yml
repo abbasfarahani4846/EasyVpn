@@ -70,7 +70,7 @@ jobs:
           sed -i "s/^version:.*/version: ${{ needs.version.outputs.pubspec }}+${{ github.run_number }}/" pubspec.yaml
       - run: make -C core linux-proc
       - run: flutter pub get
-      - run: flutter build linux --release
+      - run: flutter build linux --release --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
       - name: Package (tar.gz + deb)
         env:
           L: ${{ needs.version.outputs.label }}
@@ -128,7 +128,7 @@ jobs:
       - run: make -C core windows-proc
       - run: bash scripts/fetch_wintun.sh
       - run: flutter pub get
-      - run: flutter build windows --release
+      - run: flutter build windows --release --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
       - name: Package
         env:
           L: ${{ needs.version.outputs.label }}
@@ -173,6 +173,7 @@ jobs:
         env:
           IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
           L: ${{ needs.version.outputs.label }}
+          FLUTTER_BUILD_ARGS: --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
         run: |
           if [[ -n "$IDENTITY" ]]; then bash scripts/package_macos.sh --sign "$IDENTITY"; else bash scripts/package_macos.sh; fi
           mkdir dist
@@ -212,7 +213,7 @@ jobs:
             echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: APKs are signed with the debug key (fine for testing, not for stores)."
           fi
       - run: flutter pub get
-      - run: flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64
+      - run: flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64 --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
       - name: Package
         env:
           L: ${{ needs.version.outputs.label }}

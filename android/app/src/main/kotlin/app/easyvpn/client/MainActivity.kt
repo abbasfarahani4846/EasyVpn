@@ -30,6 +30,7 @@ class MainActivity : FlutterActivity() {
         const val CHANNEL = "easyvpn/platform"
         const val REQ_VPN = 4101
         const val ACTION_TOGGLE = "app.easyvpn.client.TOGGLE"
+        const val ACTION_FASTEST = "app.easyvpn.client.FASTEST"
 
         @Volatile var channel: MethodChannel? = null
 
@@ -40,6 +41,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private var pendingPrepare: MethodChannel.Result? = null
+
+    /** Shortcut/widget action that arrived before Dart registered its handler. */
+    private var pendingAction: String? = null
+    private var dartReady = false
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -65,6 +70,28 @@ class MainActivity : FlutterActivity() {
                     result.success(true)
                 }
                 "installedApps" -> result.success(installedApps())
+                "ready" -> {
+                    // Dart handlers are registered: replay a cold-start action.
+                    dartReady = true
+                    result.success(pendingAction)
+                    pendingAction = null
+                }
+                "setWidgetInfo" -> {
+                    VpnWidget.setInfo(this, call.argument<Boolean>("connected") ?: false,
+                        call.argument<String>("node") ?: "")
+                    result.success(true)
+                }
+                "installApk" -> {
+                    val path = call.argument<String>("path")
+                    if (path == null) result.error("update", "no path", null) else {
+                        try {
+                            installApk(java.io.File(path))
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("update", e.message, null)
+                        }
+                    }
+                }
                 "setAutoStart" -> {
                     getSharedPreferences("easyvpn", MODE_PRIVATE).edit()
                         .putBoolean("autostart", call.argument<Boolean>("enabled") ?: false).apply()
@@ -82,9 +109,26 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.action == ACTION_TOGGLE) {
-            channel?.invokeMethod("toggle", null)
+        val method = when (intent?.action) {
+            ACTION_TOGGLE -> "toggle"
+            ACTION_FASTEST -> "fastest"
+            else -> return
         }
+        intent.action = null // do not replay on configuration changes
+        if (dartReady) channel?.invokeMethod(method, null) else pendingAction = method
+    }
+
+    /** Hands a verified update APK to the system installer. */
+    private fun installApk(file: java.io.File) {
+        if (Build.VERSION.SDK_INT >= 26 && !packageManager.canRequestPackageInstalls()) {
+            startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                android.net.Uri.parse("package:$packageName")))
+            throw IllegalStateException("allow_install")
+        }
+        val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.updates", file)
+        startActivity(Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     private fun telephony() = getSystemService(TELEPHONY_SERVICE) as? TelephonyManager
@@ -123,6 +167,7 @@ class MainActivity : FlutterActivity() {
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         channel = null
+        dartReady = false
         super.cleanUpFlutterEngine(flutterEngine)
     }
 }

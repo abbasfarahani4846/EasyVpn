@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 make -C core darwin-proc
-flutter build macos --release
+flutter build macos --release ${FLUTTER_BUILD_ARGS:-}
 APP="build/macos/Build/Products/Release/easyvpn.app"
 cp bin/easycoreproc-darwin-arm64 "$APP/Contents/MacOS/easycoreproc"
 chmod +x "$APP/Contents/MacOS/easycoreproc"
