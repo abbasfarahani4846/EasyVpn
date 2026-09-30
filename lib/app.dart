@@ -368,9 +368,20 @@ class _Sidebar extends ConsumerWidget {
                 child: const Icon(Icons.shield_rounded, size: 19),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'EasyVPN',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              const Expanded(
+                child: Text(
+                  'EasyVPN',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
+              const ViewSwitcherButton(),
+              const SizedBox(width: 2),
+              IconButton(
+                tooltip: s.t('home.compact_mode'),
+                icon: const Icon(Icons.close_fullscreen_rounded, size: 18),
+                onPressed: () => ref
+                    .read(settingsProvider.notifier)
+                    .update((x) => x.copyWith(uiMode: 'simple', miniWindow: false)),
               ),
             ],
           ),
@@ -461,8 +472,8 @@ class _Sidebar extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           TextButton.icon(
-            icon: const Icon(Icons.radio_button_checked, size: 18),
-            label: Text(s.t('home.simple')),
+            icon: const Icon(Icons.close_fullscreen_rounded, size: 18),
+            label: Text(s.t('home.compact_mode')),
             onPressed: () => ref
                 .read(settingsProvider.notifier)
                 .update((x) => x.copyWith(uiMode: 'simple')),

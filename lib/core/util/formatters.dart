@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 /// Human readable bytes: 1.5 MB.
 String fmtBytes(num b) {
   const u = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -24,8 +22,6 @@ String fmtDuration(Duration d) {
 /// Country flag emoji from an ISO alpha-2 code ("IR" -> 🇮🇷).
 String flagEmoji(String cc) {
   if (cc.length != 2) return '🌐';
-  // Windows has no flag glyphs: fall back to the plain ISO code.
-  if (Platform.isWindows) return cc.toUpperCase();
   final a = cc.toUpperCase().codeUnits;
   if (a.any((c) => c < 65 || c > 90)) return '🌐';
   return String.fromCharCodes(a.map((c) => 0x1F1E6 + c - 65));

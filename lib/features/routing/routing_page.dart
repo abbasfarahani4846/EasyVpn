@@ -276,9 +276,11 @@ class RoutingPage extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              onReorderItem: (a, b) {
+              onReorder: (a, b) {
+                var newIdx = b;
+                if (a < newIdx) newIdx -= 1;
                 final list = [...r.customRules];
-                list.insert(b, list.removeAt(a));
+                list.insert(newIdx, list.removeAt(a));
                 set.setRouting((x) => x.copyWith(customRules: list));
               },
               children: [

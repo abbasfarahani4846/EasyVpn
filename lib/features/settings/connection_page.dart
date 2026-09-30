@@ -123,6 +123,7 @@ class ConnectionPage extends ConsumerWidget {
           SectionHeader(s.t('conn.tun')),
           ListTile(
             title: Text(s.t('conn.mtu')),
+            subtitle: Text(s.t('conn.mtu.desc')),
             trailing: SizedBox(
               width: 90,
               child: TextFormField(
@@ -131,14 +132,30 @@ class ConnectionPage extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 onChanged: (v) {
                   final p = int.tryParse(v);
-                  if (p != null && p >= 1280 && p <= 65535)
+                  if (p != null && p >= 1280 && p <= 1500)
                     set.update((x) => x.copyWith(tunMtu: p));
                 },
               ),
             ),
           ),
+          ListTile(
+            title: Text(s.t('conn.stack')),
+            subtitle: Text(s.t('conn.stack.desc')),
+            trailing: DropdownButton<String>(
+              value: st.tunStack,
+              items: const [
+                DropdownMenuItem(value: 'gvisor', child: Text('gVisor (Fast)')),
+                DropdownMenuItem(value: 'mixed', child: Text('Mixed')),
+                DropdownMenuItem(value: 'system', child: Text('System')),
+              ],
+              onChanged: (v) {
+                if (v != null) set.update((x) => x.copyWith(tunStack: v));
+              },
+            ),
+          ),
           SwitchListTile(
             title: Text(s.t('conn.strict_route')),
+            subtitle: Text(s.t('conn.strict_route.desc')),
             value: st.tunStrictRoute,
             onChanged: (v) => set.update((x) => x.copyWith(tunStrictRoute: v)),
           ),

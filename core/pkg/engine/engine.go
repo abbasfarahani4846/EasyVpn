@@ -348,7 +348,7 @@ func (e *Engine) selfCheck(url string) {
 	var err error
 	for i := 0; i < 3; i++ {
 		time.Sleep(time.Duration(1+i) * time.Second)
-		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		_, err = e.core.HTTPGet(ctx, url)
 		cancel()
 		if err == nil {
@@ -357,6 +357,8 @@ func (e *Engine) selfCheck(url string) {
 		}
 	}
 	pub("error", "tunnel self-check FAILED for "+url+": "+err.Error())
+		_ = e.Stop()
+		e.setState(StateError, "err.tunnel_no_traffic")
 }
 
 // StartWithNode is the legacy convenience wrapper (proxy_only / tun).

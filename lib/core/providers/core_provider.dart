@@ -138,13 +138,17 @@ class CoreController extends Notifier<CoreState> {
       if (PlatformService.isDesktop &&
           settings.mode.usesTun &&
           !await PlatformService.isElevated()) {
+        final relaunched = await PlatformService.relaunchElevated();
+        if (relaunched) return;
         throw CoreException('needs_admin');
       }
       Map<String, dynamic>? tun;
       var systemDns = const <String>[];
-      if (PlatformService.isAndroid && settings.mode.usesTun) {
+      if (settings.mode.usesTun) {
         // Must be read before the VPN interface exists (afterwards it is the VPN).
         systemDns = await PlatformService.systemDns();
+      }
+      if (PlatformService.isAndroid && settings.mode.usesTun) {
         // The Android host creates the TUN device and hands its fd to the core.
         if (!await PlatformService.prepareVpn())
           throw CoreException('vpn_permission_denied');
@@ -330,6 +334,10 @@ class CoreController extends Notifier<CoreState> {
   /// Changes the connection mode; restarts the session if it is running.
   Future<void> setMode(ConnMode m) async {
     ref.read(settingsProvider.notifier).update((s) => s.copyWith(mode: m));
+    if (PlatformService.isDesktop && m.usesTun && !await PlatformService.isElevated()) {
+      final relaunched = await PlatformService.relaunchElevated();
+      if (relaunched) return;
+    }
     if (state.isConnected) {
       await disconnect();
       await connect();

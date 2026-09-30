@@ -71,6 +71,7 @@ func ParseConnMode(v string) ConnMode {
 // TunSettings configures the TUN inbound.
 type TunSettings struct {
 	MTU         uint32 `json:"mtu,omitempty"`
+	Stack       string `json:"stack,omitempty"` // gvisor, mixed, system
 	StrictRoute bool   `json:"strict_route,omitempty"`
 	IPv6        bool   `json:"ipv6,omitempty"`
 	// FD is a host-provided TUN file descriptor (Android VpnService). When set the
@@ -573,27 +574,26 @@ const xrayBypassTag = "xray-bypass-in"
 
 func tunOptions(t TunSettings) *option.TunInboundOptions {
 	mtu := t.MTU
-	if mtu == 0 {
-		mtu = 9000
-	}
-	if t.FD > 0 && (mtu > 1500 || mtu < 576) {
+	if mtu == 0 || mtu > 1500 || mtu < 576 {
 		mtu = 1500
 	}
 	addrs := badoption.Listable[netip.Prefix]{netip.MustParsePrefix("172.19.0.1/30")}
 	if t.IPv6 {
 		addrs = append(addrs, netip.MustParsePrefix("fdfe:dcba:9876::1/126"))
 	}
+	stack := t.Stack
+	if stack == "" {
+		// Default to gVisor user-space TCP/IP stack for desktop and mobile:
+		// avoids Windows Firewall NAT loopback interception and socket buffer bottlenecks,
+		// providing significantly higher speeds and lower latency without packet drops.
+		stack = "gvisor"
+	}
 	o := &option.TunInboundOptions{
 		MTU:         mtu,
 		Address:     addrs,
 		AutoRoute:   t.FD <= 0, // with a host fd the VpnService.Builder owns the routes
 		StrictRoute: t.StrictRoute,
-	}
-	if t.FD > 0 {
-		// Host-owned fd (Android): the app itself is excluded from the VPN, so the
-		// kernel-socket "system" stack cannot see its own replies. gVisor runs
-		// entirely inside the process and needs no routing help from the OS.
-		o.Stack = "gvisor"
+		Stack:       stack,
 	}
 	o.IncludePackage = t.IncludePackages
 	o.ExcludePackage = t.ExcludePackages

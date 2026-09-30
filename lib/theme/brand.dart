@@ -297,15 +297,16 @@ int signalBars(int ms) {
 }
 
 class SignalBars extends StatelessWidget {
-  const SignalBars(this.ms, {super.key, this.color});
+  const SignalBars(this.ms, {super.key, this.color, this.showLabel = false});
   final int ms;
   final Color? color;
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
     final n = signalBars(ms);
     final c = color ?? (n >= 3 ? Brand.on : (n == 2 ? Brand.busy : Brand.bad));
-    return Row(
+    final bars = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -319,6 +320,34 @@ class SignalBars extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+      ],
+    );
+    if (!showLabel) return bars;
+    final String labelText;
+    final Color textColor;
+    if (ms > 0) {
+      labelText = '$ms ms';
+      textColor = c;
+    } else if (ms == -1) {
+      labelText = 'Timeout';
+      textColor = Brand.bad;
+    } else {
+      labelText = '— ms';
+      textColor = Brand.textDim;
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          labelText,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(width: 4),
+        bars,
       ],
     );
   }

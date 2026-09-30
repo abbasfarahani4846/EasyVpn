@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../core/models/models.dart';
 import '../../core/providers/core_provider.dart';
@@ -26,6 +27,10 @@ class SimpleHome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (PlatformService.isDesktop &&
+        ref.watch(settingsProvider.select((x) => x.miniWindow))) {
+      return const _WindscribeCard();
+    }
     final core = ref.watch(coreControllerProvider);
     final color = Brand.forStatus(core.status);
     return Theme(
@@ -55,18 +60,18 @@ class SimpleHome extends ConsumerWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
                     child: LayoutBuilder(
                       builder: (context, c) {
-                        // Windscribe-style compact arrangement for the mini
-                        // window / very short screens.
-                        final compact = c.maxHeight < 560;
+                        // Compact arrangement applies only on desktop mini windows,
+                        // never on mobile/Android devices.
+                        final compact = PlatformService.isDesktop && c.maxHeight < 560;
                         return Column(
                           children: [
                             _TopBar(core: core),
                             if (!compact) const _UpdateBanner(),
                             const Spacer(flex: 2),
-                            _Orb(core: core, size: compact ? 150 : 230),
+                            _Orb(core: core, size: compact ? 140 : 210),
                             SizedBox(height: compact ? 10 : 22),
                             _StatusText(core: core, compact: compact),
                             if (core.isConnected) ...[
@@ -101,7 +106,7 @@ class _TopBar extends StatelessWidget {
     final c = Brand.forStatus(core.status);
     final pill = AnimatedContainer(
       duration: const Duration(milliseconds: 400),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(40),
@@ -112,17 +117,17 @@ class _TopBar extends StatelessWidget {
         children: [
           Icon(
             on ? Icons.lock_rounded : Icons.lock_open_rounded,
-            size: 14,
+            size: 13,
             color: c,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Flexible(
             child: Text(
               on ? s.t('home.protected') : s.t('home.unprotected'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: c,
               ),
@@ -134,53 +139,43 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
             gradient: Brand.orbGradient(
               on ? CoreStatus.connected : CoreStatus.disconnected,
             ),
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(9),
           ),
-          child: const Icon(Icons.shield_rounded, size: 20, color: Brand.text),
+          child: const Icon(Icons.shield_rounded, size: 17, color: Brand.text),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         const Text(
           'EasyVPN',
           maxLines: 1,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0.4,
+            letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
-          child: Align(alignment: AlignmentDirectional.centerEnd, child: pill),
-        ),
-        if (PlatformService.isDesktop)
-          Consumer(
-            builder: (context, ref, _) {
-              final mini = ref.watch(
-                settingsProvider.select((x) => x.miniWindow),
-              );
-              return IconButton(
-                tooltip: s.t('home.mini'),
-                icon: Icon(
-                  mini
-                      ? Icons.open_in_full_rounded
-                      : Icons.close_fullscreen_rounded,
-                  size: 20,
-                ),
-                onPressed: () => ref
-                    .read(settingsProvider.notifier)
-                    .update((x) => x.copyWith(miniWindow: !mini)),
-              );
-            },
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: pill,
           ),
+        ),
+        const SizedBox(width: 4),
+        if (PlatformService.isDesktop) ...[
+          const ViewSwitcherButton(),
+          const SizedBox(width: 2),
+        ],
         IconButton(
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
           tooltip: s.t('home.menu'),
-          icon: const Icon(Icons.grid_view_rounded),
+          icon: const Icon(Icons.grid_view_rounded, size: 19),
           onPressed: () => showHomeMenu(context),
         ),
       ],
@@ -351,9 +346,9 @@ class _StatusTextState extends ConsumerState<_StatusText> {
     } else if (core.status == CoreStatus.error) {
       sub = core.detail == 'no_node' ? s.t('err.no_node') : s.t(core.detail);
     } else if (core.status == CoreStatus.connecting) {
-      // Pressing the orb again cancels (also while "Fastest" is testing).
-      sub = core.detail == 'home.testing'
-          ? '${s.t('home.testing')}  ·  ${s.t('home.cancel')}'
+      // Pressing the orb again cancels (also while "Fastest" is testing or verifying).
+      sub = core.detail.isNotEmpty
+          ? '${s.t(core.detail)}  ·  ${s.t('home.cancel')}'
           : s.t('home.cancel');
     } else {
       sub = s.t('home.tap');
@@ -409,9 +404,20 @@ class _IpCard extends ConsumerWidget {
       decoration: Brand.glass(),
       child: Row(
         children: [
-          Text(
-            info != null ? flagEmoji(info.countryCode) : '🌐',
-            style: const TextStyle(fontSize: 26),
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Brand.panel,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Text(
+              info != null && info.countryCode.isNotEmpty
+                  ? flagEmoji(info.countryCode)
+                  : '🌐',
+              style: const TextStyle(fontSize: 20),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -488,49 +494,36 @@ class _BottomPanel extends ConsumerWidget {
     final core = ref.watch(coreControllerProvider);
     final traffic = ref.watch(trafficProvider).current;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: Brand.glass(),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _LocationTile(nodeId: settings.activeNodeId),
-          if (!compact) const SizedBox(height: 12),
+          if (!compact) const SizedBox(height: 10),
           if (!compact)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _Chip(
-                    icon: Icons.bolt_rounded,
-                    label: s.t('home.fastest'),
-                    onTap: () => ref
-                        .read(coreControllerProvider.notifier)
-                        .connectFastest(),
-                  ),
-                  const SizedBox(width: 8),
-                  _Chip(
-                    icon: Icons.link_rounded,
-                    label: _chainLabel(s, settings),
-                    active:
-                        settings.chainNodeIds.isNotEmpty ||
-                        settings.exitNodeId.isNotEmpty,
-                    onTap: () => openMenuPage(context, MenuTarget.chain),
-                  ),
-                  const SizedBox(width: 8),
-                  _ModeChip(mode: settings.mode),
-                  if (core.isConnected) ...[
-                    const SizedBox(width: 8),
-                    _Chip(
-                      icon: Icons.travel_explore_rounded,
-                      label: s.t('menu.sites'),
-                      onTap: () => openMenuPage(context, MenuTarget.sites),
-                    ),
-                  ],
-                ],
-              ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              alignment: WrapAlignment.center,
+              children: [
+                _Chip(
+                  icon: Icons.bolt_rounded,
+                  label: s.t('home.fastest'),
+                  onTap: () => ref
+                      .read(coreControllerProvider.notifier)
+                      .connectFastest(),
+                ),
+                _Chip(
+                  icon: Icons.travel_explore_rounded,
+                  label: s.t('menu.sites'),
+                  onTap: () => openMenuPage(context, MenuTarget.sites),
+                ),
+                _ModeChip(mode: settings.mode),
+              ],
             ),
           if (core.isConnected && !compact) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: [
                 const Icon(Icons.south_rounded, size: 16, color: Brand.on),
@@ -546,14 +539,6 @@ class _BottomPanel extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _chainLabel(S s, AppSettings st) {
-    if (st.exitNodeId.isNotEmpty) return s.t('home.chain.warp');
-    if (st.chainNodeIds.isNotEmpty) {
-      return s.t('home.chain.custom', {'n': st.chainNodeIds.length});
-    }
-    return '${s.t('home.chain')}: ${s.t('home.chain.off')}';
   }
 }
 
@@ -630,7 +615,7 @@ class _LocationTile extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (row != null) SignalBars(row.latency),
+                  if (row != null) SignalBars(row.latency, showLabel: true),
                   const SizedBox(width: 6),
                   const Icon(Icons.chevron_right_rounded, color: Brand.textDim),
                 ],
@@ -648,31 +633,35 @@ class _Chip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.active = false,
   });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool active;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: active ? Brand.on.withValues(alpha: 0.18) : Brand.panel,
-      shape: StadiumBorder(
-        side: BorderSide(color: active ? Brand.on : Brand.panelBorder),
+      color: Brand.panel,
+      shape: const StadiumBorder(
+        side: BorderSide(color: Brand.panelBorder),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: active ? Brand.on : Brand.text),
-              const SizedBox(width: 6),
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Icon(icon, size: 15, color: Brand.text),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -739,6 +728,272 @@ class _UpdateBanner extends ConsumerWidget {
                 const Icon(Icons.chevron_right_rounded),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Allows switching between Mini Card, Standard, and Advanced layout views.
+class ViewSwitcherButton extends ConsumerWidget {
+  const ViewSwitcherButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.s;
+    final settings = ref.watch(settingsProvider);
+    final set = ref.read(settingsProvider.notifier);
+
+    return PopupMenuButton<String>(
+      tooltip: s.t('view.switcher'),
+      icon: const Icon(Icons.dashboard_customize_outlined, size: 18),
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Brand.night2,
+      onSelected: (mode) {
+        if (mode == 'mini') {
+          set.update((x) => x.copyWith(uiMode: 'simple', miniWindow: true));
+        } else if (mode == 'simple') {
+          set.update((x) => x.copyWith(uiMode: 'simple', miniWindow: false));
+        } else if (mode == 'advanced') {
+          set.update((x) => x.copyWith(uiMode: 'advanced', miniWindow: false));
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'mini',
+          child: Row(
+            children: [
+              Icon(Icons.crop_16_9_rounded, size: 18, color: settings.miniWindow ? Brand.on : Brand.textDim),
+              const SizedBox(width: 8),
+              Text(s.t('view.mini'), style: TextStyle(fontWeight: settings.miniWindow ? FontWeight.w700 : null)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'simple',
+          child: Row(
+            children: [
+              Icon(Icons.smartphone_rounded, size: 18, color: (!settings.miniWindow && settings.uiMode == 'simple') ? Brand.on : Brand.textDim),
+              const SizedBox(width: 8),
+              Text(s.t('view.simple'), style: TextStyle(fontWeight: (!settings.miniWindow && settings.uiMode == 'simple') ? FontWeight.w700 : null)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'advanced',
+          child: Row(
+            children: [
+              Icon(Icons.desktop_windows_rounded, size: 18, color: settings.uiMode == 'advanced' ? Brand.on : Brand.textDim),
+              const SizedBox(width: 8),
+              Text(s.t('view.advanced'), style: TextStyle(fontWeight: settings.uiMode == 'advanced' ? FontWeight.w700 : null)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Windscribe-style horizontal mini card layout (370x270 fixed).
+class _WindscribeCard extends ConsumerWidget {
+  const _WindscribeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.s;
+    final core = ref.watch(coreControllerProvider);
+    final settings = ref.watch(settingsProvider);
+    final set = ref.read(settingsProvider.notifier);
+    final color = Brand.forStatus(core.status);
+    final exitInfo = ref.watch(exitInfoProvider).value;
+
+    return Theme(
+      data: Brand.theme(Theme.of(context)),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0.6, -0.2),
+              radius: 1.15,
+              colors: [
+                color.withValues(alpha: 0.28),
+                Brand.night2.withValues(alpha: 0.96),
+                Brand.night,
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top Bar
+              Row(
+                children: [
+                  IconButton(
+                    constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.menu_rounded, size: 20),
+                    onPressed: () => showHomeMenu(context),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'EasyVPN',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                  const Spacer(),
+                  const ViewSwitcherButton(),
+                  const SizedBox(width: 2),
+                  IconButton(
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    padding: EdgeInsets.zero,
+                    tooltip: s.t('conn.start_minimized'),
+                    icon: const Icon(Icons.remove_rounded, size: 18),
+                    onPressed: () => windowManager.minimize(),
+                  ),
+                  IconButton(
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    padding: EdgeInsets.zero,
+                    tooltip: s.t('tray.quit'),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () => windowManager.close(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Center row: Info on left, Power Orb on right
+              Expanded(
+                child: Row(
+                  children: [
+                    // Left info column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FutureBuilder<NodeRow?>(
+                            future: settings.activeNodeId == null
+                                ? Future.value(null)
+                                : ref.read(envProvider).repo.nodeRow(settings.activeNodeId!),
+                            builder: (context, snap) {
+                              final row = snap.data;
+                              final flag = row == null ? null : leadingFlag(row.name);
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () => showLocationPicker(context),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (flag != null) ...[
+                                            Text(flag, style: const TextStyle(fontSize: 15)),
+                                            const SizedBox(width: 4),
+                                          ],
+                                          Text(
+                                            row != null ? row.protocol.toUpperCase() : 'VPN',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: Brand.on,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          if (row != null)
+                                            SignalBars(row.latency, showLabel: true),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        row == null ? s.t('home.choose') : cleanName(row.name),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: Brand.text,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 3),
+                          // IP Address
+                          Text(
+                            exitInfo != null ? exitInfo.ip : (core.isConnected ? s.t('ip.checking') : s.t('home.unprotected')),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: core.isConnected ? Brand.textDim : Brand.bad,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Kill switch
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'KILL SWITCH',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: settings.tunStrictRoute ? Brand.on : Brand.textDim,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              SizedBox(
+                                height: 20,
+                                width: 36,
+                                child: Switch(
+                                  value: settings.tunStrictRoute,
+                                  onChanged: (v) => set.update((x) => x.copyWith(tunStrictRoute: v)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Right power orb
+                    _Orb(core: core, size: 95),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Bottom Locations bar
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => showLocationPicker(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: Brand.glass(radius: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 16, color: Brand.textDim),
+                      const SizedBox(width: 6),
+                      Text(s.t('home.location'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Brand.textDim),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

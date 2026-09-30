@@ -485,8 +485,9 @@ class AppSettings {
     this.localPort = 2080,
     this.allowLan = false,
     this.localAuth = true,
-    this.tunMtu = 9000,
-    this.tunStrictRoute = false,
+    this.tunMtu = 1500,
+    this.tunStack = 'gvisor', // gvisor | mixed | system
+    this.tunStrictRoute = true,
     this.tunIpv6 = false,
     this.perAppMode = 'off', // off|include|exclude (Android)
     this.perAppPackages = const [],
@@ -517,6 +518,7 @@ class AppSettings {
   final bool allowLan;
   final bool localAuth;
   final int tunMtu;
+  final String tunStack;
   final bool tunStrictRoute;
   final bool tunIpv6;
   final String perAppMode;
@@ -560,6 +562,7 @@ class AppSettings {
     bool? allowLan,
     bool? localAuth,
     int? tunMtu,
+    String? tunStack,
     bool? tunStrictRoute,
     bool? tunIpv6,
     String? perAppMode,
@@ -590,6 +593,7 @@ class AppSettings {
     allowLan: allowLan ?? this.allowLan,
     localAuth: localAuth ?? this.localAuth,
     tunMtu: tunMtu ?? this.tunMtu,
+    tunStack: tunStack ?? this.tunStack,
     tunStrictRoute: tunStrictRoute ?? this.tunStrictRoute,
     tunIpv6: tunIpv6 ?? this.tunIpv6,
     perAppMode: perAppMode ?? this.perAppMode,
@@ -628,6 +632,7 @@ class AppSettings {
     'allowLan': allowLan,
     'localAuth': localAuth,
     'tunMtu': tunMtu,
+    'tunStack': tunStack,
     'tunStrictRoute': tunStrictRoute,
     'tunIpv6': tunIpv6,
     'perAppMode': perAppMode,
@@ -666,6 +671,7 @@ class AppSettings {
       allowLan: (j['allowLan'] as bool?) ?? d.allowLan,
       localAuth: (j['localAuth'] as bool?) ?? d.localAuth,
       tunMtu: (j['tunMtu'] as int?) ?? d.tunMtu,
+      tunStack: (j['tunStack'] as String?) ?? d.tunStack,
       tunStrictRoute: (j['tunStrictRoute'] as bool?) ?? d.tunStrictRoute,
       tunIpv6: (j['tunIpv6'] as bool?) ?? d.tunIpv6,
       perAppMode: (j['perAppMode'] as String?) ?? d.perAppMode,

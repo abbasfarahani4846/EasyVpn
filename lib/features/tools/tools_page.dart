@@ -12,6 +12,12 @@ class ToolsPage extends StatelessWidget {
   static const _items = <(MenuTarget, IconData, String, String)>[
     (MenuTarget.add, Icons.add_circle_rounded, 'menu.add', 'tools.add'),
     (
+      MenuTarget.speed,
+      Icons.speed_rounded,
+      'menu.speed',
+      'tools.speed',
+    ),
+    (
       MenuTarget.sites,
       Icons.travel_explore_rounded,
       'menu.sites',

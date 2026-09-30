@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/settings_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/platform_service.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/common.dart';
 
@@ -180,6 +181,50 @@ class AppearancePage extends ConsumerWidget {
             onChanged: (v) =>
                 set.setAppearance((x) => x.copyWith(showSpeedChart: v)),
           ),
+          if (PlatformService.isDesktop) ...[
+            SectionHeader(s.t('view.switcher')),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final settings = ref.watch(settingsProvider);
+                  final current = settings.miniWindow
+                      ? 'mini'
+                      : (settings.uiMode == 'advanced' ? 'advanced' : 'simple');
+                  return SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(
+                        value: 'mini',
+                        icon: const Icon(Icons.crop_16_9_rounded, size: 16),
+                        label: Text(s.t('view.mini')),
+                      ),
+                      ButtonSegment(
+                        value: 'simple',
+                        icon: const Icon(Icons.smartphone_rounded, size: 16),
+                        label: Text(s.t('view.simple')),
+                      ),
+                      ButtonSegment(
+                        value: 'advanced',
+                        icon: const Icon(Icons.desktop_windows_rounded, size: 16),
+                        label: Text(s.t('view.advanced')),
+                      ),
+                    ],
+                    selected: {current},
+                    onSelectionChanged: (v) {
+                      final val = v.first;
+                      if (val == 'mini') {
+                        set.update((x) => x.copyWith(uiMode: 'simple', miniWindow: true));
+                      } else if (val == 'simple') {
+                        set.update((x) => x.copyWith(uiMode: 'simple', miniWindow: false));
+                      } else if (val == 'advanced') {
+                        set.update((x) => x.copyWith(uiMode: 'advanced', miniWindow: false));
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
         ],
       ),

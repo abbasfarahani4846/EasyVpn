@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/strings.dart';
+import '../theme/brand.dart';
 
 void showSnack(BuildContext context, String msg, {bool error = false}) {
   final m = ScaffoldMessenger.maybeOf(context);
@@ -111,18 +112,25 @@ class LatencyBadge extends StatelessWidget {
         ? const Color(0xFF22C55E)
         : (ms < 800 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        '$ms ms',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$ms ms',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(width: 4),
+          SignalBars(ms, color: color),
+        ],
       ),
     );
   }

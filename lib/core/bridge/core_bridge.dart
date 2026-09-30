@@ -55,6 +55,7 @@ class CoreBridge {
           tun ??
           {
             'mtu': settings.tunMtu,
+            'stack': settings.tunStack,
             'strict_route': settings.tunStrictRoute,
             'ipv6': settings.tunIpv6,
             'include_packages': ?(settings.perAppMode == 'include'

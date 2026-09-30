@@ -23,20 +23,23 @@ class WindowProfile {
   final Size min;
   final Size max;
 
-  static const simple = WindowProfile(
-    Size(400, 740),
-    Size(360, 620),
-    Size(520, 900),
-  );
+  /// Mini / Compact card mode (like Windscribe): 370x270 fixed.
   static const mini = WindowProfile(
-    Size(320, 440),
-    Size(320, 440),
-    Size(320, 440),
+    Size(370, 270),
+    Size(370, 270),
+    Size(370, 270),
   );
+  /// Standard phone-style mode: 390x660 fixed.
+  static const simple = WindowProfile(
+    Size(390, 660),
+    Size(390, 660),
+    Size(390, 660),
+  );
+  /// Large/expanded mode: spacious 1060x720 window with full dashboard and tabs.
   static const advanced = WindowProfile(
     Size(1060, 720),
-    Size(820, 600),
-    Size(1440, 960),
+    Size(860, 600),
+    Size(1600, 1000),
   );
 
   static WindowProfile of(AppSettings s) =>
@@ -50,9 +53,10 @@ Future<void> applyWindowProfile(WindowProfile p) async {
   await windowManager.setSize(p.size);
   await windowManager.setMinimumSize(p.min);
   await windowManager.setMaximumSize(p.max);
-  // Note: no setResizable(false): on Linux/GTK it snaps the window to its
-  // default size. min == max already makes the mini window fixed.
   await windowManager.setSize(p.size);
+  final isFixed = p.min == p.max;
+  await windowManager.setResizable(!isFixed);
+  await windowManager.setMaximizable(!isFixed);
 }
 
 /// Call once before `runApp` on desktop.
@@ -71,6 +75,9 @@ Future<void> initDesktopWindow({
     backgroundColor: const Color(0xFF070B16),
   );
   await windowManager.waitUntilReadyToShow(opts, () async {
+    final isFixed = profile.min == profile.max;
+    await windowManager.setResizable(!isFixed);
+    await windowManager.setMaximizable(!isFixed);
     if (!startMinimized) {
       await windowManager.show();
       await windowManager.focus();

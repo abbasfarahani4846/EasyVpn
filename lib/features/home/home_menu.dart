@@ -7,6 +7,7 @@ import '../../theme/brand.dart';
 import '../add/add_sheet.dart';
 import '../chain/chain_page.dart';
 import '../tools/site_check_page.dart';
+import '../tools/speed_test_page.dart';
 import '../logs/logs_page.dart';
 import '../proxies/proxies_page.dart';
 import '../routing/routing_page.dart';
@@ -17,6 +18,7 @@ import '../windscribe/windscribe_page.dart';
 
 enum MenuTarget {
   add,
+  speed,
   sites,
   servers,
   proxies,
@@ -30,6 +32,7 @@ enum MenuTarget {
 
 Widget _pageFor(MenuTarget t) => switch (t) {
   MenuTarget.add => const SizedBox.shrink(), // a sheet, see openMenuPage
+  MenuTarget.speed => const SpeedTestPage(),
   MenuTarget.sites => const SiteCheckPage(),
   MenuTarget.servers => const SubscriptionPage(),
   MenuTarget.proxies => const ProxiesPage(),
@@ -68,6 +71,7 @@ class _MenuSheet extends ConsumerWidget {
 
   static const _items = <(MenuTarget, IconData, String)>[
     (MenuTarget.add, Icons.add_circle_rounded, 'menu.add'),
+    (MenuTarget.speed, Icons.speed_rounded, 'menu.speed'),
     (MenuTarget.sites, Icons.travel_explore_rounded, 'menu.sites'),
     (MenuTarget.servers, Icons.cloud_download_rounded, 'menu.servers'),
     (MenuTarget.proxies, Icons.dns_rounded, 'menu.proxies'),

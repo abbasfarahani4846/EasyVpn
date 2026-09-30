@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/models.dart';
 import '../../core/providers/core_provider.dart';
 import '../../core/providers/env.dart';
+import '../../core/providers/node_list_provider.dart';
 import '../../core/providers/ping_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../l10n/strings.dart';
@@ -97,6 +98,18 @@ class _PickerState extends ConsumerState<_Picker> {
     final s = context.s;
     final active = ref.watch(settingsProvider.select((x) => x.activeNodeId));
     final ping = ref.watch(pingProvider);
+    ref.listen<NodeListState>(nodeListProvider, (_, next) {
+      if (!mounted || _rows.isEmpty) return;
+      final latMap = {for (final r in next.rows) r.id: r.latency};
+      setState(() {
+        for (var i = 0; i < _rows.length; i++) {
+          final lat = latMap[_rows[i].id];
+          if (lat != null && lat != _rows[i].latency) {
+            _rows[i] = _rows[i].copyWith(latency: lat);
+          }
+        }
+      });
+    });
     return Theme(
       data: Brand.theme(Theme.of(context)),
       child: Column(
@@ -286,13 +299,14 @@ class _NodeTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        '${row.protocol.toUpperCase()}${row.latency > 0 ? '  ·  ${row.latency} ms' : ''}',
+        row.protocol.toUpperCase(),
         style: const TextStyle(fontSize: 11.5, color: Brand.textDim),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SignalBars(row.latency),
+          SignalBars(row.latency, showLabel: true),
+          const SizedBox(width: 4),
           IconButton(
             icon: Icon(
               row.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
