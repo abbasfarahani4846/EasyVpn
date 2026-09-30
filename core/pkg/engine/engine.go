@@ -53,6 +53,9 @@ type StartParams struct {
 	Chain []*protocol.ProxyNode `json:"chain,omitempty"`
 }
 
+// ErrCancelled is returned by Start when Stop cancelled it midway.
+var ErrCancelled = errorString("cancelled")
+
 // Engine is the single orchestrator instance owned by the C/RPC entry points.
 type Engine struct {
 	mu      sync.Mutex
@@ -266,9 +269,20 @@ func (e *Engine) Start(p StartParams) error {
 	}
 	if err := e.core.Start(ctx, req); err != nil {
 		e.closeSidecar()
+		if ctx.Err() != nil { // cancelled by Stop while starting
+			e.setState(StateDisconnected, "")
+			return ErrCancelled
+		}
 		e.setState(StateError, err.Error())
 		cancel()
 		return err
+	}
+	// The user pressed "cancel" while the box was starting: undo it.
+	if ctx.Err() != nil {
+		_ = e.core.Stop(context.Background())
+		e.closeSidecar()
+		e.setState(StateDisconnected, "")
+		return ErrCancelled
 	}
 
 	// System proxy: only after the core is listening. Failure to set it must
@@ -295,9 +309,18 @@ func (e *Engine) Start(p StartParams) error {
 	}
 	e.mu.Lock()
 	e.localPort = port
+	cancelled := ctx.Err() != nil
 	e.mu.Unlock()
+	if cancelled {
+		_ = e.sysProxy.Restore()
+		_ = e.core.Stop(context.Background())
+		e.closeSidecar()
+		e.setState(StateDisconnected, "")
+		return ErrCancelled
+	}
 	e.setState(StateConnected, "")
 	if mode.NeedsTUN() {
+		flushOSDNSCache() // drop answers cached before the tunnel (DNS poisoning)
 		go e.selfCheck(p.TestURL)
 	}
 	return nil
@@ -348,13 +371,13 @@ func (e *Engine) Stop() error {
 	e.stopFn = nil
 	e.proxyOn = false
 	e.mu.Unlock()
+	if stopFn != nil {
+		stopFn() // cancels a Start that is still in progress
+	}
 
 	_ = e.sysProxy.Restore()
 	err := e.core.Stop(context.Background())
 	e.closeSidecar()
-	if stopFn != nil {
-		stopFn()
-	}
 	e.setState(StateDisconnected, "")
 	return err
 }

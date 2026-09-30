@@ -143,6 +143,8 @@ type CoreAdapter interface {
 	Running() bool
 	// HTTPGet fetches a plain-HTTP URL through the running tunnel.
 	HTTPGet(ctx context.Context, rawURL string) ([]byte, error)
+	// HTTPProbe fetches a URL through the tunnel and returns any status.
+	HTTPProbe(ctx context.Context, rawURL string, maxBody int64) (*ProbeResult, error)
 }
 
 // ErrNeedsRestart is returned by SwitchNode when a full restart is required.
@@ -222,6 +224,15 @@ func (a *SingBoxAdapter) Start(ctx context.Context, req *StartRequest) error {
 	}
 
 	boxCtx := include.Context(ctx)
+	// Round-trip the generated options through sing-box's own JSON decoder,
+	// exactly like a config file: every field default is applied the same
+	// way (e.g. reject method, sniff timeout), so a zero value in our
+	// struct-built config can never reach sing-box as an invalid value.
+	if norm, err := normalizeOptions(boxCtx, opts); err != nil {
+		return fmt.Errorf("build options: %w", err)
+	} else {
+		opts = norm
+	}
 	// PlatformLogWriter captures log lines AND guarantees box.New registers
 	// the traffic manager (needClashAPI path includes PlatformLogWriter != nil).
 	boxOpts := box.Options{
@@ -650,6 +661,29 @@ func ExportSingBox(nodes []*protocol.ProxyNode) (string, error) {
 // HTTPGet performs a GET (http or https) through the running tunnel's "proxy"
 // selector: this is how the app shows the REAL exit IP as seen from the internet.
 func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, error) {
+	r, err := a.HTTPProbe(ctx, rawURL, 64<<10)
+	if err != nil {
+		return nil, err
+	}
+	if r.Status < 200 || r.Status > 299 { // generate_204 answers 204
+		return nil, fmt.Errorf("HTTP %d from %s", r.Status, r.Host)
+	}
+	return r.Body, nil
+}
+
+// ProbeResult is one HTTP request made through the tunnel.
+type ProbeResult struct {
+	Status   int
+	Body     []byte
+	Host     string
+	FinalURL string
+	Elapsed  time.Duration
+}
+
+// HTTPProbe performs a GET through the running tunnel's "proxy" selector and
+// returns the status, the first maxBody bytes and the final URL (redirects
+// followed). Any status is returned, not only 2xx.
+func (a *SingBoxAdapter) HTTPProbe(ctx context.Context, rawURL string, maxBody int64) (*ProbeResult, error) {
 	a.mu.Lock()
 	b := a.instance
 	a.mu.Unlock()
@@ -665,7 +699,7 @@ func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, er
 		return nil, fmt.Errorf("URL must start with http:// or https://")
 	}
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 12 * time.Second,
 		Transport: &http.Transport{
 			// The net/http transport layers TLS on top of the tunnel connection for https.
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -678,16 +712,18 @@ func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "EasyVPN/1.0")
+	// A browser-like UA: several services answer bots differently.
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode > 299 { // generate_204 answers 204
-		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, u.Host)
-	}
-	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBody))
+	return &ProbeResult{Status: resp.StatusCode, Body: body, Host: u.Host,
+		FinalURL: resp.Request.URL.String(), Elapsed: time.Since(start)}, nil
 }
 
 // cacheFilePath returns an absolute, writable location for sing-box's cache file.
@@ -697,4 +733,13 @@ func cacheFilePath(dir string) string {
 	}
 	_ = os.MkdirAll(dir, 0o755)
 	return filepath.Join(dir, "singbox-cache.db")
+}
+
+// normalizeOptions marshals and re-parses options with sing-box's decoder.
+func normalizeOptions(ctx context.Context, o option.Options) (option.Options, error) {
+	b, err := singjson.Marshal(o)
+	if err != nil {
+		return o, err
+	}
+	return singjson.UnmarshalExtendedContext[option.Options](ctx, b)
 }

@@ -21,7 +21,11 @@ func fakeSets(t *testing.T, tags ...string) string {
 func actions(rules []option.Rule) []string {
 	var out []string
 	for _, r := range rules {
-		out = append(out, r.DefaultOptions.Action)
+		a := r.DefaultOptions.Action
+		if a == "route" {
+			a += ":" + r.DefaultOptions.RouteOptions.Outbound
+		}
+		out = append(out, a)
 	}
 	return out
 }
@@ -31,7 +35,7 @@ func TestIranRuleOrder(t *testing.T) {
 	m.RuleSetDir = fakeSets(t, "geosite-ads-all", "geosite-malware", "geosite-ir", "geoip-ir")
 	got := actions(BuildRouteRules(m))
 	// sniff, hijack-dns, reject(block), direct(LAN), route(proxy override), direct(.ir), direct(sets)
-	want := []string{"sniff", "hijack-dns", "reject", "direct", "route", "direct", "direct"}
+	want := []string{"sniff", "hijack-dns", "reject", "route:direct", "route:proxy", "route:direct", "route:direct"}
 	if len(got) != len(want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -62,7 +66,7 @@ func TestMissingRuleSetsAreNeverReferenced(t *testing.T) {
 	found := false
 	for _, r := range BuildRouteRules(m) {
 		for _, s := range r.DefaultOptions.DomainSuffix {
-			if s == ".ir" && r.DefaultOptions.Action == "direct" {
+			if s == ".ir" && r.DefaultOptions.RouteOptions.Outbound == "direct" {
 				found = true
 			}
 		}

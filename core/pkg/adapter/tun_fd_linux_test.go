@@ -219,3 +219,48 @@ func TestTUNWithXraySidecarBypass(t *testing.T) {
 		t.Fatalf("status %d", resp.StatusCode)
 	}
 }
+
+// Real reproduction of the Windows crash: in TUN mode a connection that hits
+// a "block" rule must be rejected, not panic the whole core.
+func TestTUNBlockRuleDoesNotPanic(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("needs root")
+	}
+	echo, closeEcho := startEchoServer(t)
+	defer closeEcho()
+	socks := startAnySOCKS(t, strings.TrimPrefix(echo, "http://"))
+	fd := newTUN(t, "evtest2")
+	link, err := netlink.LinkByName("evtest2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr, _ := netlink.ParseAddr("172.19.0.9/30")
+	_ = netlink.AddrAdd(link, addr)
+	_ = netlink.LinkSetUp(link)
+	_, dst, _ := net.ParseCIDR("198.18.80.0/24")
+	if err := netlink.RouteAdd(&netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst}); err != nil {
+		t.Fatal(err)
+	}
+	host, port := splitHostPort(t, socks)
+	m := router.Model{Mode: router.ModeGlobalProxy, LogLevel: "warn",
+		CustomRules: []router.Rule{{Kind: router.KindIPCIDR, Values: []string{"198.18.80.66/32"}, Outbound: router.OutboundBlock}}}
+	a := NewSingBoxAdapter()
+	if err := a.Start(context.Background(), &StartRequest{
+		Node: &protocol.ProxyNode{Name: "s", Type: protocol.ProtoSocks, Server: host, Port: port},
+		Mode: ModeTUN, Routing: m, LogLevel: "warn", CacheDir: t.TempDir(), Tun: TunSettings{FD: fd, MTU: 1500},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	defer a.Stop(context.Background())
+	cl := &http.Client{Timeout: 4 * time.Second}
+	if resp, err := cl.Get("http://198.18.80.66/"); err == nil {
+		resp.Body.Close()
+		t.Fatal("blocked destination must not be reachable")
+	}
+	// The core is still alive and routes allowed traffic.
+	resp, err := cl.Get("http://198.18.80.9/generate_204")
+	if err != nil {
+		t.Fatalf("core died after a blocked connection: %v", err)
+	}
+	resp.Body.Close()
+}

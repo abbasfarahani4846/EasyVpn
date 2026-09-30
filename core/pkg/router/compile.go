@@ -90,7 +90,7 @@ func BuildRouteRules(m Model) []option.Rule {
 	if len(blockSets) > 0 {
 		rules = append(rules, rule(option.DefaultRule{
 			RawDefaultRule: option.RawDefaultRule{RuleSet: blockSets},
-			RuleAction:     option.RuleAction{Action: "reject"},
+			RuleAction:     rejectAction(),
 		}))
 	}
 
@@ -98,7 +98,7 @@ func BuildRouteRules(m Model) []option.Rule {
 	if m.BypassLAN {
 		rules = append(rules, rule(option.DefaultRule{
 			RawDefaultRule: option.RawDefaultRule{IPIsPrivate: true},
-			RuleAction:     option.RuleAction{Action: "direct"},
+			RuleAction:     routeAction(OutboundDirect),
 		}))
 	}
 
@@ -113,7 +113,7 @@ func BuildRouteRules(m Model) []option.Rule {
 	if len(m.ServiceOverrides.Direct) > 0 {
 		rules = append(rules, rule(option.DefaultRule{
 			RawDefaultRule: option.RawDefaultRule{DomainSuffix: m.ServiceOverrides.Direct},
-			RuleAction:     option.RuleAction{Action: "direct"},
+			RuleAction:     routeAction(OutboundDirect),
 		}))
 	}
 
@@ -129,13 +129,13 @@ func BuildRouteRules(m Model) []option.Rule {
 			if len(raw.DomainSuffix) > 0 {
 				rules = append(rules, rule(option.DefaultRule{
 					RawDefaultRule: option.RawDefaultRule{DomainSuffix: raw.DomainSuffix},
-					RuleAction:     option.RuleAction{Action: "direct"},
+					RuleAction:     routeAction(OutboundDirect),
 				}))
 			}
 			if len(raw.RuleSet) > 0 {
 				rules = append(rules, rule(option.DefaultRule{
 					RawDefaultRule: option.RawDefaultRule{RuleSet: raw.RuleSet},
-					RuleAction:     option.RuleAction{Action: "direct"},
+					RuleAction:     routeAction(OutboundDirect),
 				}))
 			}
 		}
@@ -189,9 +189,9 @@ func routeAction(o Outbound) option.RuleAction {
 func actionFor(o Outbound) option.RuleAction {
 	switch o {
 	case OutboundBlock:
-		return option.RuleAction{Action: "reject"}
+		return rejectAction()
 	case OutboundDirect:
-		return option.RuleAction{Action: "direct"}
+		return routeAction(OutboundDirect)
 	default:
 		return routeAction(OutboundProxy)
 	}
@@ -383,5 +383,16 @@ func parseDNSServer(tag, addr, detour string) option.DNSServerOptions {
 		return option.DNSServerOptions{Type: "tcp", Tag: tag, Options: &option.RemoteDNSServerOptions{RawLocalDNSServerOptions: remote(host, port, 53).RawLocalDNSServerOptions, DNSServerAddressOptions: remote(host, port, 53).DNSServerAddressOptions}}
 	default:
 		return option.DNSServerOptions{Type: "udp", Tag: tag, Options: &option.RemoteDNSServerOptions{RawLocalDNSServerOptions: remote(host, port, 53).RawLocalDNSServerOptions, DNSServerAddressOptions: remote(host, port, 53).DNSServerAddressOptions}}
+	}
+}
+
+// rejectAction builds a reject rule action with an explicit method. The
+// struct zero value (Method "") is only defaulted by sing-box's JSON decoder;
+// used directly it panics ("unknown reject method") on the first blocked
+// connection, which crashed the core in TUN mode.
+func rejectAction() option.RuleAction {
+	return option.RuleAction{
+		Action:        C.RuleActionTypeReject,
+		RejectOptions: option.RejectActionOptions{Method: C.RuleActionRejectMethodDefault},
 	}
 }

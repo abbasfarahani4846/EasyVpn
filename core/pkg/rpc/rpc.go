@@ -79,6 +79,18 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 	switch method {
 	case "Init", "Info":
 		return e.Info(), nil
+	case "SiteCheck":
+		a, err := decode[struct {
+			Sites []engine.Site `json:"sites"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		r, err := e.SiteCheck(ctx, a.Sites)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"results": r}, nil
 	case "LastCrash":
 		return map[string]any{"text": e.LastCrash()}, nil
 	case "GetState":
