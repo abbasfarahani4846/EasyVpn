@@ -21,6 +21,7 @@ import (
 	"easyvpn/core/pkg/router"
 	"easyvpn/core/pkg/rulesync"
 	"easyvpn/core/pkg/transport"
+	"easyvpn/core/pkg/update"
 )
 
 // Server dispatches RPC calls onto an Engine.
@@ -144,6 +145,58 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 		}
 		e.Bus().Publish(transport.KindPriority, "subSync", map[string]any{"url": a.URL, "count": len(r.Nodes), "via": r.Via})
 		return r, nil
+
+	case "WarpRegister":
+		a, err := decode[struct {
+			Name     string `json:"name"`
+			Endpoint string `json:"endpoint"`
+			License  string `json:"license"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		n, acc, err := e.WarpRegister(ctx, a.Name, a.Endpoint, a.License)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"node": n, "account": acc}, nil
+	case "WindscribeExpand":
+		a, err := decode[struct {
+			Template *protocol.ProxyNode `json:"template"`
+			Pro      bool                `json:"pro"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := e.WindscribeExpand(ctx, a.Template, a.Pro)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"nodes": nodes}, nil
+	case "UpdateCheck":
+		a, err := decode[struct {
+			Channel string        `json:"channel"`
+			Current string        `json:"current"`
+			Target  update.Target `json:"target"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		return e.UpdateCheck(ctx, a.Channel, a.Current, a.Target)
+	case "UpdateDownload":
+		a, err := decode[struct {
+			URL    string `json:"url"`
+			Name   string `json:"name"`
+			SHA256 string `json:"sha256"`
+		}](raw)
+		if err != nil {
+			return nil, err
+		}
+		p, err := e.UpdateDownload(context.Background(), a.URL, a.Name, a.SHA256)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"path": p}, nil
 
 	case "PingBatch":
 		a, err := decode[struct {

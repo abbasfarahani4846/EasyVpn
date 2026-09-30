@@ -49,6 +49,8 @@ type StartParams struct {
 	AllowLAN   bool                  `json:"allow_lan,omitempty"`
 	Bypass     []string              `json:"bypass,omitempty"` // system-proxy bypass list
 	TestURL    string                `json:"test_url,omitempty"`
+	// Chain: hops dialed before Node (proxy-in-proxy, exit via WARP, WARP-in-WARP).
+	Chain []*protocol.ProxyNode `json:"chain,omitempty"`
 }
 
 // Engine is the single orchestrator instance owned by the C/RPC entry points.
@@ -179,6 +181,12 @@ func (e *Engine) Start(p StartParams) error {
 	for _, c := range p.Candidates {
 		adapter.NormalizeNode(c)
 	}
+	for _, c := range p.Chain {
+		if c != nil {
+			c.EnsureID()
+			adapter.NormalizeNode(c)
+		}
+	}
 	mode := adapter.ParseConnMode(p.Mode)
 	if mode == adapter.ModeSystemProxy && !e.sysProxy.Supported() {
 		return fmt.Errorf("%w: system_proxy (use tun or proxy_only)", ErrUnsupportedMode)
@@ -215,7 +223,9 @@ func (e *Engine) Start(p StartParams) error {
 	runNode := node
 	bypassPort := 0
 	if adapter.NeedsXray(node) {
-		if mode.NeedsTUN() {
+		// The bypass inbound keeps the sidecar out of the TUN and is also how a
+		// chain reaches an Xray-only exit node.
+		if mode.NeedsTUN() || len(p.Chain) > 0 {
 			bypassPort = freeTCPPort()
 		}
 		sc, err := adapter.StartXraySidecarWith(node, adapter.SidecarOptions{BypassPort: bypassPort})
@@ -231,20 +241,22 @@ func (e *Engine) Start(p StartParams) error {
 	}
 
 	req := &adapter.StartRequest{
-		Node:           runNode,
-		Candidates:     p.Candidates,
-		Routing:        e.currentRouting(),
-		Mode:           mode,
-		Tun:            p.Tun,
-		Tricks:         tricks,
-		Auth:           p.Auth,
-		LocalPort:      port,
-		BindLocal:      true,
-		AllowLAN:       p.AllowLAN,
-		CacheDir:       e.cacheDir,
-		LogLevel:       "info",
-		TestURL:        p.TestURL,
-		XrayBypassPort: bypassPort,
+		Node:             runNode,
+		Candidates:       p.Candidates,
+		Routing:          e.currentRouting(),
+		Mode:             mode,
+		Tun:              p.Tun,
+		Tricks:           tricks,
+		Auth:             p.Auth,
+		LocalPort:        port,
+		BindLocal:        true,
+		AllowLAN:         p.AllowLAN,
+		CacheDir:         e.cacheDir,
+		LogLevel:         "info",
+		TestURL:          p.TestURL,
+		XrayBypassPort:   bypassPort,
+		Chain:            p.Chain,
+		ActiveViaSidecar: runNode != node,
 		StatsHook: func(s adapter.Stats) {
 			e.bus.Publish(transport.KindBulk, "stats", s)
 		},
@@ -424,9 +436,10 @@ func (e *Engine) SwitchNode(node *protocol.ProxyNode) error {
 	adapter.NormalizeNode(node)
 	e.mu.Lock()
 	viaSidecar := e.sidecar != nil
+	chained := len(e.lastStart.Chain) > 0
 	e.mu.Unlock()
 	var err error
-	if viaSidecar || adapter.NeedsXray(node) {
+	if viaSidecar || chained || adapter.NeedsXray(node) {
 		err = adapter.ErrNeedsRestart // the sidecar serves exactly one node
 	} else {
 		err = e.core.SwitchNode(context.Background(), node)

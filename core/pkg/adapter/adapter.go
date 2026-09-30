@@ -112,9 +112,15 @@ type StartRequest struct {
 	// Xray sidecar to reach its server; it is routed to the interface-bound
 	// direct outbound so the sidecar never loops back into the TUN.
 	XrayBypassPort int
-	StatsHook      func(Stats)
-	LogHook        func(level, msg string)
-	StateHook      func(state, detail string)
+	// Chain lists hops dialed before the active node (proxy-in-proxy, exit via
+	// WARP, WARP-in-WARP). See chain.go.
+	Chain []*protocol.ProxyNode
+	// ActiveViaSidecar marks the active node as the Xray sidecar's loopback
+	// SOCKS hop; the chain is then applied through XrayBypassPort.
+	ActiveViaSidecar bool
+	StatsHook        func(Stats)
+	LogHook          func(level, msg string)
+	StateHook        func(state, detail string)
 }
 
 // MaxMaterialized caps how many nodes are compiled into the running core.
@@ -435,6 +441,12 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 	var outbounds []option.Outbound
 	var endpoints []option.Endpoint
 	var tagList []string
+	chainObs, chainEps, lastHop, err := buildChain(req.Chain, req.Tricks)
+	if err != nil {
+		return option.Options{}, nil, err
+	}
+	outbounds = append(outbounds, chainObs...)
+	endpoints = append(endpoints, chainEps...)
 	for i, n := range list {
 		id := n.ID
 		tag := nodeTag(n)
@@ -444,6 +456,15 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 				return option.Options{}, nil, err // the active node must compile
 			}
 			continue // an incompatible candidate is simply not materialized
+		}
+		// A sidecar-served active node is a loopback SOCKS hop: the chain is
+		// applied inside Xray (it dials through the bypass inbound instead).
+		if lastHop != "" && !(i == 0 && req.ActiveViaSidecar) {
+			if built.Outbound != nil {
+				setDetour(built.Outbound.Options, lastHop)
+			} else {
+				setDetour(built.Endpoint.Options, lastHop)
+			}
 		}
 		if built.Outbound != nil {
 			outbounds = append(outbounds, *built.Outbound)
@@ -502,7 +523,7 @@ func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string,
 		}})
 		rules = append([]option.Rule{{Type: C.RuleTypeDefault, DefaultOptions: option.DefaultRule{
 			RawDefaultRule: option.RawDefaultRule{Inbound: badoption.Listable[string]{xrayBypassTag}},
-			RuleAction:     option.RuleAction{Action: C.RuleActionTypeRoute, RouteOptions: option.RouteActionOptions{Outbound: directTag}},
+			RuleAction:     option.RuleAction{Action: C.RuleActionTypeRoute, RouteOptions: option.RouteActionOptions{Outbound: orDefaultStr(lastHop, directTag)}},
 		}}}, rules...)
 	}
 
