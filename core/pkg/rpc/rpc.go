@@ -241,11 +241,12 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 			Mode    string                `json:"mode"`
 			URL     string                `json:"url"`
 			Workers int                   `json:"workers"`
+			DNS     []string              `json:"system_dns"`
 		}](raw)
 		if err != nil {
 			return nil, err
 		}
-		return s.ping(a.Nodes, a.Mode, a.URL, a.Workers)
+		return s.ping(a.Nodes, a.Mode, a.URL, a.Workers, a.DNS)
 	case "CancelPing":
 		if s.cancelPing != nil {
 			s.cancelPing()
@@ -410,12 +411,12 @@ func (s *Server) Call(method string, raw json.RawMessage) (any, error) {
 	return nil, fmt.Errorf("unknown method %q", method)
 }
 
-func (s *Server) ping(nodes []*protocol.ProxyNode, mode, url string, workers int) (any, error) {
+func (s *Server) ping(nodes []*protocol.ProxyNode, mode, url string, workers int, dns []string) (any, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancelPing = cancel
 	defer cancel()
 	if strings.EqualFold(mode, "url") {
-		res := s.Eng.TestNodesURL(ctx, nodes, url, workers, func(b []adapter.URLTestResult) {
+		res := s.Eng.TestNodesURL(ctx, nodes, url, workers, dns, func(b []adapter.URLTestResult) {
 			s.Eng.Bus().Publish(transport.KindPriority, "delay", b)
 		})
 		return map[string]any{"results": res}, nil

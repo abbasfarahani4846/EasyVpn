@@ -36,9 +36,9 @@ class SettingsPage extends ConsumerWidget {
       title: Text(title),
       subtitle: sub == null ? null : Text(sub),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => page())),
+      onTap: () =>
+          Navigator.of(context)
+              .push(MaterialPageRoute<void>(builder: (_) => page())),
     );
 
     return Scaffold(

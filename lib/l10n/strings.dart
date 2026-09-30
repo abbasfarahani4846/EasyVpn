@@ -66,8 +66,7 @@ const _en = <String, String>{
   'common.enabled': 'Enabled',
   'common.none': 'None',
   'core.unavailable': 'Core unavailable',
-  'core.unavailable.body':
-      'The native networking core could not be loaded, so connecting is disabled.',
+  'core.unavailable.body': 'The native networking core could not be loaded, so connecting is disabled.',
   'status.disconnected': 'Disconnected',
   'status.connecting': 'Connecting…',
   'status.connected': 'Connected',
@@ -91,22 +90,18 @@ const _en = <String, String>{
   'mode.system_proxy': 'Proxy',
   'mode.both': 'Both',
   'mode.proxy_only': 'Local port',
-  'mode.tun.desc':
-      'Routes all device traffic through a virtual network interface (needs permission).',
+  'mode.tun.desc': 'Routes all device traffic through a virtual network interface (needs permission).',
   'mode.system_proxy.desc':
       'Sets the operating-system proxy. No admin rights needed. Desktop only.',
-  'mode.both.desc':
-      'Tunnel plus system proxy together. Apps that ignore the proxy are still captured.',
+  'mode.both.desc': 'Tunnel plus system proxy together. Apps that ignore the proxy are still captured.',
   'mode.proxy_only.desc':
       'Only opens a local HTTP/SOCKS port. Configure apps manually.',
   'mode.unsupported': 'Not available on this device',
   'err.no_node': 'No node selected. Import a profile first.',
-  'err.needs_admin':
-      'Tunnel mode needs administrator rights. Restart as administrator, or use Proxy mode.',
+  'err.needs_admin': 'Tunnel mode needs administrator rights. Restart as administrator, or use Proxy mode.',
   'err.restart_admin': 'Restart as administrator',
   'err.vpn_permission_denied': 'VPN permission was denied.',
-  'err.needs_core':
-      'This node needs the “{cap}” engine, which is not available in the built-in core.',
+  'err.needs_core': 'This node needs the “{cap}” engine, which is not available in the built-in core.',
   'proxies.title': 'Proxies',
   'proxies.search': 'Search name or server',
   'proxies.ping_all': 'Ping all',
@@ -140,8 +135,7 @@ const _en = <String, String>{
   'subs.from_qr': 'Scan QR',
   'subs.url': 'Subscription URL',
   'subs.name': 'Name (optional)',
-  'subs.paste_hint':
-      'Paste links, a subscription, a Clash / sing-box config, an .ovpn or WireGuard config',
+  'subs.paste_hint': 'Paste links, a subscription, a Clash / sing-box config, an .ovpn or WireGuard config',
   'subs.refresh': 'Refresh',
   'subs.refresh_all': 'Refresh all',
   'subs.auto_refresh': 'Auto refresh',
@@ -183,8 +177,7 @@ const _en = <String, String>{
   'routing.block_ads': 'Block ads',
   'routing.block_trackers': 'Block malware & phishing',
   'routing.bypass_lan': 'Bypass LAN',
-  'routing.rule_order':
-      'Rule order: block lists → LAN → service overrides → country → custom → final.',
+  'routing.rule_order': 'Rule order: block lists → LAN → service overrides → country → custom → final.',
   'routing.rulesets': 'Rule lists',
   'routing.sync': 'Update now',
   'routing.syncing': 'Updating…',
@@ -211,8 +204,7 @@ const _en = <String, String>{
   'routing.kind.package_name': 'App package (Android)',
   'routing.kind.rule_set': 'Rule list tag',
   'routing.overrides': 'Service overrides',
-  'routing.overrides.desc':
-      'Always evaluated before the country lists, so services like WhatsApp are never routed as domestic.',
+  'routing.overrides.desc': 'Always evaluated before the country lists, so services like WhatsApp are never routed as domestic.',
   'routing.overrides.proxy': 'Always via proxy',
   'routing.overrides.direct': 'Always direct',
   'routing.overrides.hint': 'domains, comma separated',
@@ -298,15 +290,12 @@ const _en = <String, String>{
   'data.format.clash': 'Clash / mihomo YAML',
   'data.format.singbox': 'sing-box JSON',
   'data.paste_backup': 'Paste backup text or choose a file',
-  'data.keystore.warn':
-      'OS keystore unavailable; the database key is stored in a protected app file.',
+  'data.keystore.warn': 'OS keystore unavailable; the database key is stored in a protected app file.',
   'about.version': 'Version',
   'about.license': 'Licenses',
   'about.core': 'Core',
-  'about.gpl':
-      'EasyVPN embeds sing-box (GPL-3.0). Source code is available in the project repository.',
-  'about.geo':
-      'Rule lists come from Chocolate4U, MetaCubeX and other community projects.',
+  'about.gpl': 'EasyVPN embeds sing-box (GPL-3.0). Source code is available in the project repository.',
+  'about.geo': 'Rule lists come from Chocolate4U, MetaCubeX and other community projects.',
   'logs.title': 'Logs',
   'logs.clear': 'Clear',
   'logs.copy': 'Copy all',
@@ -383,10 +372,8 @@ const _fa = <String, String>{
   'mode.proxy_only': 'پورت محلی',
   'mode.tun.desc':
       'کل ترافیک دستگاه از یک رابط شبکه مجازی عبور می‌کند (نیاز به مجوز).',
-  'mode.system_proxy.desc':
-      'پروکسی سیستم‌عامل را تنظیم می‌کند. بدون نیاز به دسترسی مدیر. فقط دسکتاپ.',
-  'mode.both.desc':
-      'تونل و پروکسی سیستم با هم. برنامه‌هایی که پروکسی را نادیده می‌گیرند هم پوشش داده می‌شوند.',
+  'mode.system_proxy.desc': 'پروکسی سیستم‌عامل را تنظیم می‌کند. بدون نیاز به دسترسی مدیر. فقط دسکتاپ.',
+  'mode.both.desc': 'تونل و پروکسی سیستم با هم. برنامه‌هایی که پروکسی را نادیده می‌گیرند هم پوشش داده می‌شوند.',
   'mode.proxy_only.desc':
       'فقط یک پورت HTTP/SOCKS محلی باز می‌کند. برنامه‌ها را دستی تنظیم کنید.',
   'mode.unsupported': 'در این دستگاه در دسترس نیست',
@@ -426,8 +413,7 @@ const _fa = <String, String>{
   'subs.from_qr': 'اسکن QR',
   'subs.url': 'آدرس اشتراک',
   'subs.name': 'نام (اختیاری)',
-  'subs.paste_hint':
-      'لینک‌ها، اشتراک، کانفیگ Clash / sing-box، فایل ovpn یا WireGuard را پیست کنید',
+  'subs.paste_hint': 'لینک‌ها، اشتراک، کانفیگ Clash / sing-box، فایل ovpn یا WireGuard را پیست کنید',
   'subs.refresh': 'به‌روزرسانی',
   'subs.refresh_all': 'به‌روزرسانی همه',
   'subs.auto_refresh': 'به‌روزرسانی خودکار',
@@ -468,8 +454,7 @@ const _fa = <String, String>{
   'routing.block_ads': 'مسدودسازی تبلیغات',
   'routing.block_trackers': 'مسدودسازی بدافزار و فیشینگ',
   'routing.bypass_lan': 'عبور مستقیم شبکه محلی',
-  'routing.rule_order':
-      'ترتیب قوانین: لیست مسدودی ← شبکه محلی ← استثناهای سرویس ← کشور ← سفارشی ← پیش‌فرض.',
+  'routing.rule_order': 'ترتیب قوانین: لیست مسدودی ← شبکه محلی ← استثناهای سرویس ← کشور ← سفارشی ← پیش‌فرض.',
   'routing.rulesets': 'لیست‌های قوانین',
   'routing.sync': 'به‌روزرسانی',
   'routing.syncing': 'در حال به‌روزرسانی…',
@@ -497,8 +482,7 @@ const _fa = <String, String>{
   'routing.kind.package_name': 'بسته برنامه (اندروید)',
   'routing.kind.rule_set': 'برچسب لیست قوانین',
   'routing.overrides': 'استثناهای سرویس',
-  'routing.overrides.desc':
-      'همیشه پیش از لیست‌های کشور بررسی می‌شوند تا سرویس‌هایی مثل واتساپ هرگز داخلی حساب نشوند.',
+  'routing.overrides.desc': 'همیشه پیش از لیست‌های کشور بررسی می‌شوند تا سرویس‌هایی مثل واتساپ هرگز داخلی حساب نشوند.',
   'routing.overrides.proxy': 'همیشه با پروکسی',
   'routing.overrides.direct': 'همیشه مستقیم',
   'routing.overrides.hint': 'دامنه‌ها، با ویرگول جدا کنید',
@@ -508,8 +492,7 @@ const _fa = <String, String>{
   'routing.dns.fakeip': 'FakeIP (برای تونل توصیه می‌شود)',
   'routing.tls_tricks': 'ضد DPI برای TLS',
   'routing.tls_fragment': 'قطعه‌قطعه کردن TLS hello',
-  'routing.tls_fragment.desc':
-      'بسته‌های اول را تکه می‌کند تا فیلتر SNI دور زده شود. برای ایران توصیه می‌شود.',
+  'routing.tls_fragment.desc': 'بسته‌های اول را تکه می‌کند تا فیلتر SNI دور زده شود. برای ایران توصیه می‌شود.',
   'routing.add_ruleset': 'افزودن لیست قوانین سفارشی',
   'routing.ruleset.tag': 'برچسب',
   'routing.ruleset.url': 'آدرس HTTPS فایل srs',
@@ -585,15 +568,12 @@ const _fa = <String, String>{
   'data.format.clash': 'Clash / mihomo YAML',
   'data.format.singbox': 'sing-box JSON',
   'data.paste_backup': 'متن پشتیبان را پیست کنید یا فایل انتخاب کنید',
-  'data.keystore.warn':
-      'کی‌استور سیستم در دسترس نیست؛ کلید پایگاه‌داده در یک فایل محافظت‌شده ذخیره می‌شود.',
+  'data.keystore.warn': 'کی‌استور سیستم در دسترس نیست؛ کلید پایگاه‌داده در یک فایل محافظت‌شده ذخیره می‌شود.',
   'about.version': 'نسخه',
   'about.license': 'مجوزها',
   'about.core': 'هسته',
-  'about.gpl':
-      'ایزی وی‌پی‌ان از sing-box (GPL-3.0) استفاده می‌کند. کد منبع در مخزن پروژه موجود است.',
-  'about.geo':
-      'لیست‌های قوانین از پروژه‌های Chocolate4U، MetaCubeX و جامعه‌ی متن‌باز تأمین می‌شود.',
+  'about.gpl': 'ایزی وی‌پی‌ان از sing-box (GPL-3.0) استفاده می‌کند. کد منبع در مخزن پروژه موجود است.',
+  'about.geo': 'لیست‌های قوانین از پروژه‌های Chocolate4U، MetaCubeX و جامعه‌ی متن‌باز تأمین می‌شود.',
   'logs.title': 'گزارش‌ها',
   'logs.clear': 'پاک کردن',
   'logs.copy': 'کپی همه',

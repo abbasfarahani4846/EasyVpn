@@ -91,9 +91,8 @@ class _AddSheetState extends ConsumerState<_AddSheet> {
   }
 
   Future<void> _camera() async {
-    final v = await Navigator.of(
-      context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
+    final v = await Navigator.of(context)
+        .push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (v != null && mounted) await _import(v);
   }
 

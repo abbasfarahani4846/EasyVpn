@@ -168,9 +168,8 @@ class _AddSheetState extends ConsumerState<_AddSheet> {
   }
 
   Future<void> _qr() async {
-    final v = await Navigator.of(
-      context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
+    final v = await Navigator.of(context)
+        .push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (v == null || !mounted) return;
     final notifier = ref.read(profilesProvider.notifier);
     if (v.startsWith('http://') || v.startsWith('https://')) {
@@ -276,9 +275,8 @@ class _ProfileCard extends ConsumerWidget {
     final frac = p.usedFraction;
     final expired =
         p.expire > 0 &&
-        DateTime.fromMillisecondsSinceEpoch(
-          p.expire * 1000,
-        ).isBefore(DateTime.now());
+        DateTime.fromMillisecondsSinceEpoch(p.expire * 1000)
+            .isBefore(DateTime.now());
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

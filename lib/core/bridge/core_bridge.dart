@@ -37,8 +37,10 @@ class CoreBridge {
     String? authPass,
     Map<String, dynamic>? tun,
     List<Map<String, dynamic>> chain = const [],
+    List<String> systemDns = const [],
   }) async {
     await _t.call('Start', {
+      if (systemDns.isNotEmpty) 'system_dns': systemDns,
       'node': node,
       'candidates': candidates,
       if (chain.isNotEmpty) 'chain': chain,
@@ -163,9 +165,11 @@ class CoreBridge {
     List<Map<String, dynamic>> nodes, {
     String mode = 'tcp',
     String? url,
-    int workers = 50,
+    int workers = 20,
+    List<String> systemDns = const [],
   }) async {
     final r = await _t.call('PingBatch', {
+      if (systemDns.isNotEmpty) 'system_dns': systemDns,
       'nodes': nodes,
       'mode': mode,
       'url': url ?? '',

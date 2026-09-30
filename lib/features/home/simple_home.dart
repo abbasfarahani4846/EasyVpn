@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/models.dart';
@@ -68,6 +69,10 @@ class SimpleHome extends ConsumerWidget {
                             _Orb(core: core, size: compact ? 150 : 230),
                             SizedBox(height: compact ? 10 : 22),
                             _StatusText(core: core, compact: compact),
+                            if (core.isConnected) ...[
+                              SizedBox(height: compact ? 8 : 16),
+                              _IpCard(compact: compact),
+                            ],
                             const Spacer(flex: 3),
                             _BottomPanel(compact: compact),
                           ],
@@ -339,12 +344,10 @@ class _StatusTextState extends ConsumerState<_StatusText> {
       CoreStatus.unavailable => s.t('status.unavailable'),
       _ => s.t('status.disconnected'),
     };
-    final exit = core.isConnected ? ref.watch(exitInfoProvider) : null;
-    final ip = exit?.value;
     String sub;
     if (core.isConnected) {
       final d = fmtDuration(DateTime.now().difference(_since!));
-      sub = ip == null ? d : '$d  ·  ${flagEmoji(ip.countryCode)} ${ip.ip}';
+      sub = d;
     } else if (core.status == CoreStatus.error) {
       sub = core.detail == 'no_node' ? s.t('err.no_node') : s.t(core.detail);
     } else if (core.status == CoreStatus.connecting) {
@@ -377,6 +380,99 @@ class _StatusTextState extends ConsumerState<_StatusText> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The address the internet sees through the tunnel, with a refresh button so
+/// the user can tell that the connection really carries traffic.
+class _IpCard extends ConsumerWidget {
+  const _IpCard({this.compact = false});
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.s;
+    final v = ref.watch(exitInfoProvider);
+    final info = v.value;
+    final loading = v.isLoading;
+    final failed = v.hasError && !loading;
+    final where = info == null
+        ? ''
+        : [
+            info.city,
+            info.country,
+            info.isp,
+          ].where((e) => e.isNotEmpty).join(' · ');
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: compact ? 6 : 10),
+      decoration: Brand.glass(),
+      child: Row(
+        children: [
+          Text(
+            info != null ? flagEmoji(info.countryCode) : '🌐',
+            style: const TextStyle(fontSize: 26),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: InkWell(
+              onTap: info == null
+                  ? null
+                  : () {
+                      Clipboard.setData(ClipboardData(text: info.ip));
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(s.t('ip.copied'))));
+                    },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    info != null
+                        ? info.ip
+                        : failed
+                        ? s.t('ip.failed')
+                        : s.t('ip.checking'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: info != null ? 18 : 13,
+                      fontWeight: FontWeight.w700,
+                      color: failed ? Brand.bad : null,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  if (where.isNotEmpty && !compact)
+                    Text(
+                      where,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Brand.textDim,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          loading
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  tooltip: s.t('ip.refresh'),
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: ref.read(exitInfoProvider.notifier).refresh,
+                ),
+        ],
+      ),
     );
   }
 }

@@ -3,6 +3,8 @@ package app.easyvpn.client
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.os.Build
 import android.telephony.TelephonyManager
@@ -56,6 +58,7 @@ class MainActivity : FlutterActivity() {
                 "networkCountry" -> result.success(telephony()?.networkCountryIso?.takeIf { it.length == 2 }?.uppercase())
                 "timezone" -> result.success(TimeZone.getDefault().id)
                 "prepareVpn" -> prepareVpn(result)
+                "systemDns" -> result.success(systemDns())
                 "establishVpn" -> {
                     val mtu = call.argument<Int>("mtu") ?: 1500
                     val ipv6 = call.argument<Boolean>("ipv6") ?: false
@@ -129,6 +132,30 @@ class MainActivity : FlutterActivity() {
         startActivity(Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, "application/vnd.android.package-archive")
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /**
+     * DNS servers of the real (non-VPN) networks, the active one first. Android has
+     * no /etc/resolv.conf, so the core needs these to resolve proxy server names.
+     * Must be read before the VPN interface is established.
+     */
+    private fun systemDns(): List<String> {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return emptyList()
+        val out = LinkedHashSet<String>()
+        val nets = buildList {
+            cm.activeNetwork?.let { add(it) }
+            addAll(cm.allNetworks)
+        }
+        for (n in nets) {
+            val caps = cm.getNetworkCapabilities(n) ?: continue
+            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ||
+                !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue
+            cm.getLinkProperties(n)?.dnsServers?.forEach { a ->
+                val h = a.hostAddress ?: return@forEach
+                if (!a.isLoopbackAddress && !a.isAnyLocalAddress && !h.contains(':') && h != "172.19.0.2") out.add(h)
+            }
+        }
+        return out.toList()
     }
 
     private fun telephony() = getSystemService(TELEPHONY_SERVICE) as? TelephonyManager

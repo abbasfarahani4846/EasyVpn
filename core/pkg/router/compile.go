@@ -338,6 +338,11 @@ func orDefault(v, d string) string {
 // parseDNSServer converts "https://host[:port]/path", "tls://host[:port]",
 // "udp://host[:port]", "tcp://host[:port]", "local" or a bare IP into a
 // sing-box DNS server. detour is the outbound used to reach the server.
+// ParseDNSServer is the exported form of parseDNSServer.
+func ParseDNSServer(tag, addr, detour string) option.DNSServerOptions {
+	return parseDNSServer(tag, addr, detour)
+}
+
 func parseDNSServer(tag, addr, detour string) option.DNSServerOptions {
 	dialer := option.RawLocalDNSServerOptions{DialerOptions: option.DialerOptions{Detour: detour}}
 	remote := func(host, port string, def uint16) option.RemoteDNSServerOptions {

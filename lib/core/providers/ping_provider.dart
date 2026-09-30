@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bridge/core_bridge.dart';
+import '../util/platform_service.dart';
 import 'env.dart';
 import 'node_list_provider.dart';
 import 'settings_provider.dart';
@@ -107,13 +108,19 @@ class PingNotifier extends Notifier<PingState> {
         _applyFinal(results);
       } else {
         final url = ref.read(settingsProvider).testUrl;
+        final dns = await PlatformService.systemDns();
         for (var i = 0; i < all.length && state.running; i += 200) {
           final part = all.sublist(
             i,
             i + 200 > all.length ? all.length : i + 200,
           );
           final raws = await env.repo.rawNodes(part);
-          final results = await env.core.ping(raws, mode: 'url', url: url);
+          final results = await env.core.ping(
+            raws,
+            mode: 'url',
+            url: url,
+            systemDns: dns,
+          );
           _applyFinal(results);
         }
       }

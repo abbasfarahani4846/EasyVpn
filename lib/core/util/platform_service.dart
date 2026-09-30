@@ -53,6 +53,17 @@ class PlatformService {
     'exclude': exclude,
   });
 
+  /// DNS servers of the real (non-VPN) networks (Android), read before the VPN is up.
+  static Future<List<String>> systemDns() async {
+    if (!isAndroid) return const [];
+    try {
+      final r = await _ch.invokeMethod<List<dynamic>>('systemDns');
+      return [for (final e in r ?? const []) '$e'];
+    } catch (_) {
+      return const [];
+    }
+  }
+
   static Future<void> stopVpn() => _try<bool>('stopVpn');
 
   /// Native -> Dart notifications (system revoked the VPN / tile or notification tapped).

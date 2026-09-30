@@ -51,6 +51,8 @@ type StartParams struct {
 	TestURL    string                `json:"test_url,omitempty"`
 	// Chain: hops dialed before Node (proxy-in-proxy, exit via WARP, WARP-in-WARP).
 	Chain []*protocol.ProxyNode `json:"chain,omitempty"`
+	// SystemDNS: resolvers of the real network (Android has no /etc/resolv.conf).
+	SystemDNS []string `json:"system_dns,omitempty"`
 }
 
 // ErrCancelled is returned by Start when Stop cancelled it midway.
@@ -190,6 +192,7 @@ func (e *Engine) Start(p StartParams) error {
 			adapter.NormalizeNode(c)
 		}
 	}
+	useSystemResolver(p.SystemDNS, p.Tun.FD > 0)
 	mode := adapter.ParseConnMode(p.Mode)
 	if mode == adapter.ModeSystemProxy && !e.sysProxy.Supported() {
 		return fmt.Errorf("%w: system_proxy (use tun or proxy_only)", ErrUnsupportedMode)
@@ -228,7 +231,9 @@ func (e *Engine) Start(p StartParams) error {
 	if adapter.NeedsXray(node) {
 		// The bypass inbound keeps the sidecar out of the TUN and is also how a
 		// chain reaches an Xray-only exit node.
-		if mode.NeedsTUN() || len(p.Chain) > 0 {
+		// With a host-owned TUN fd (Android) the app is excluded from the VPN, so the
+		// sidecar dials the server directly, exactly like in proxy mode.
+		if (mode.NeedsTUN() && p.Tun.FD <= 0) || len(p.Chain) > 0 {
 			bypassPort = freeTCPPort()
 		}
 		sc, err := adapter.StartXraySidecarWith(node, adapter.SidecarOptions{BypassPort: bypassPort})
@@ -246,7 +251,7 @@ func (e *Engine) Start(p StartParams) error {
 	req := &adapter.StartRequest{
 		Node:             runNode,
 		Candidates:       p.Candidates,
-		Routing:          e.currentRouting(),
+		Routing:          withLocalDNS(e.currentRouting(), p.SystemDNS, p.Tun.FD > 0),
 		Mode:             mode,
 		Tun:              p.Tun,
 		Tricks:           tricks,
@@ -599,8 +604,13 @@ func (e *Engine) TestNodesLatency(ctx context.Context, nodes []*protocol.ProxyNo
 
 // TestNodesURL measures real through-proxy latency in chunked throw-away
 // boxes; results stream as `delay` events and are returned at the end.
-func (e *Engine) TestNodesURL(ctx context.Context, nodes []*protocol.ProxyNode, url string, workers int, onBatch func([]adapter.URLTestResult)) []adapter.URLTestResult {
-	return adapter.URLTestBatch(ctx, nodes, adapter.URLTestOptions{URL: url, Workers: workers, OnBatch: onBatch})
+func (e *Engine) TestNodesURL(ctx context.Context, nodes []*protocol.ProxyNode, url string, workers int, systemDNS []string, onBatch func([]adapter.URLTestResult)) []adapter.URLTestResult {
+	useSystemResolver(systemDNS, false)
+	dns := ""
+	if u := usableDNS(systemDNS); len(u) > 0 {
+		dns = "udp://" + u[0]
+	}
+	return adapter.URLTestBatch(ctx, nodes, adapter.URLTestOptions{URL: url, Workers: workers, DNS: dns, OnBatch: onBatch})
 }
 
 // DumpConfig renders the generated sing-box options for the debug screen.

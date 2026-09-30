@@ -141,7 +141,10 @@ class CoreController extends Notifier<CoreState> {
         throw CoreException('needs_admin');
       }
       Map<String, dynamic>? tun;
+      var systemDns = const <String>[];
       if (PlatformService.isAndroid && settings.mode.usesTun) {
+        // Must be read before the VPN interface exists (afterwards it is the VPN).
+        systemDns = await PlatformService.systemDns();
         // The Android host creates the TUN device and hands its fd to the core.
         if (!await PlatformService.prepareVpn())
           throw CoreException('vpn_permission_denied');
@@ -179,10 +182,12 @@ class CoreController extends Notifier<CoreState> {
         authPass: useAuth ? env.localPass : null,
         tun: tun,
         chain: chain,
+        systemDns: systemDns,
       );
       lastFailure = null;
     } on CoreException catch (e) {
       if (rev != _revision) return;
+      if (PlatformService.isAndroid) await PlatformService.stopVpn();
       if (e.message == 'cancelled') {
         // The user pressed the button again while connecting.
         lastFailure = null;
@@ -197,6 +202,7 @@ class CoreController extends Notifier<CoreState> {
       );
     } catch (e) {
       if (rev != _revision) return;
+      if (PlatformService.isAndroid) await PlatformService.stopVpn();
       lastFailure = ConnectFailure('$e');
       state = CoreState(
         status: CoreStatus.error,

@@ -86,9 +86,8 @@ class BackupPage extends ConsumerWidget {
               final pass = await _askPass(context, confirmPass: true);
               if (pass == null || !context.mounted) return;
               try {
-                final blob = await _svc(
-                  ref,
-                ).create(ref.read(settingsProvider), pass);
+                final blob = await _svc(ref)
+                    .create(ref.read(settingsProvider), pass);
                 final stamp = DateTime.now().toIso8601String().substring(0, 10);
                 await saveText(fileName: 'easyvpn-$stamp.ezbak', content: blob);
                 if (context.mounted)

@@ -43,9 +43,9 @@ class BackupService {
       core.backupEncrypt(await _collect(settings), passphrase);
 
   /// Plain (unencrypted, secret-free) settings export for support/debug.
-  String exportSettings(AppSettings s) => const JsonEncoder.withIndent(
-    '  ',
-  ).convert({'schema': schema, 'settings': s.toJson()});
+  String exportSettings(AppSettings s) =>
+      const JsonEncoder.withIndent('  ')
+          .convert({'schema': schema, 'settings': s.toJson()});
 
   AppSettings importSettings(String json) {
     final j = (jsonDecode(json) as Map).cast<String, dynamic>();

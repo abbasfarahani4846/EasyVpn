@@ -257,8 +257,7 @@ class CustomRule {
     required this.values,
     required this.outbound,
   });
-  final String
-  kind; // domain_suffix|domain_keyword|ip_cidr|port|process_name|package_name|rule_set
+  final String kind; // domain_suffix|domain_keyword|ip_cidr|port|process_name|package_name|rule_set
   final List<String> values;
   final String outbound; // direct|proxy|block
 

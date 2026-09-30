@@ -164,9 +164,8 @@ class _ConnectPanel extends ConsumerWidget {
             const SizedBox(height: 20),
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             if (core.status == CoreStatus.connected) const _Duration(),
@@ -262,9 +261,8 @@ class _DurationState extends ConsumerState<_Duration> {
   @override
   Widget build(BuildContext context) => Text(
     fmtDuration(DateTime.now().difference(_start)),
-    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-    ),
+    style: Theme.of(context).textTheme.titleMedium
+        ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
   );
 }
 
@@ -417,9 +415,9 @@ class _ActiveNodeTile extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
                             fontSize: 12,
                           ),
                         ),

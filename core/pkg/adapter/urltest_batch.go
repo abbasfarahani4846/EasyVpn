@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"easyvpn/core/pkg/protocol"
+	"easyvpn/core/pkg/router"
 
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/common/urltest"
@@ -25,7 +26,8 @@ type URLTestResult struct {
 type URLTestOptions struct {
 	URL       string
 	Timeout   time.Duration // per node (default 5 s)
-	Workers   int           // concurrent probes per chunk (default 50, cap 128)
+	DNS       string        // resolver for server names ("udp://ip"); empty = system
+	Workers   int           // concurrent probes per chunk (default 20, cap 128)
 	ChunkSize int           // nodes compiled into one throw-away box (default 100)
 	OnBatch   func([]URLTestResult)
 }
@@ -39,7 +41,9 @@ func URLTestBatch(ctx context.Context, nodes []*protocol.ProxyNode, o URLTestOpt
 		o.Timeout = 5 * time.Second
 	}
 	if o.Workers <= 0 {
-		o.Workers = 50
+		// Fewer parallel probes than before: 50 at once saturate a phone's radio
+		// and inflate every latency.
+		o.Workers = 20
 	}
 	if o.Workers > 128 {
 		o.Workers = 128
@@ -98,7 +102,7 @@ func testChunk(ctx context.Context, nodes []*protocol.ProxyNode, o URLTestOption
 		return res
 	}
 	opts.Log = &option.LogOptions{Disabled: true}
-	opts.DNS = defaultTestDNS()
+	opts.DNS = defaultTestDNS(o.DNS)
 	opts.Route = &option.RouteOptions{DefaultDomainResolver: &option.DomainResolveOptions{Server: "dns-local"}}
 
 	bctx := include.Context(ctx)
@@ -153,8 +157,8 @@ func testChunk(ctx context.Context, nodes []*protocol.ProxyNode, o URLTestOption
 	return res
 }
 
-func defaultTestDNS() *option.DNSOptions {
+func defaultTestDNS(addr string) *option.DNSOptions {
 	d := &option.DNSOptions{}
-	d.Servers = []option.DNSServerOptions{{Type: "local", Tag: "dns-local", Options: &option.LocalDNSServerOptions{}}}
+	d.Servers = []option.DNSServerOptions{router.ParseDNSServer("dns-local", addr, "")}
 	return d
 }
