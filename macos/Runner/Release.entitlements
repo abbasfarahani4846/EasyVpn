@@ -2,7 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- The bundled core (easycoreproc) and networksetup need an unsandboxed app
+	     (direct/notarized distribution). A sandboxed Mac App Store build would use a
+	     NetworkExtension PacketTunnel provider instead (see docs/MASTER_PROMPT.md). -->
 	<key>com.apple.security.app-sandbox</key>
+	<false/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
 	<true/>
 </dict>
 </plist>

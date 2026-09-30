@@ -1,7 +1,13 @@
-// Command libeasycore is compiled as a C-shared library and exposes the
-// stable FFI surface consumed by lib/core/ffi/easy_core_ffi.dart.
-// All functions are thread-safe; long work happens on Go goroutines and
-// progress arrives through the registered event callback.
+// Command libeasycore is compiled as a C-shared library and exposes a tiny,
+// stable FFI surface consumed by the Dart bridge (and the Android JNI module):
+//
+//	InitCore(cacheDir)              create/refresh the engine
+//	RegisterEventCallback(cb)       batched events (JSON) are pushed to cb; the
+//	                                callee must FreeString() each event string
+//	CoreCall(requestJSON) -> JSON   run any RPC method (see pkg/rpc)
+//	FreeString(p)                   release strings returned by CoreCall
+//
+// CoreCall blocks until the method finishes: call it from a worker isolate.
 package main
 
 /*
@@ -18,33 +24,38 @@ static void invoke_event_callback(event_callback_t cb, const char* json) {
 import "C"
 
 import (
-	"context"
 	"encoding/json"
 	"sync"
 	"unsafe"
 
 	"easyvpn/core/pkg/engine"
-	"easyvpn/core/pkg/pinger"
-	"easyvpn/core/pkg/protocol"
-	"easyvpn/core/pkg/router"
+	"easyvpn/core/pkg/rpc"
 )
 
 var (
 	coreMu  sync.Mutex
 	coreEng *engine.Engine
-	eventFn C.event_callback_t // Dart NativeCallable: void fn(const char* json)
+	server  *rpc.Server
+	eventFn C.event_callback_t
 )
 
 func main() {}
 
-func getEngine(cacheDir string) *engine.Engine {
+func getServer(cacheDir string) *rpc.Server {
 	coreMu.Lock()
 	defer coreMu.Unlock()
 	if coreEng == nil {
 		coreEng = engine.NewEngine(cacheDir)
+		server = &rpc.Server{Eng: coreEng}
 		go pumpEvents(coreEng)
 	}
-	return coreEng
+	return server
+}
+
+func currentServer() *rpc.Server {
+	coreMu.Lock()
+	defer coreMu.Unlock()
+	return server
 }
 
 // pumpEvents forwards bus batches to the registered C callback.
@@ -62,165 +73,33 @@ func pumpEvents(e *engine.Engine) {
 		if err != nil {
 			continue
 		}
+		// Ownership of cstr passes to the callback: Dart's NativeCallable.listener
+		// runs asynchronously, so it must release the string with FreeString.
 		cstr := C.CString(string(payload))
 		C.invoke_event_callback(fn, cstr)
-		C.free(unsafe.Pointer(cstr))
 	}
 }
 
-func cString(s string) *C.char { return C.CString(s) }
-
-func freeCStr(p *C.char) { C.free(unsafe.Pointer(p)) }
-
 //export InitCore
 func InitCore(cacheDir *C.char) {
-	getEngine(C.GoString(cacheDir))
+	getServer(C.GoString(cacheDir))
 }
 
 //export RegisterEventCallback
 func RegisterEventCallback(cb C.event_callback_t) {
-	// Dart registers a NativeCallable.listener whose C signature is
-	// void (*)(const char* json); batches arrive as JSON arrays.
 	coreMu.Lock()
 	eventFn = cb
 	coreMu.Unlock()
 }
 
-//export StartProxy
-func StartProxy(nodeJSON *C.char, tun C.int) C.int {
-	e := getEngine("")
-	var node protocol.ProxyNode
-	if err := json.Unmarshal([]byte(C.GoString(nodeJSON)), &node); err != nil {
-		return -1
+//export CoreCall
+func CoreCall(request *C.char) *C.char {
+	s := currentServer()
+	if s == nil {
+		return C.CString(`{"error":"core not initialized; call InitCore first"}`)
 	}
-	if err := e.StartWithNode(&node, tun == 1); err != nil {
-		return -2
-	}
-	return 0
-}
-
-//export StopProxy
-func StopProxy() C.int {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e == nil {
-		return 0
-	}
-	if err := e.Stop(); err != nil {
-		return -1
-	}
-	return 0
-}
-
-//export SwitchProxy
-func SwitchProxy(nodeJSON *C.char) C.int {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e == nil {
-		return -1
-	}
-	var node protocol.ProxyNode
-	if err := json.Unmarshal([]byte(C.GoString(nodeJSON)), &node); err != nil {
-		return -1
-	}
-	if err := e.SwitchNode(&node); err != nil {
-		return -2
-	}
-	return 0
-}
-
-//export GetStatsJSON
-func GetStatsJSON() *C.char {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e == nil {
-		return cString(`{}`)
-	}
-	b, err := json.Marshal(e.GetStats())
-	if err != nil {
-		return cString(`{}`)
-	}
-	return cString(string(b))
-}
-
-//export ParseSubscription
-func ParseSubscription(content *C.char) *C.char {
-	e := getEngine("")
-	res, err := e.ParseSubscriptionWithWarnings(C.GoString(content))
-	if err != nil {
-		b, _ := json.Marshal(map[string]any{"error": err.Error(), "nodes": []any{}})
-		return cString(string(b))
-	}
-	b, _ := json.Marshal(map[string]any{"error": "", "nodes": res.Nodes, "warnings": res.Warnings})
-	return cString(string(b))
-}
-
-//export TestBatchPing
-func TestBatchPing(nodesJSON *C.char, mode *C.char) *C.char {
-	e := getEngine("")
-	var nodes []*protocol.ProxyNode
-	if err := json.Unmarshal([]byte(C.GoString(nodesJSON)), &nodes); err != nil {
-		return cString(`{"results":[]}`)
-	}
-	m := pinger.Mode(C.GoString(mode))
-	if m == "" {
-		m = pinger.ModeTCP
-	}
-	results := e.TestNodesLatency(context.Background(), nodes, m, nil)
-	b, _ := json.Marshal(map[string]any{"results": results})
-	return cString(string(b))
-}
-
-//export SetCountry
-func SetCountry(code *C.char) {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e != nil {
-		e.SetRoutingCountry(C.GoString(code))
-	}
-}
-
-//export SetRoutingMode
-func SetRoutingMode(mode *C.char) {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e != nil {
-		e.SetRoutingMode(router.RoutingMode(C.GoString(mode)))
-	}
-}
-
-//export SetLocalPort
-func SetLocalPort(port C.int) {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e != nil {
-		e.SetLocalPort(int(port))
-	}
-}
-
-//export SetRoutingModel
-func SetRoutingModel(modelJSON *C.char) C.int {
-	coreMu.Lock()
-	e := coreEng
-	coreMu.Unlock()
-	if e == nil {
-		return -1
-	}
-	var m router.Model
-	if err := json.Unmarshal([]byte(C.GoString(modelJSON)), &m); err != nil {
-		return -1
-	}
-	e.SetRoutingModel(m)
-	return 0
+	return C.CString(string(s.Handle([]byte(C.GoString(request)))))
 }
 
 //export FreeString
-func FreeString(str *C.char) {
-	freeCStr(str)
-}
+func FreeString(p *C.char) { C.free(unsafe.Pointer(p)) }

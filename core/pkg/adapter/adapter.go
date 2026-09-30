@@ -6,7 +6,13 @@ package adapter
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"net/netip"
+	"net/url"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,13 +20,17 @@ import (
 	"easyvpn/core/pkg/router"
 
 	box "github.com/sagernet/sing-box"
+	sbadapter "github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/trafficcontrol"
 	"github.com/sagernet/sing-box/common/urltest"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing/common/auth"
+	singjson "github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/json/badoption"
+	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/service"
 )
 
@@ -33,30 +43,97 @@ type Stats struct {
 	Connections   int32 `json:"connections"`
 }
 
+// ConnMode selects which local inbounds the core creates.
+type ConnMode string
+
+const (
+	ModeTUN         ConnMode = "tun"          // TUN inbound only
+	ModeSystemProxy ConnMode = "system_proxy" // mixed inbound; caller sets the OS proxy
+	ModeBoth        ConnMode = "both"         // TUN + mixed inbound (+ OS proxy set by caller)
+	ModeProxyOnly   ConnMode = "proxy_only"   // mixed inbound, no OS changes
+)
+
+// NeedsTUN / NeedsMixed tell which inbounds a mode requires.
+func (m ConnMode) NeedsTUN() bool   { return m == ModeTUN || m == ModeBoth }
+func (m ConnMode) NeedsMixed() bool { return m != ModeTUN }
+
+// ParseConnMode normalizes user input; unknown values default to proxy_only.
+func ParseConnMode(v string) ConnMode {
+	switch ConnMode(v) {
+	case ModeTUN, ModeSystemProxy, ModeBoth, ModeProxyOnly:
+		return ConnMode(v)
+	}
+	return ModeProxyOnly
+}
+
+// TunSettings configures the TUN inbound.
+type TunSettings struct {
+	MTU         uint32 `json:"mtu,omitempty"`
+	StrictRoute bool   `json:"strict_route,omitempty"`
+	IPv6        bool   `json:"ipv6,omitempty"`
+	// FD is a host-provided TUN file descriptor (Android VpnService). When set the
+	// core uses it instead of creating its own interface.
+	FD              int      `json:"fd,omitempty"`
+	IncludePackages []string `json:"include_packages,omitempty"` // Android per-app allow list
+	ExcludePackages []string `json:"exclude_packages,omitempty"` // Android per-app deny list
+	ExcludeIfaces   []string `json:"exclude_ifaces,omitempty"`
+}
+
+// TLSTricks are global anti-DPI toggles applied to every TLS-enabled node.
+type TLSTricks struct {
+	Fragment       bool `json:"fragment"`
+	RecordFragment bool `json:"record_fragment"`
+}
+
+// LocalAuth optionally protects the mixed inbound with username/password.
+type LocalAuth struct {
+	User string `json:"user"`
+	Pass string `json:"pass"`
+}
+
 // StartRequest fully describes a requested tunnel session.
 type StartRequest struct {
-	Node      *protocol.ProxyNode
-	Routing   router.Model
-	LocalPort int  // mixed-in listener port; 0 => 2080
-	BindLocal bool // bind 127.0.0.1 instead of 0.0.0.0 (recommended)
-	CacheDir  string
-	LogLevel  string
-	StatsHook func(Stats)
-	LogHook   func(level, msg string)
-	StateHook func(state, detail string)
+	Node       *protocol.ProxyNode   // active node
+	Candidates []*protocol.ProxyNode // extra nodes materialized for hot switching / auto-test (capped)
+	Routing    router.Model
+	Mode       ConnMode
+	Tun        TunSettings
+	Tricks     TLSTricks
+	Auth       *LocalAuth
+	LocalPort  int  // mixed-in listener port; 0 => 2080
+	BindLocal  bool // bind 127.0.0.1 instead of 0.0.0.0 (recommended)
+	AllowLAN   bool
+	CacheDir   string
+	LogLevel   string
+	StatsHook  func(Stats)
+	LogHook    func(level, msg string)
+	StateHook  func(state, detail string)
 }
+
+// MaxMaterialized caps how many nodes are compiled into the running core.
+const MaxMaterialized = 50
 
 // CoreAdapter abstracts a tunnel engine implementation.
 type CoreAdapter interface {
 	Name() string
+	Version() string
+	// Capabilities lists node capabilities (protocol.Cap*) the engine honors.
+	Capabilities() []string
 	Start(ctx context.Context, req *StartRequest) error
 	Stop(ctx context.Context) error
+	// SwitchNode hot-swaps the active node without tearing the tunnel down. It
+	// returns ErrNeedsRestart when the node is not part of the running core.
 	SwitchNode(ctx context.Context, node *protocol.ProxyNode) error
 	// UrlTest measures real proxy latency through a running instance.
-	// testURL may be empty (engine default) or a custom probe URL.
 	UrlTest(ctx context.Context, node *protocol.ProxyNode, testURL string, timeoutMs int) (int64, error)
+	LatestStats() Stats
 	Running() bool
+	// HTTPGet fetches a plain-HTTP URL through the running tunnel.
+	HTTPGet(ctx context.Context, rawURL string) ([]byte, error)
 }
+
+// ErrNeedsRestart is returned by SwitchNode when a full restart is required.
+var ErrNeedsRestart = fmt.Errorf("node not materialized in running core; restart required")
 
 // ---------------------------------------------------------------------------
 // sing-box adapter
@@ -78,11 +155,40 @@ type SingBoxAdapter struct {
 	history   *urltest.HistoryStorage
 	statsHook func(Stats)
 	stopCh    chan struct{}
+	tags      map[string]string // node ID -> outbound tag
+	latest    Stats
 }
 
 func NewSingBoxAdapter() *SingBoxAdapter { return &SingBoxAdapter{} }
 
 func (a *SingBoxAdapter) Name() string { return "sing-box" }
+
+func (a *SingBoxAdapter) Version() string {
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		for _, d := range bi.Deps {
+			if d.Path == "github.com/sagernet/sing-box" {
+				return strings.TrimPrefix(d.Version, "v")
+			}
+		}
+	}
+	return C.Version
+}
+
+func (a *SingBoxAdapter) Capabilities() []string {
+	var out []string
+	for c, ok := range singboxCapabilities {
+		if ok {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func (a *SingBoxAdapter) LatestStats() Stats {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.latest
+}
 
 func (a *SingBoxAdapter) Running() bool {
 	a.mu.Lock()
@@ -97,7 +203,7 @@ func (a *SingBoxAdapter) Start(ctx context.Context, req *StartRequest) error {
 		return fmt.Errorf("adapter already running")
 	}
 
-	opts, err := BuildOptions(req)
+	opts, tags, err := buildOptionsWithTags(req)
 	if err != nil {
 		return fmt.Errorf("build options: %w", err)
 	}
@@ -105,11 +211,15 @@ func (a *SingBoxAdapter) Start(ctx context.Context, req *StartRequest) error {
 	boxCtx := include.Context(ctx)
 	// PlatformLogWriter captures log lines AND guarantees box.New registers
 	// the traffic manager (needClashAPI path includes PlatformLogWriter != nil).
-	instance, err := box.New(box.Options{
+	boxOpts := box.Options{
 		Context:           boxCtx,
 		Options:           opts,
 		PlatformLogWriter: &platformLogger{hook: req.LogHook},
-	})
+	}
+	if req.Tun.FD > 0 && req.Mode.NeedsTUN() {
+		service.MustRegister[sbadapter.PlatformInterface](boxCtx, newFDPlatform(req.Tun.FD))
+	}
+	instance, err := box.New(boxOpts)
 	if err != nil {
 		return fmt.Errorf("create box: %w", err)
 	}
@@ -122,10 +232,10 @@ func (a *SingBoxAdapter) Start(ctx context.Context, req *StartRequest) error {
 	a.history = service.PtrFromContext[urltest.HistoryStorage](boxCtx)
 	a.traffic = service.PtrFromContext[trafficcontrol.Manager](boxCtx)
 	a.statsHook = req.StatsHook
+	a.tags = tags
+	a.latest = Stats{}
 	a.stopCh = make(chan struct{})
-	if req.StatsHook != nil {
-		go a.statsLoop()
-	}
+	go a.statsLoop(a.stopCh)
 	if req.StateHook != nil {
 		req.StateHook("connected", "")
 	}
@@ -138,6 +248,7 @@ func (a *SingBoxAdapter) Stop(_ context.Context) error {
 	a.instance = nil
 	a.traffic = nil
 	a.history = nil
+	a.tags = nil
 	stopCh := a.stopCh
 	a.stopCh = nil
 	a.mu.Unlock()
@@ -150,10 +261,30 @@ func (a *SingBoxAdapter) Stop(_ context.Context) error {
 	return b.Close()
 }
 
-func (a *SingBoxAdapter) SwitchNode(_ context.Context, _ *protocol.ProxyNode) error {
-	// Hot switching via the selector outbound lands with the clash-API build
-	// tag in Phase 4; until then the engine restarts the session.
-	return fmt.Errorf("hot node switch not yet supported; restart the session instead")
+// selectable is implemented by sing-box's selector outbound.
+type selectable interface{ SelectOutbound(tag string) bool }
+
+func (a *SingBoxAdapter) SwitchNode(_ context.Context, node *protocol.ProxyNode) error {
+	node.EnsureID()
+	a.mu.Lock()
+	b := a.instance
+	tag, ok := a.tags[node.ID]
+	a.mu.Unlock()
+	if b == nil {
+		return fmt.Errorf("box not running")
+	}
+	if !ok {
+		return ErrNeedsRestart
+	}
+	out, found := b.Outbound().Outbound(selectorTag)
+	if !found {
+		return ErrNeedsRestart
+	}
+	sel, ok := out.(selectable)
+	if !ok || !sel.SelectOutbound(tag) {
+		return ErrNeedsRestart
+	}
+	return nil
 }
 
 // UrlTest measures real proxy round-trip latency through a running box by
@@ -184,75 +315,218 @@ func (a *SingBoxAdapter) UrlTest(ctx context.Context, node *protocol.ProxyNode, 
 	return int64(ms), nil
 }
 
-func (a *SingBoxAdapter) statsLoop() {
+func (a *SingBoxAdapter) statsLoop(stop chan struct{}) {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
+	var lastUp, lastDown int64
+	last := time.Now()
 	for {
 		select {
-		case <-a.stopCh:
+		case <-stop:
 			return
-		case <-ticker.C:
+		case now := <-ticker.C:
 			a.mu.Lock()
 			tm := a.traffic
 			hook := a.statsHook
 			a.mu.Unlock()
-			if tm == nil || hook == nil {
+			if tm == nil {
 				continue
 			}
 			up, down := tm.Total()
-			hook(Stats{
+			dt := now.Sub(last).Seconds()
+			var upBps, downBps int64
+			if dt > 0 {
+				upBps = int64(float64(up-lastUp) / dt)
+				downBps = int64(float64(down-lastDown) / dt)
+			}
+			lastUp, lastDown, last = up, down, now
+			st := Stats{
+				UploadSpeed:   upBps,
+				DownloadSpeed: downBps,
 				TotalUpload:   up,
 				TotalDownload: down,
 				Connections:   int32(tm.ConnectionsLen()),
-			})
+			}
+			a.mu.Lock()
+			a.latest = st
+			a.mu.Unlock()
+			if hook != nil {
+				hook(st)
+			}
 		}
 	}
 }
 
+const (
+	selectorTag = "proxy"
+	autoTag     = "auto"
+	directTag   = "direct"
+)
+
 // BuildOptions compiles the full sing-box option tree from our internal model.
 // Exported so the engine can dump/validate generated configs.
 func BuildOptions(req *StartRequest) (option.Options, error) {
+	o, _, err := buildOptionsWithTags(req)
+	return o, err
+}
+
+// nodeTag returns the stable outbound tag of a node.
+func nodeTag(n *protocol.ProxyNode) string {
+	n.EnsureID()
+	id := n.ID
+	if len(id) > 12 {
+		id = id[:12]
+	}
+	return "n-" + id
+}
+
+// applyTricks returns a copy of node with global TLS tricks applied.
+func applyTricks(n *protocol.ProxyNode, t TLSTricks) *protocol.ProxyNode {
+	if !t.Fragment && !t.RecordFragment {
+		return n
+	}
+	c := *n
+	if c.TLS != nil && c.TLS.Enabled {
+		tls := *c.TLS
+		tls.Fragment = tls.Fragment || t.Fragment
+		tls.RecordFragment = tls.RecordFragment || t.RecordFragment
+		c.TLS = &tls
+	}
+	return &c
+}
+
+func buildOptionsWithTags(req *StartRequest) (option.Options, map[string]string, error) {
 	if req.Node == nil {
-		return option.Options{}, fmt.Errorf("no node provided")
+		return option.Options{}, nil, fmt.Errorf("no node provided")
+	}
+	mode := req.Mode
+	if mode == "" {
+		mode = ModeProxyOnly
 	}
 	port := req.LocalPort
 	if port <= 0 {
 		port = 2080
 	}
+	req.Node.EnsureID()
 
-	outbound, err := buildOutbound(req.Node)
-	if err != nil {
-		return option.Options{}, err
+	// Materialize the active node first, then candidates (deduplicated, capped).
+	list := []*protocol.ProxyNode{req.Node}
+	seen := map[string]bool{req.Node.ID: true}
+	for _, c := range req.Candidates {
+		if c == nil || len(list) >= MaxMaterialized {
+			continue
+		}
+		c.EnsureID()
+		if seen[c.ID] {
+			continue
+		}
+		seen[c.ID] = true
+		list = append(list, c)
 	}
 
-	listenAddr := badoption.Addr(netip.AddrFrom4([4]byte{127, 0, 0, 1}))
+	tags := map[string]string{}
+	var outbounds []option.Outbound
+	var endpoints []option.Endpoint
+	var tagList []string
+	for i, n := range list {
+		id := n.ID
+		tag := nodeTag(n)
+		built, err := buildNode(applyTricks(n, req.Tricks), tag)
+		if err != nil {
+			if i == 0 {
+				return option.Options{}, nil, err // the active node must compile
+			}
+			continue // an incompatible candidate is simply not materialized
+		}
+		if built.Outbound != nil {
+			outbounds = append(outbounds, *built.Outbound)
+		} else {
+			endpoints = append(endpoints, *built.Endpoint)
+		}
+		tags[id] = tag
+		tagList = append(tagList, tag)
+	}
+	activeTag := tags[req.Node.ID]
+
+	selOutbounds := append([]string{}, tagList...)
+	if len(tagList) > 1 {
+		outbounds = append(outbounds, option.Outbound{
+			Type: C.TypeURLTest, Tag: autoTag,
+			Options: &option.URLTestOutboundOptions{
+				Outbounds: tagList,
+				URL:       "https://www.gstatic.com/generate_204",
+				Interval:  badoption.Duration(10 * time.Minute),
+				Tolerance: 50,
+			},
+		})
+		selOutbounds = append(selOutbounds, autoTag)
+	}
+	outbounds = append(outbounds,
+		option.Outbound{
+			Type: C.TypeSelector, Tag: selectorTag,
+			Options: &option.SelectorOutboundOptions{Outbounds: selOutbounds, Default: activeTag},
+		},
+		option.Outbound{Type: C.TypeDirect, Tag: directTag, Options: &option.DirectOutboundOptions{}},
+	)
+
 	routing := req.Routing
+	var inbounds []option.Inbound
+	if mode.NeedsMixed() {
+		listen := badoption.Addr(netip.AddrFrom4([4]byte{127, 0, 0, 1}))
+		if req.AllowLAN {
+			listen = badoption.Addr(netip.IPv4Unspecified())
+		}
+		mixed := &option.HTTPMixedInboundOptions{
+			ListenOptions: option.ListenOptions{Listen: &listen, ListenPort: uint16(port)},
+		}
+		if req.Auth != nil && req.Auth.User != "" {
+			mixed.Users = []auth.User{{Username: req.Auth.User, Password: req.Auth.Pass}}
+		}
+		inbounds = append(inbounds, option.Inbound{Type: C.TypeMixed, Tag: "mixed-in", Options: mixed})
+	}
+	if mode.NeedsTUN() {
+		inbounds = append(inbounds, option.Inbound{Type: C.TypeTun, Tag: "tun-in", Options: tunOptions(req.Tun)})
+	}
+
 	opts := option.Options{
 		Log: &option.LogOptions{
 			Level:     orDefaultStr(routing.LogLevel, req.LogLevel, "info"),
 			Timestamp: true,
-		}, Inbounds: []option.Inbound{
-			{
-				Type: C.TypeMixed,
-				Tag:  "mixed-in",
-				Options: &option.HTTPMixedInboundOptions{
-					ListenOptions: option.ListenOptions{
-						Listen:     &listenAddr,
-						ListenPort: uint16(port),
-					},
-				},
-			},
 		},
-		Outbounds: []option.Outbound{outbound},
+		Inbounds:  inbounds,
+		Outbounds: outbounds,
+		Endpoints: endpoints,
 		Route: &option.RouteOptions{
 			Rules:                 router.BuildRouteRules(routing),
 			RuleSet:               router.BuildRuleSets(routing),
 			Final:                 router.RouteFinal(routing),
-			DefaultDomainResolver: &option.DomainResolveOptions{Server: "dns-local"},
+			AutoDetectInterface:   mode.NeedsTUN() && req.Tun.FD <= 0,
+			DefaultDomainResolver: &option.DomainResolveOptions{Server: router.DNSLocalTag},
 		},
 		DNS: router.BuildDNSOptions(routing),
 	}
-	return opts, nil
+	return opts, tags, nil
+}
+
+func tunOptions(t TunSettings) *option.TunInboundOptions {
+	mtu := t.MTU
+	if mtu == 0 {
+		mtu = 9000
+	}
+	addrs := badoption.Listable[netip.Prefix]{netip.MustParsePrefix("172.19.0.1/30")}
+	if t.IPv6 {
+		addrs = append(addrs, netip.MustParsePrefix("fdfe:dcba:9876::1/126"))
+	}
+	o := &option.TunInboundOptions{
+		MTU:         mtu,
+		Address:     addrs,
+		AutoRoute:   t.FD <= 0, // with a host fd the VpnService.Builder owns the routes
+		StrictRoute: t.StrictRoute,
+	}
+	o.IncludePackage = t.IncludePackages
+	o.ExcludePackage = t.ExcludePackages
+	o.ExcludeInterface = t.ExcludeIfaces
+	return o
 }
 
 func orDefaultStr(vals ...string) string {
@@ -262,4 +536,94 @@ func orDefaultStr(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+// DumpConfig renders the compiled sing-box configuration as JSON (secrets are
+// present — callers must redact before sharing).
+func DumpConfig(req *StartRequest) (string, error) {
+	opts, err := BuildOptions(req)
+	if err != nil {
+		return "", err
+	}
+	b, err := singjson.MarshalContext(include.Context(context.Background()), opts)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// ExportSingBox renders ALL given nodes as a standalone sing-box config
+// (outbounds/endpoints + selector), for the "export profile" feature. Unlike
+// the running core there is no materialization cap. Tags are node names.
+func ExportSingBox(nodes []*protocol.ProxyNode) (string, error) {
+	var opts option.Options
+	var tags []string
+	used := map[string]bool{}
+	for _, n := range nodes {
+		tag := n.Name
+		if tag == "" || used[tag] {
+			tag = nodeTag(n)
+		}
+		used[tag] = true
+		built, err := buildNode(n, tag)
+		if err != nil {
+			continue // unsupported nodes are skipped from the export
+		}
+		if built.Outbound != nil {
+			opts.Outbounds = append(opts.Outbounds, *built.Outbound)
+		} else {
+			opts.Endpoints = append(opts.Endpoints, *built.Endpoint)
+		}
+		tags = append(tags, tag)
+	}
+	if len(tags) == 0 {
+		return "", fmt.Errorf("no exportable nodes")
+	}
+	opts.Outbounds = append(opts.Outbounds,
+		option.Outbound{Type: C.TypeSelector, Tag: "proxy", Options: &option.SelectorOutboundOptions{Outbounds: tags, Default: tags[0]}},
+		option.Outbound{Type: C.TypeDirect, Tag: "direct", Options: &option.DirectOutboundOptions{}})
+	b, err := singjson.MarshalContext(include.Context(context.Background()), opts)
+	return string(b), err
+}
+
+// HTTPGet performs a plain-HTTP GET through the running tunnel's "proxy"
+// selector (used for the real exit-IP lookup). https targets are not supported.
+func (a *SingBoxAdapter) HTTPGet(ctx context.Context, rawURL string) ([]byte, error) {
+	a.mu.Lock()
+	b := a.instance
+	a.mu.Unlock()
+	if b == nil {
+		return nil, fmt.Errorf("box not running")
+	}
+	out, ok := b.Outbound().Outbound(selectorTag)
+	if !ok {
+		return nil, fmt.Errorf("proxy outbound not found")
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme != "http" {
+		return nil, fmt.Errorf("only http:// URLs are supported")
+	}
+	host := u.Host
+	if u.Port() == "" {
+		host += ":80"
+	}
+	client := &http.Client{
+		Timeout: 8 * time.Second,
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return out.DialContext(ctx, network, M.ParseSocksaddr(host))
+			},
+			DisableKeepAlives: true,
+		},
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))
 }

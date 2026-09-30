@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "countries": {
+    "ir": {
+      "name": "Iran",
+      "tld": ".ir",
+      "tls_tricks": {"fragment": true},
+      "service_overrides": {
+        "proxy": ["whatsapp.com", "whatsapp.net", "wa.me", "telegram.org", "telegram.me", "t.me", "cdn-telegram.org", "telesco.pe"],
+        "direct": []
+      },
+      "rule_sets": [
+        {"tag": "geosite-ir", "category": "country", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-ir.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-ir.srs"], "baseline": true},
+        {"tag": "geoip-ir", "category": "country", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geoip-ir.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geoip-ir.srs"], "baseline": true},
+        {"tag": "geosite-ads-all", "category": "ads", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-category-ads-all.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-category-ads-all.srs"], "baseline": true},
+        {"tag": "geosite-malware", "category": "security", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-malware.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-malware.srs"], "baseline": true},
+        {"tag": "geosite-phishing", "category": "security", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-phishing.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-phishing.srs"], "baseline": true},
+        {"tag": "geosite-cryptominers", "category": "security", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-cryptominers.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-cryptominers.srs"], "baseline": true},
+        {"tag": "geoip-malware", "category": "security", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geoip-malware.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geoip-malware.srs"], "baseline": true},
+        {"tag": "geoip-phishing", "category": "security", "urls": ["https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geoip-phishing.srs", "https://cdn.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geoip-phishing.srs"], "baseline": true}
+      ]
+    },
+    "cn": {
+      "name": "China",
+      "tld": ".cn",
+      "tls_tricks": {"fragment": false},
+      "rule_sets": [
+        {"tag": "geosite-cn", "category": "country", "urls": ["https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs", "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs", "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs"]},
+        {"tag": "geoip-cn", "category": "country", "urls": ["https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs", "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs", "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs"]}
+      ]
+    },
+    "ru": {
+      "name": "Russia",
+      "tld": ".ru",
+      "tls_tricks": {"fragment": false},
+      "rule_sets": [
+        {"tag": "geosite-ru", "category": "country", "urls": ["https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ru.srs", "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ru.srs"]},
+        {"tag": "geoip-ru", "category": "country", "urls": ["https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/ru.srs", "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/ru.srs"]}
+      ]
+    }
+  },
+  "global": {
+    "rule_sets": [
+      {"tag": "geosite-ads-all", "category": "ads", "urls": ["https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ads-all.srs", "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ads-all.srs", "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ads-all.srs"]}
+    ]
+  }
+}

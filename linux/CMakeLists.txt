@@ -7,7 +7,7 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "easyvpn")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.easyvpn")
+set(APPLICATION_ID "app.easyvpn.client")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -105,6 +105,16 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endforeach(bundled_library)
+
+# EasyVPN core (built with `make -C core linux-proc`). TUN mode needs CAP_NET_ADMIN:
+# run `sudo setcap cap_net_admin,cap_net_bind_service+ep <bundle>/easycoreproc` (see docs/BUILD.md).
+set(EASYCORE_BIN "${CMAKE_CURRENT_SOURCE_DIR}/../bin/easycoreproc-linux-amd64")
+if(EXISTS "${EASYCORE_BIN}")
+  install(PROGRAMS "${EASYCORE_BIN}" RENAME "easycoreproc"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+else()
+  message(WARNING "easycoreproc-linux-amd64 not found: run `make -C core linux-proc` first")
+endif()
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")

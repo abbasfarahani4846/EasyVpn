@@ -1,188 +1,141 @@
-// Command easycoreproc is the desktop process-mode core (CGO_ENABLED=0).
-// It speaks a newline-delimited JSON-RPC protocol on stdin/stdout:
+// Command easycoreproc is the desktop process-mode core (CGO-free).
 //
-//	→ {"id":"1","method":"ParseContent","args":{"content":"..."}}
-//	← {"id":"1","result":{...}}   |   {"id":"1","error":"..."}
-//	← {"type":"state|stats|delay|log","payload":{...}}   (events, no id)
+// IPC: a loopback TCP listener on a random port protected by a random
+// per-launch token (256-bit). On start it prints one JSON line to stdout:
 //
-// The Dart desktop side owns the process lifetime and the transport; this
-// binary stays engine-agnostic and only wraps pkg/engine.
+//	{"ready":true,"port":51234,"token":"<hex>"}
+//
+// The parent (Flutter app) reads it, connects, and sends {"auth":"<token>"}
+// as the first line; then newline-delimited JSON requests
+// {"id","method","args"} get {"id","result"|"error"} responses, and batched
+// events arrive as {"event":[...]} lines. Connections without a valid token
+// are closed immediately. The process exits when its stdin closes (parent
+// death) after restoring the OS proxy.
 package main
 
 import (
 	"bufio"
-	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"sync"
+	"time"
 
 	"easyvpn/core/pkg/engine"
-	"easyvpn/core/pkg/pinger"
-	"easyvpn/core/pkg/protocol"
-	"easyvpn/core/pkg/router"
+	"easyvpn/core/pkg/rpc"
 )
-
-type request struct {
-	ID     string          `json:"id"`
-	Method string          `json:"method"`
-	Args   json.RawMessage `json:"args,omitempty"`
-}
-
-type response struct {
-	ID     string          `json:"id"`
-	Result json.RawMessage `json:"result,omitempty"`
-	Error  string          `json:"error,omitempty"`
-}
-
-type event struct {
-	Type    string `json:"type"`
-	Payload any    `json:"payload,omitempty"`
-}
-
-var (
-	outMu sync.Mutex
-	out   = bufio.NewWriter(os.Stdout)
-)
-
-func writeLine(v any) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return
-	}
-	outMu.Lock()
-	defer outMu.Unlock()
-	out.Write(b)
-	out.WriteByte('\n')
-	out.Flush()
-}
-
-func reply(id string, result any, errText string) {
-	var raw json.RawMessage
-	if result != nil {
-		raw, _ = json.Marshal(result)
-	}
-	writeLine(response{ID: id, Result: raw, Error: errText})
-}
 
 func main() {
-	cacheDir := "."
-	if len(os.Args) > 1 {
-		cacheDir = os.Args[1]
+	cacheDir := flag.String("cache", "", "cache directory (required)")
+	debug := flag.Bool("debug", false, "also serve requests on stdin/stdout (debug only)")
+	flag.Parse()
+	if *cacheDir == "" {
+		fmt.Fprintln(os.Stderr, "usage: easycoreproc -cache <dir>")
+		os.Exit(2)
 	}
-	eng := engine.NewEngine(cacheDir)
 
-	// Fan out core events to stdout as one-line JSON events.
-	events, unsub := eng.Bus().Subscribe()
+	eng := engine.NewEngine(*cacheDir)
+	srv := &rpc.Server{Eng: eng}
+
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		fmt.Fprintln(os.Stderr, "rng:", err)
+		os.Exit(1)
+	}
+	token := hex.EncodeToString(tokenBytes)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "listen:", err)
+		os.Exit(1)
+	}
+	port := ln.Addr().(*net.TCPAddr).Port
+	ready, _ := json.Marshal(map[string]any{"ready": true, "port": port, "token": token})
+	fmt.Println(string(ready))
+
+	go func() { // exit (restoring the OS proxy) when the parent goes away
+		_, _ = io.Copy(io.Discard, os.Stdin)
+		eng.Shutdown()
+		os.Exit(0)
+	}()
+	if *debug {
+		go serve(struct {
+			io.Reader
+			io.Writer
+		}{os.Stdin, os.Stdout}, srv, "")
+	}
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		go serve(c, srv, token)
+	}
+}
+
+func serve(rw io.ReadWriter, srv *rpc.Server, token string) {
+	if c, ok := rw.(net.Conn); ok {
+		defer c.Close()
+		_ = c.SetReadDeadline(time.Now().Add(5 * time.Second))
+	}
+	r := bufio.NewReaderSize(rw, 1<<20)
+	if token != "" {
+		line, err := r.ReadBytes('\n')
+		var a struct {
+			Auth string `json:"auth"`
+		}
+		if err != nil || json.Unmarshal(line, &a) != nil ||
+			subtle.ConstantTimeCompare([]byte(a.Auth), []byte(token)) != 1 {
+			return
+		}
+		if c, ok := rw.(net.Conn); ok {
+			_ = c.SetReadDeadline(time.Time{})
+		}
+	}
+
+	var wmu sync.Mutex
+	write := func(b []byte) {
+		wmu.Lock()
+		defer wmu.Unlock()
+		_, _ = rw.Write(append(b, '\n'))
+	}
+
+	events, unsub := srv.Eng.Bus().Subscribe()
+	defer unsub()
+	done := make(chan struct{})
+	defer close(done)
 	go func() {
-		for batch := range events {
-			for _, ev := range batch {
-				writeLine(event{Type: ev.Type, Payload: ev.Payload})
+		for {
+			select {
+			case batch, ok := <-events:
+				if !ok {
+					return
+				}
+				b, err := json.Marshal(map[string]any{"event": batch})
+				if err == nil {
+					write(b)
+				}
+			case <-done:
+				return
 			}
 		}
 	}()
-	defer unsub()
 
-	ctx := context.Background()
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Buffer(make([]byte, 1024*1024), 16*1024*1024) // big subscription payloads
-
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
+	for {
+		line, err := r.ReadBytes('\n')
+		if len(line) > 1 {
+			// Calls run concurrently so long operations (ping, sync) never
+			// block state queries.
+			go func(l []byte) { write(srv.Handle(l)) }(append([]byte(nil), line...))
 		}
-		var req request
-		if err := json.Unmarshal(line, &req); err != nil {
-			reply("", nil, "bad request: "+err.Error())
-			continue
-		}
-		handle(ctx, eng, req)
-	}
-}
-
-func handle(ctx context.Context, eng *engine.Engine, req request) {
-	switch req.Method {
-	case "GetState":
-		reply(req.ID, map[string]string{"state": string(eng.GetState())}, "")
-
-	case "Start":
-		var args struct {
-			Node      protocol.ProxyNode `json:"node"`
-			TUN       bool               `json:"tun"`
-			LocalPort int                `json:"local_port"`
-		}
-		if err := json.Unmarshal(req.Args, &args); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		if args.LocalPort > 0 {
-			eng.SetLocalPort(args.LocalPort)
-		}
-		if err := eng.StartWithNode(&args.Node, args.TUN); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		reply(req.ID, map[string]string{"ok": "true"}, "")
-
-	case "Stop":
-		if err := eng.Stop(); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		reply(req.ID, map[string]string{"ok": "true"}, "")
-
-	case "ParseContent":
-		var args struct {
-			Content string `json:"content"`
-		}
-		if err := json.Unmarshal(req.Args, &args); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		res, err := eng.ParseSubscriptionWithWarnings(args.Content)
 		if err != nil {
-			reply(req.ID, nil, err.Error())
 			return
 		}
-		reply(req.ID, res, "")
-
-	case "PingBatch":
-		var args struct {
-			Nodes   []*protocol.ProxyNode `json:"nodes"`
-			Mode    pinger.Mode           `json:"mode"`
-			Workers int                   `json:"workers"`
-		}
-		if err := json.Unmarshal(req.Args, &args); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		results := eng.TestNodesLatency(ctx, args.Nodes, args.Mode, nil)
-		reply(req.ID, map[string]any{"results": results}, "")
-
-	case "SetRoutingModel":
-		var m router.Model
-		if err := json.Unmarshal(req.Args, &m); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		eng.SetRoutingModel(m)
-		reply(req.ID, map[string]string{"ok": "true"}, "")
-
-	case "SetRouting":
-		var args struct {
-			Country string             `json:"country"`
-			Mode    router.RoutingMode `json:"mode"`
-		}
-		if err := json.Unmarshal(req.Args, &args); err != nil {
-			reply(req.ID, nil, err.Error())
-			return
-		}
-		eng.SetRoutingCountry(args.Country)
-		eng.SetRoutingMode(args.Mode)
-		reply(req.ID, map[string]string{"ok": "true"}, "")
-
-	default:
-		reply(req.ID, nil, fmt.Sprintf("unknown method: %s", req.Method))
 	}
 }

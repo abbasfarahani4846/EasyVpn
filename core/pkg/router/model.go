@@ -3,6 +3,8 @@
 // list into engine-specific structures (currently sing-box rule actions).
 package router
 
+import "strings"
+
 // Outbound is the symbolic destination of a rule.
 type Outbound string
 
@@ -19,6 +21,7 @@ const (
 	ModeBypassLocalAndCountry RoutingMode = "bypass_local_country"
 	ModeBypassLANOnly         RoutingMode = "bypass_lan_only"
 	ModeGlobalProxy           RoutingMode = "global_proxy"
+	ModeBypassProxy           RoutingMode = "bypass_proxy" // inverted: only listed rules go through the proxy
 	ModeCustom                RoutingMode = "custom"
 )
 
@@ -65,17 +68,45 @@ type Model struct {
 	LocalDNS      string       `json:"local_dns,omitempty"`  // e.g. "udp://78.157.42.100" or "" (system)
 	FakeIPEnabled bool         `json:"fakeip_enabled"`
 	LogLevel      string       `json:"log_level,omitempty"`
+
+	// RuleSetDir is the cache directory holding "<tag>.srs" files maintained by
+	// pkg/rulesync. Only rule-sets that exist on disk are declared/referenced,
+	// so a failed download can never make the box fail to start.
+	RuleSetDir string `json:"rule_set_dir,omitempty"`
+	// ServiceOverrides are evaluated before the country rule-sets: domains that
+	// must always be proxied (e.g. WhatsApp) or always direct (banks).
+	ServiceOverrides ServiceOverrides `json:"service_overrides,omitempty"`
+}
+
+// ServiceOverrides holds domain-suffix lists for the override layer.
+type ServiceOverrides struct {
+	Proxy  []string `json:"proxy,omitempty"`
+	Direct []string `json:"direct,omitempty"`
+}
+
+// DefaultServiceOverrides returns the shipped overrides for a country code.
+func DefaultServiceOverrides(country string) ServiceOverrides {
+	if strings.EqualFold(country, "ir") {
+		return ServiceOverrides{
+			Proxy: []string{
+				"whatsapp.com", "whatsapp.net", "wa.me",
+				"telegram.org", "telegram.me", "t.me", "cdn-telegram.org", "telesco.pe",
+			},
+		}
+	}
+	return ServiceOverrides{}
 }
 
 // Default returns the default model (Iran bypass preset with ads blocking).
 func Default() Model {
 	return Model{
-		Mode:          ModeBypassLocalAndCountry,
-		Country:       "IR",
-		BlockAds:      true,
-		BlockTrackers: true,
-		BypassLAN:     true,
-		FakeIPEnabled: false,
-		LogLevel:      "info",
+		Mode:             ModeBypassLocalAndCountry,
+		Country:          "IR",
+		BlockAds:         true,
+		BlockTrackers:    true,
+		BypassLAN:        true,
+		FakeIPEnabled:    false,
+		LogLevel:         "info",
+		ServiceOverrides: DefaultServiceOverrides("IR"),
 	}
 }

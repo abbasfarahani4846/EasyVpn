@@ -51,6 +51,23 @@ func (p *Parser) ParseWithWarnings(content string) (*ParseResult, error) {
 		}
 	}
 
+	// 1b. OpenVPN / WireGuard config files.
+	if LooksLikeWGQuick(trimmed) {
+		if n, err := ParseWGQuick(trimmed, ""); err == nil {
+			res.Nodes = []*protocol.ProxyNode{n}
+			res.Warnings = append(res.Warnings, "format: wg-quick")
+			return res, nil
+		}
+	}
+	if strings.Contains(trimmed, "remote ") && (strings.Contains(trimmed, "<ca>") || strings.Contains(trimmed, "\nclient") || strings.HasPrefix(trimmed, "client")) {
+		if n, err := ParseOVPN(trimmed, ""); err == nil {
+			res.Nodes = []*protocol.ProxyNode{n}
+			res.Warnings = append(res.Warnings, "format: ovpn")
+			res.Warnings = append(res.Warnings, n.OpenVPN.Warnings...)
+			return res, nil
+		}
+	}
+
 	// 2. YAML payloads: Clash / mihomo `proxies:` list.
 	if strings.Contains(trimmed, "proxies:") {
 		if nodes, warns, ok := parseClashYAML([]byte(trimmed)); ok && len(nodes) > 0 {
@@ -91,10 +108,15 @@ func (p *Parser) ParseWithWarnings(content string) (*ParseResult, error) {
 }
 
 func looksLikeBase64(s string) bool {
-	if strings.ContainsAny(s, "://{} \n\t") {
-		return false
-	}
-	if len(s) < 16 {
+	// Subscriptions are often line-wrapped; whitespace is not part of the alphabet.
+	s = strings.Map(func(r rune) rune {
+		switch r {
+		case '\r', '\n', ' ', '\t':
+			return -1
+		}
+		return r
+	}, s)
+	if len(s) < 16 || strings.Contains(s, "://") {
 		return false
 	}
 	for _, r := range s {
@@ -165,6 +187,10 @@ func (p *Parser) ParseURI(rawURI string) (*protocol.ProxyNode, error) {
 		return parseVMess(rawURI)
 	case "wireguard":
 		return parseWireGuard(rawURI, fragment)
+	case "anytls":
+		return parseAnyTLS(body, fragment)
+	case "ssh":
+		return parseSSH(body, fragment)
 	default:
 		return nil, fmt.Errorf("unsupported scheme: %s", scheme)
 	}
@@ -236,6 +262,11 @@ func parseTLSQuery(q url.Values) *protocol.TLSConfig {
 		ALPN:        splitCSV(q.Get("alpn")),
 		UTLS:        q.Get("fp") != "" && q.Get("fp") != "none",
 		Fingerprint: q.Get("fp"),
+		Fragment:    isTruthy(q.Get("fragment")),
+		ECH:         q.Get("ech") != "",
+	}
+	if e := q.Get("ech"); e != "" {
+		tls.ECHConfig = []string{e}
 	}
 	if security == "reality" {
 		tls.Reality = &protocol.Reality{
@@ -251,7 +282,15 @@ func parseTransportQuery(q url.Values) *protocol.TransportConfig {
 	t := strings.ToLower(q.Get("type"))
 	switch t {
 	case "", "tcp", "raw":
+		if strings.EqualFold(q.Get("headerType"), "http") {
+			return &protocol.TransportConfig{Type: "tcp-http", Path: q.Get("path"), Host: q.Get("host")}
+		}
 		return nil
+	case "xhttp", "splithttp":
+		return &protocol.TransportConfig{
+			Type: "xhttp", Path: q.Get("path"), Host: q.Get("host"),
+			Mode: q.Get("mode"), Extra: q.Get("extra"),
+		}
 	case "ws", "grpc", "httpupgrade", "http", "quic":
 		tc := &protocol.TransportConfig{Type: t, Path: q.Get("path"), Host: q.Get("host")}
 		if t == "grpc" {

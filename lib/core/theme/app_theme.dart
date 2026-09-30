@@ -1,164 +1,128 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
+import '../models/models.dart';
+
+/// Builds light/dark [ThemeData] from the user's appearance settings:
+/// accent seed or Material You dynamic colors, AMOLED true black, corner
+/// radius, density and font scale.
 class AppTheme {
-  // OLED & Minimal Palette
-  static const Color darkBackground = Color(0xFF090A0F);
-  static const Color darkSurface = Color(0xFF11141E);
-  static const Color darkCard = Color(0xFF171B26);
-  static const Color darkBorder = Color(0xFF222838);
-
-  static const Color lightBackground = Color(0xFFF8FAFC);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightBorder = Color(0xFFE2E8F0);
-
-  static ThemeData darkTheme(Color accent) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: accent,
-      brightness: Brightness.dark,
-      background: darkBackground,
-      surface: darkSurface,
-    );
-
+  static ThemeData build(
+    AppearanceSettings a,
+    Brightness brightness, {
+    ColorScheme? dynamicScheme,
+  }) {
+    var scheme = (a.dynamicColor && dynamicScheme != null)
+        ? dynamicScheme
+        : ColorScheme.fromSeed(
+            seedColor: Color(a.accent),
+            brightness: brightness,
+          );
+    final dark = brightness == Brightness.dark;
+    if (dark && a.amoled) {
+      scheme = scheme.copyWith(
+        surface: Colors.black,
+        surfaceContainerLowest: Colors.black,
+        surfaceContainerLow: const Color(0xFF0A0A0A),
+        surfaceContainer: const Color(0xFF111111),
+        surfaceContainerHigh: const Color(0xFF161616),
+        surfaceContainerHighest: const Color(0xFF1C1C1C),
+      );
+    }
+    final r = BorderRadius.circular(a.cornerRadius);
+    final density = a.density == 'compact'
+        ? VisualDensity.compact
+        : VisualDensity.standard;
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: darkBackground,
+      colorScheme: scheme,
+      brightness: brightness,
+      visualDensity: density,
+      scaffoldBackgroundColor: dark && a.amoled ? Colors.black : null,
       cardTheme: CardThemeData(
-        color: darkCard,
         elevation: 0,
         margin: EdgeInsets.zero,
+        color: scheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: darkBorder, width: 1),
+          borderRadius: r,
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: darkBackground,
-        elevation: 0,
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: r),
         ),
       ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: darkSurface,
-        indicatorColor: accent.withOpacity(0.18),
-        selectedIconTheme: IconThemeData(color: accent),
-        unselectedIconTheme: const IconThemeData(color: Colors.grey),
-        selectedLabelTextStyle: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: 13),
-        unselectedLabelTextStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: darkSurface,
-        indicatorColor: accent.withOpacity(0.18),
-        elevation: 0,
-        height: 65,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.bold);
-          }
-          return const TextStyle(color: Colors.grey, fontSize: 12);
-        }),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: r),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(borderRadius: r),
         filled: true,
-        fillColor: darkCard,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: accent, width: 1.5),
+        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(a.cornerRadius + 4),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: darkBorder,
-        thickness: 1,
-        space: 1,
+      bottomSheetTheme: BottomSheetThemeData(
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(a.cornerRadius + 4),
+          ),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surfaceContainer,
+        indicatorColor: scheme.primaryContainer,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: dark && a.amoled ? Colors.black : null,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(borderRadius: r),
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(a.cornerRadius),
+        ),
       ),
     );
   }
 
-  static ThemeData lightTheme(Color accent) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: accent,
-      brightness: Brightness.light,
-      background: lightBackground,
-      surface: lightSurface,
-    );
+  static ThemeMode mode(String m) => switch (m) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
 
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: lightBackground,
-      cardTheme: CardThemeData(
-        color: lightCard,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: lightBorder, width: 1),
-        ),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: lightBackground,
-        elevation: 0,
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(
-          color: Color(0xFF0F172A),
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
-        ),
-      ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: lightSurface,
-        indicatorColor: accent.withOpacity(0.15),
-        selectedIconTheme: IconThemeData(color: accent),
-        unselectedIconTheme: const IconThemeData(color: Color(0xFF64748B)),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: lightSurface,
-        indicatorColor: accent.withOpacity(0.15),
-        elevation: 2,
-        height: 65,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: lightBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: lightBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: accent, width: 1.5),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: lightBorder,
-        thickness: 1,
-        space: 1,
-      ),
+  /// Wraps [builder] with Material You dynamic colors when available.
+  static Widget withDynamic(
+    bool enabled,
+    Widget Function(ColorScheme? light, ColorScheme? dark) builder,
+  ) {
+    if (!enabled) return builder(null, null);
+    return DynamicColorBuilder(
+      builder: (light, dark) =>
+          builder(light?.harmonized(), dark?.harmonized()),
     );
   }
 }
+
+/// Preset accent colors shown in the picker.
+const accentPresets = <int>[
+  0xFF3B82F6, // blue
+  0xFF10B981, // emerald
+  0xFF8B5CF6, // violet
+  0xFFEF4444, // red
+  0xFFF59E0B, // amber
+  0xFFEC4899, // pink
+  0xFF06B6D4, // cyan
+  0xFF64748B, // slate
+];

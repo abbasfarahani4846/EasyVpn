@@ -320,6 +320,7 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 		if x := ss.XHTTPSettings; x != nil {
 			tc.Path = x.Path
 			tc.Host = x.Host
+			tc.Mode = x.Mode
 		}
 	case "grpc":
 		if g := ss.GRPCSettings; g != nil {
@@ -332,6 +333,9 @@ func applyXrayStreamSettings(node *protocol.ProxyNode, ss *xrayStreamSettings) {
 		}
 	case "tcp":
 		if t := ss.TCPSettings; t != nil && strings.EqualFold(t.Header.Type, "http") {
+			// TCP + HTTP header camouflage: not expressible in sing-box (its "http"
+			// transport is HTTP/2); needs an Xray-capable core.
+			tc.Type = "tcp-http"
 			req := t.Header.Request.Request
 			if len(req.Path) > 0 {
 				tc.Path = req.Path[0]
