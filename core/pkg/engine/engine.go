@@ -115,13 +115,24 @@ func (e *Engine) GetState() State {
 
 // Info describes the build for the UI / diagnostics.
 func (e *Engine) Info() map[string]any {
-	return map[string]any{
+	e.mu.Lock()
+	st := e.state
+	md := e.mode
+	node := e.activeNode
+	e.mu.Unlock()
+	res := map[string]any{
 		"core":         e.core.Name(),
 		"version":      e.core.Version(),
 		"capabilities": e.capabilities(),
 		"protocols":    protocol.SupportedProtocols(),
 		"system_proxy": e.sysProxy.Supported(),
+		"state":        string(st),
+		"mode":         string(md),
 	}
+	if node != nil {
+		res["active_node_id"] = node.ID
+	}
+	return res
 }
 
 // capabilities is the union of every engine's optional node capabilities.
@@ -201,7 +212,8 @@ func (e *Engine) Start(p StartParams) error {
 	e.mu.Lock()
 	if e.state == StateConnecting || e.state == StateConnected {
 		e.mu.Unlock()
-		return fmt.Errorf("already connected; stop first")
+		_ = e.Stop()
+		e.mu.Lock()
 	}
 	e.activeNode = node
 	e.mode = mode

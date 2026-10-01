@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bridge/core_bridge.dart';
 import '../models/models.dart';
+import '../util/formatters.dart';
 import '../util/platform_service.dart';
+import '../../theme/brand.dart';
 import 'env.dart';
 import 'ping_provider.dart';
 import 'settings_provider.dart';
@@ -38,8 +40,9 @@ class CoreController extends Notifier<CoreState> {
     if (PlatformService.isAndroid) {
       PlatformService.setHandlers(
         onRevoked: () {
-          if (state.isConnected || state.status == CoreStatus.connecting)
+          if (state.isConnected || state.status == CoreStatus.connecting) {
             disconnect();
+          }
         },
         onToggle: toggle,
         onFastest: connectFastest,
@@ -49,6 +52,22 @@ class CoreController extends Notifier<CoreState> {
         _pushWidget(next.isConnected);
       });
     }
+    // Query authoritative state from core to stay 100% in sync even if app was backgrounded
+    Future.microtask(() async {
+      try {
+        final info = await env.core.info();
+        final coreSt = parseStatus(info['state'] as String?);
+        if (coreSt == CoreStatus.connected) {
+          state = CoreState(
+            status: CoreStatus.connected,
+            mode: ConnMode.parse(info['mode'] as String?),
+          );
+          _pushWidget(true);
+        } else if (PlatformService.isAndroid && !await PlatformService.isVpnActive() && state.isConnected) {
+          state = const CoreState();
+        }
+      } catch (_) {}
+    });
     return const CoreState();
   }
 
@@ -270,14 +289,31 @@ class CoreController extends Notifier<CoreState> {
     return updated;
   }
 
-  Future<void> _pushWidget(bool connected) async {
+  Future<void> _pushWidget(bool connected, {String? ip, String? countryCode}) async {
     final env = ref.read(envProvider);
     final id = ref.read(settingsProvider).activeNodeId;
     final row = id == null ? null : await env.repo.nodeRow(id);
-    await PlatformService.setWidgetInfo(
+    final nodeName = row?.name ?? '';
+    final protocol = row?.protocol ?? '';
+    final flag = (countryCode != null && countryCode.isNotEmpty)
+        ? flagEmoji(countryCode)
+        : (row != null ? (leadingFlag(row.name) ?? '') : '');
+    final ping = row?.latency ?? 0;
+
+    await PlatformService.updateVpnNotification(
       connected: connected,
-      node: row?.name ?? '',
+      node: cleanName(nodeName),
+      protocol: protocol,
+      flag: flag,
+      ping: ping,
+      ip: ip ?? '',
     );
+  }
+
+  void updateExitInfo(String ip, String countryCode) {
+    if (state.isConnected) {
+      _pushWidget(true, ip: ip, countryCode: countryCode);
+    }
   }
 
   /// Connects to the lowest-latency node of the active profile (shortcut,
@@ -499,7 +535,7 @@ class ExitInfoNotifier extends AsyncNotifier<ExitInfo?> {
       try {
         final j = await core.exitInfo(url: url);
         if ((j['ip'] as String?)?.isNotEmpty ?? false) {
-          return ExitInfo(
+          final info = ExitInfo(
             ip: j['ip'] as String,
             country: (j['country'] as String?) ?? '',
             countryCode: (j['countryCode'] as String?) ?? '',
@@ -507,6 +543,8 @@ class ExitInfoNotifier extends AsyncNotifier<ExitInfo?> {
             isp: (j['isp'] as String?) ?? '',
             source: (j['source'] as String?) ?? '',
           );
+          ref.read(coreControllerProvider.notifier).updateExitInfo(info.ip, info.countryCode);
+          return info;
         }
       } catch (e) {
         lastError = e;

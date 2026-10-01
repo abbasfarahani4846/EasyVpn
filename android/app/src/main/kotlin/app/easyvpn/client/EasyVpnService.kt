@@ -33,6 +33,38 @@ class EasyVpnService : VpnService() {
         @Volatile var active: Boolean = false
             private set
 
+        @Volatile private var notifNode: String = ""
+        @Volatile private var notifProtocol: String = ""
+        @Volatile private var notifFlag: String = ""
+        @Volatile private var notifPing: Int = 0
+        @Volatile private var notifIp: String = ""
+
+        fun updateNotificationInfo(
+            node: String,
+            protocol: String,
+            flag: String,
+            ping: Int,
+            ip: String
+        ) {
+            if (node.isNotEmpty()) notifNode = node
+            if (protocol.isNotEmpty()) notifProtocol = protocol
+            if (flag.isNotEmpty()) notifFlag = flag
+            if (ping > 0) notifPing = ping
+            if (ip.isNotEmpty()) notifIp = ip
+            instance?.updateNotification()
+        }
+
+        fun currentInfo(): Map<String, Any> {
+            return mapOf(
+                "active" to active,
+                "node" to notifNode,
+                "protocol" to notifProtocol,
+                "flag" to notifFlag,
+                "ping" to notifPing,
+                "ip" to notifIp
+            )
+        }
+
         /**
          * Establishes the interface and reports the raw fd (or a negative code) through
          * [done]. Must NOT block the main thread: Service.onCreate() runs on it, so a
@@ -116,21 +148,47 @@ class EasyVpnService : VpnService() {
         return pfd.fd
     }
 
+    private fun buildNotification(): Notification {
+        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val stop = PendingIntent.getService(this, 1, Intent(this, EasyVpnService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
+
+        val flagPrefix = if (notifFlag.isNotEmpty()) "$notifFlag " else ""
+        val pingSuffix = if (notifPing > 0) " (${notifPing} ms)" else ""
+        val title = if (notifNode.isNotEmpty()) {
+            "EasyVPN · $flagPrefix$notifNode$pingSuffix"
+        } else {
+            "EasyVPN · ${getString(R.string.vpn_connected)}"
+        }
+
+        val text = when {
+            notifIp.isNotEmpty() -> "IP: $notifIp" + if (notifProtocol.isNotEmpty()) " · ${notifProtocol.uppercase()}" else ""
+            notifProtocol.isNotEmpty() -> "${getString(R.string.vpn_connected)} · ${notifProtocol.uppercase()}"
+            else -> getString(R.string.vpn_connected)
+        }
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(open)
+            .addAction(0, getString(R.string.vpn_disconnect), stop)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .build()
+    }
+
+    fun updateNotification() {
+        if (!active) return
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(NOTIF_ID, buildNotification())
+    }
+
     private fun startForegroundCompat() {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26) {
             nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "VPN status", NotificationManager.IMPORTANCE_LOW))
         }
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val stop = PendingIntent.getService(this, 1, Intent(this, EasyVpnService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
-        val n: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
-            .setContentTitle("EasyVPN")
-            .setContentText(getString(R.string.vpn_connected))
-            .setContentIntent(open)
-            .addAction(0, getString(R.string.vpn_disconnect), stop)
-            .setOngoing(true)
-            .build()
+        val n = buildNotification()
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {

@@ -72,6 +72,18 @@ class MainActivity : FlutterActivity() {
                     EasyVpnService.stopFromActivity(this)
                     result.success(true)
                 }
+                "isVpnActive" -> result.success(EasyVpnService.active)
+                "updateVpnNotification" -> {
+                    val connected = call.argument<Boolean>("connected") ?: false
+                    val node = call.argument<String>("node") ?: ""
+                    val protocol = call.argument<String>("protocol") ?: ""
+                    val flag = call.argument<String>("flag") ?: ""
+                    val ping = call.argument<Int>("ping") ?: 0
+                    val ip = call.argument<String>("ip") ?: ""
+                    EasyVpnService.updateNotificationInfo(node, protocol, flag, ping, ip)
+                    VpnWidget.setInfo(this, connected, node)
+                    result.success(true)
+                }
                 "installedApps" -> result.success(installedApps())
                 "ready" -> {
                     // Dart handlers are registered: replay a cold-start action.

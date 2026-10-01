@@ -86,10 +86,36 @@ class PlatformService {
     _try<String>('ready').then(run);
   }
 
+  /// Updates the ongoing VPN notification and widget with rich information.
+  static Future<void> updateVpnNotification({
+    required bool connected,
+    String node = '',
+    String protocol = '',
+    String flag = '',
+    int ping = 0,
+    String ip = '',
+  }) async {
+    if (!isAndroid) return;
+    await _try<bool>('updateVpnNotification', {
+      'connected': connected,
+      'node': node,
+      'protocol': protocol,
+      'flag': flag,
+      'ping': ping,
+      'ip': ip,
+    });
+  }
+
+  /// True when the native Android VPN interface is currently up.
+  static Future<bool> isVpnActive() async {
+    if (!isAndroid) return false;
+    return await _try<bool>('isVpnActive') ?? false;
+  }
+
   /// Updates the Android home-screen widget label.
   static Future<void> setWidgetInfo({
     required bool connected,
-    required String node,
+    String node = '',
   }) async {
     if (!isAndroid) return;
     await _try<bool>('setWidgetInfo', {'connected': connected, 'node': node});
