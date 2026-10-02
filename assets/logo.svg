@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#141E46" />
+      <stop offset="55%" stop-color="#080E24" />
+      <stop offset="100%" stop-color="#040612" />
+    </radialGradient>
+
+    <!-- Neon Cyan to Violet Gradient -->
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="50%" stop-color="#00C8FF" />
+      <stop offset="100%" stop-color="#7B2CBF" />
+    </linearGradient>
+
+    <!-- Accent Emerald Glow -->
+    <linearGradient id="emeraldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#00F0FF" />
+    </linearGradient>
+
+    <!-- Shield Border Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#7B2CBF" stop-opacity="0.7" />
+    </linearGradient>
+
+    <!-- Core Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="24" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Base: Squircle Frame -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="4" />
+
+  <!-- Ambient Background Glow Circle -->
+  <circle cx="256" cy="256" r="140" fill="#00C8FF" opacity="0.08" filter="url(#softGlow)" />
+  <circle cx="256" cy="256" r="85" fill="#7B2CBF" opacity="0.15" filter="url(#softGlow)" />
+
+  <!-- Outer Cyber Orbit Rings -->
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.18" stroke-dasharray="16 12" />
+  <circle cx="256" cy="256" r="192" fill="none" stroke="#7B2CBF" stroke-width="1.5" stroke-opacity="0.15" />
+
+  <!-- Central Shield / Infinity Tunnel Glyph -->
+  <!-- Outer Shield Outline with Neon Gradient -->
+  <path d="M 256 96
+           C 340 96 384 136 384 216
+           C 384 324 288 388 256 416
+           C 224 388 128 324 128 216
+           C 128 136 172 96 256 96 Z"
+        fill="none"
+        stroke="url(#neonGrad)"
+        stroke-width="14"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        filter="url(#glow)" />
+
+  <!-- Inner Dynamic Modern 'E' & Keyhole / Tunnel Geometry -->
+  <!-- Top Horizontal Bar of 'E' -->
+  <path d="M 210 180 L 310 180"
+        stroke="url(#neonGrad)"
+        stroke-width="14"
+        stroke-linecap="round" />
+
+  <!-- Middle Bar with Cyber Node -->
+  <path d="M 210 256 L 285 256"
+        stroke="url(#emeraldGrad)"
+        stroke-width="14"
+        stroke-linecap="round"
+        filter="url(#glow)" />
+
+  <!-- Bottom Horizontal Bar of 'E' -->
+  <path d="M 210 332 L 310 332"
+        stroke="url(#neonGrad)"
+        stroke-width="14"
+        stroke-linecap="round" />
+
+  <!-- Vertical Spine of 'E' -->
+  <path d="M 210 180 L 210 332"
+        stroke="url(#neonGrad)"
+        stroke-width="14"
+        stroke-linecap="round" />
+
+  <!-- Center Quantum Core Point (Secure Connection Anchor) -->
+  <circle cx="316" cy="256" r="12" fill="#00F0FF" filter="url(#glow)" />
+  <circle cx="316" cy="256" r="6" fill="#FFFFFF" />
+
+  <!-- Top Right Sparkle / Security Star -->
+  <polygon points="360,140 364,152 376,156 364,160 360,172 356,160 344,156 356,152" fill="#00F0FF" opacity="0.85" filter="url(#glow)" />
+</svg>

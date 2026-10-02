@@ -8,9 +8,12 @@ import '../../core/providers/core_provider.dart';
 import '../../core/providers/env.dart';
 import '../../core/providers/node_list_provider.dart';
 import '../../core/providers/ping_provider.dart';
+import '../../core/providers/profiles_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../l10n/strings.dart';
 import '../../theme/brand.dart';
+import '../add/add_sheet.dart';
+import '../subscription/subscription_page.dart';
 import 'home_menu.dart';
 
 /// Full-height location sheet: search, favorites, flags and signal bars.
@@ -46,6 +49,7 @@ class _PickerState extends ConsumerState<_Picker> {
   bool _loading = false;
   bool _favOnly = false;
   String _q = '';
+  String? _selectedProfileId;
   Timer? _debounce;
 
   @override
@@ -79,7 +83,7 @@ class _PickerState extends ConsumerState<_Picker> {
         .read(envProvider)
         .repo
         .query(
-          profileId: ref.read(settingsProvider).activeProfileId,
+          profileId: _selectedProfileId ?? ref.read(settingsProvider).activeProfileId,
           search: _q,
           onlyFavorites: _favOnly,
           after: _cursor,
@@ -98,6 +102,7 @@ class _PickerState extends ConsumerState<_Picker> {
     final s = context.s;
     final active = ref.watch(settingsProvider.select((x) => x.activeNodeId));
     final ping = ref.watch(pingProvider);
+    final profiles = ref.watch(profilesProvider).value ?? const [];
     ref.listen<NodeListState>(nodeListProvider, (_, next) {
       if (!mounted || _rows.isEmpty) return;
       final latMap = {for (final r in next.rows) r.id: r.latency};
@@ -114,9 +119,55 @@ class _PickerState extends ConsumerState<_Picker> {
       data: Brand.theme(Theme.of(context)),
       child: Column(
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          // Top action bar: Title + Profiles + Add config link
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            padding: const EdgeInsets.fromLTRB(20, 10, 16, 4),
+            child: Row(
+              children: [
+                Text(
+                  s.t('menu.servers'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Brand.text,
+                  ),
+                ),
+                const Spacer(),
+                // Profiles button
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.folder_shared_rounded, size: 20),
+                  tooltip: s.t('subs.title'),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Brand.panel,
+                    foregroundColor: Brand.text,
+                  ),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+                    );
+                    if (mounted) _reload();
+                  },
+                ),
+                const SizedBox(width: 8),
+                // Add new config link button
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.add_link_rounded, size: 20),
+                  tooltip: s.t('menu.add'),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Brand.on.withValues(alpha: 0.15),
+                    foregroundColor: Brand.on,
+                  ),
+                  onPressed: () async {
+                    await showAddConfigSheet(context);
+                    if (mounted) _reload();
+                  },
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               decoration: InputDecoration(
                 hintText: s.t('home.search'),
@@ -137,6 +188,35 @@ class _PickerState extends ConsumerState<_Picker> {
               },
             ),
           ),
+          if (profiles.length > 1)
+            SizedBox(
+              height: 38,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  ChoiceChip(
+                    label: Text(s.t('proxies.all_profiles')),
+                    selected: _selectedProfileId == null,
+                    onSelected: (_) {
+                      _selectedProfileId = null;
+                      _reload();
+                    },
+                  ),
+                  for (final p in profiles) ...[
+                    const SizedBox(width: 6),
+                    ChoiceChip(
+                      label: Text(p.name),
+                      selected: _selectedProfileId == p.id,
+                      onSelected: (_) {
+                        _selectedProfileId = p.id;
+                        _reload();
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -174,9 +254,8 @@ class _PickerState extends ConsumerState<_Picker> {
                           await ref
                               .read(pingProvider.notifier)
                               .run(
-                                profileId: ref
-                                    .read(settingsProvider)
-                                    .activeProfileId,
+                                profileId: _selectedProfileId ??
+                                    ref.read(settingsProvider).activeProfileId,
                                 mode: 'url',
                               );
                           if (mounted) _reload();
@@ -188,9 +267,9 @@ class _PickerState extends ConsumerState<_Picker> {
           Expanded(
             child: _rows.isEmpty && !_loading
                 ? _Empty(
-                    onAdd: () {
-                      Navigator.pop(context);
-                      openMenuPage(context, MenuTarget.servers);
+                    onAdd: () async {
+                      await showAddConfigSheet(context);
+                      if (mounted) _reload();
                     },
                   )
                 : ListView.builder(
@@ -208,9 +287,11 @@ class _PickerState extends ConsumerState<_Picker> {
                         );
                       }
                       final r = _rows[i - 1];
+                      final isTesting = ping.isTesting(r.id);
                       return _NodeTile(
                         row: r,
                         selected: r.id == active,
+                        isTestingPing: isTesting,
                         onTap: () async {
                           Navigator.pop(context);
                           final ctl = ref.read(coreControllerProvider.notifier);
@@ -229,6 +310,9 @@ class _PickerState extends ConsumerState<_Picker> {
                               isFavorite: !r.isFavorite,
                             ),
                           );
+                        },
+                        onPingTap: () {
+                          ref.read(pingProvider.notifier).pingSingleNode(r.id);
                         },
                       );
                     },
@@ -266,13 +350,17 @@ class _NodeTile extends StatelessWidget {
   const _NodeTile({
     required this.row,
     required this.selected,
+    required this.isTestingPing,
     required this.onTap,
     required this.onFav,
+    required this.onPingTap,
   });
   final NodeRow row;
   final bool selected;
+  final bool isTestingPing;
   final VoidCallback onTap;
   final VoidCallback onFav;
+  final VoidCallback onPingTap;
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +393,12 @@ class _NodeTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SignalBars(row.latency, showLabel: true),
+          SignalBars(
+            row.latency,
+            showLabel: true,
+            isLoading: isTestingPing,
+            onTap: onPingTap,
+          ),
           const SizedBox(width: 4),
           IconButton(
             icon: Icon(

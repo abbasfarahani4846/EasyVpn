@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -90,6 +91,8 @@ type Engine struct {
 // NewEngine creates the engine and recovers any crash-leftover system proxy.
 func NewEngine(cacheDir string) *Engine {
 	PrepareRuntime(cacheDir)
+	// Keep heap small and aggressively return unused memory to OS (battery & RAM saving on mobile)
+	debug.SetGCPercent(50)
 	e := &Engine{
 		state:    StateDisconnected,
 		cacheDir: cacheDir,
@@ -398,6 +401,10 @@ func (e *Engine) Stop() error {
 	err := e.core.Stop(context.Background())
 	e.closeSidecar()
 	e.setState(StateDisconnected, "")
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		debug.FreeOSMemory()
+	}()
 	return err
 }
 

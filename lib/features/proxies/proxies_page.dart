@@ -15,6 +15,8 @@ import '../../core/providers/settings_provider.dart';
 import '../../core/util/formatters.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/common.dart';
+import '../add/add_sheet.dart';
+import '../subscription/subscription_page.dart';
 
 class ProxiesPage extends ConsumerStatefulWidget {
   const ProxiesPage({super.key});
@@ -61,6 +63,20 @@ class _ProxiesPageState extends ConsumerState<ProxiesPage> {
       appBar: AppBar(
         title: Text(s.t('proxies.title')),
         actions: [
+          IconButton(
+            tooltip: s.t('subs.title'),
+            icon: const Icon(Icons.folder_shared_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: s.t('menu.add'),
+            icon: const Icon(Icons.add_link_rounded),
+            onPressed: () => showAddConfigSheet(context),
+          ),
           PopupMenuButton<NodeSort>(
             tooltip: s.t('proxies.sort'),
             icon: const Icon(Icons.sort),
@@ -295,6 +311,7 @@ class _NodeTile extends ConsumerWidget {
         ? const <String>[]
         : row.requires.where((c) => !caps.contains(c)).toList();
     final needs = missing.isNotEmpty ? missing.join(', ') : null;
+    final isTesting = ref.watch(pingProvider.select((p) => p.isTesting(row.id)));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       child: Material(
@@ -327,7 +344,12 @@ class _NodeTile extends ConsumerWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              LatencyBadge(row.latency),
+              LatencyBadge(
+                row.latency,
+                isLoading: isTesting,
+                onTap: () =>
+                    ref.read(pingProvider.notifier).pingSingleNode(row.id),
+              ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 icon: Icon(

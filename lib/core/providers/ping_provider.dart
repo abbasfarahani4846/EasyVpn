@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bridge/core_bridge.dart';
 import '../util/platform_service.dart';
+import 'core_provider.dart';
 import 'env.dart';
 import 'node_list_provider.dart';
 import 'settings_provider.dart';
@@ -15,13 +16,34 @@ class PingState {
     this.total = 0,
     this.mode = 'tcp',
     this.error,
+    this.testingNodeIds = const <String>{},
   });
   final bool running;
   final int done;
   final int total;
   final String mode;
   final String? error;
+  final Set<String> testingNodeIds;
   double get progress => total == 0 ? 0 : done / total;
+
+  bool isTesting(String id) => testingNodeIds.contains(id);
+
+  PingState copyWith({
+    bool? running,
+    int? done,
+    int? total,
+    String? mode,
+    String? error,
+    Set<String>? testingNodeIds,
+  }) =>
+      PingState(
+        running: running ?? this.running,
+        done: done ?? this.done,
+        total: total ?? this.total,
+        mode: mode ?? this.mode,
+        error: error ?? this.error,
+        testingNodeIds: testingNodeIds ?? this.testingNodeIds,
+      );
 }
 
 /// Batch latency testing. Results stream from the core as `delay` events; the
@@ -138,6 +160,65 @@ class PingNotifier extends Notifier<PingState> {
       _pending[r['node_id'] as String] = (r['latency_ms'] as int?) ?? -1;
     }
     _done = state.total;
+  }
+
+  /// Pings a single node immediately and updates UI and DB.
+  Future<int?> pingSingleNode(String nodeId, {String? mode}) async {
+    final nextTesting = Set<String>.from(state.testingNodeIds)..add(nodeId);
+    state = state.copyWith(testingNodeIds: nextTesting);
+    final env = ref.read(envProvider);
+    final m = mode ?? 'tcp';
+    int? latency;
+    try {
+      if (m == 'tcp') {
+        final r = await env.repo.nodeRow(nodeId);
+        if (r != null) {
+          final nodes = [
+            {
+              'id': r.id,
+              'type': r.protocol,
+              'server': r.server,
+              'port': r.port,
+            }
+          ];
+          final results = await env.core.ping(nodes, mode: 'tcp');
+          if (results.isNotEmpty) {
+            latency = (results.first['latency_ms'] as int?) ?? -1;
+          }
+        }
+      } else {
+        final raws = await env.repo.rawNodes([nodeId]);
+        if (raws.isNotEmpty) {
+          final url = ref.read(settingsProvider).testUrl;
+          final dns = await PlatformService.systemDns();
+          final results = await env.core.ping(
+            raws,
+            mode: 'url',
+            url: url,
+            systemDns: dns,
+          );
+          if (results.isNotEmpty) {
+            latency = (results.first['latency_ms'] as int?) ?? -1;
+          }
+        }
+      }
+      if (latency != null) {
+        ref.read(nodeListProvider.notifier).applyLatency({nodeId: latency});
+        await env.repo.setLatencies({nodeId: latency});
+        final activeId = ref.read(settingsProvider).activeNodeId;
+        if (activeId == nodeId && ref.read(coreControllerProvider).isConnected) {
+          ref.read(coreControllerProvider.notifier).refreshNotificationPing();
+        }
+      }
+    } catch (_) {
+      latency = -1;
+      ref.read(nodeListProvider.notifier).applyLatency({nodeId: -1});
+      await env.repo.setLatencies({nodeId: -1});
+    } finally {
+      final updatedTesting = Set<String>.from(state.testingNodeIds)..remove(nodeId);
+      state = state.copyWith(testingNodeIds: updatedTesting);
+    }
+    return latency;
   }
 
   Future<void> cancel() async {

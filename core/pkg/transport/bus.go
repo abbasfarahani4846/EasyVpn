@@ -42,6 +42,7 @@ type Bus struct {
 	batchSize     int
 	stopCh        chan struct{}
 	stopOnce      sync.Once
+	wakeCh        chan struct{}
 }
 
 const (
@@ -58,6 +59,7 @@ func NewBus() *Bus {
 		flushInterval: defaultFlushEveryMS * time.Millisecond,
 		batchSize:     defaultBatchSize,
 		stopCh:        make(chan struct{}),
+		wakeCh:        make(chan struct{}, 1),
 	}
 	go b.loop()
 	return b
@@ -67,7 +69,6 @@ func NewBus() *Bus {
 func (b *Bus) Publish(kind EventKind, typ string, payload any) {
 	ev := Event{Kind: kind, Type: typ, Payload: payload, Timestamp: time.Now().UnixMilli()}
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	switch kind {
 	case KindPriority:
 		b.priority = append(b.priority, ev)
@@ -79,6 +80,12 @@ func (b *Bus) Publish(kind EventKind, typ string, payload any) {
 		if len(b.bulk) > b.capacity {
 			b.bulk = b.bulk[1:]
 		}
+	}
+	b.mu.Unlock()
+
+	select {
+	case b.wakeCh <- struct{}{}:
+	default:
 	}
 }
 
@@ -107,15 +114,29 @@ func (b *Bus) Close() {
 }
 
 func (b *Bus) loop() {
-	ticker := time.NewTicker(b.flushInterval)
-	defer ticker.Stop()
 	for {
 		select {
 		case <-b.stopCh:
 			b.flush(true)
 			return
-		case <-ticker.C:
+		case <-b.wakeCh:
 			b.flush(false)
+			// If items remain in queue, drain with a short sleep until empty
+			for {
+				b.mu.Lock()
+				hasMore := len(b.priority) > 0 || len(b.bulk) > 0
+				b.mu.Unlock()
+				if !hasMore {
+					break
+				}
+				select {
+				case <-b.stopCh:
+					b.flush(true)
+					return
+				case <-time.After(b.flushInterval):
+					b.flush(false)
+				}
+			}
 		}
 	}
 }

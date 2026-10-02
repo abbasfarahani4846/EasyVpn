@@ -297,13 +297,60 @@ int signalBars(int ms) {
 }
 
 class SignalBars extends StatelessWidget {
-  const SignalBars(this.ms, {super.key, this.color, this.showLabel = false});
+  const SignalBars(
+    this.ms, {
+    super.key,
+    this.color,
+    this.showLabel = false,
+    this.isLoading = false,
+    this.onTap,
+  });
   final int ms;
   final Color? color;
   final bool showLabel;
+  final bool isLoading;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      final loadingWidget = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.8,
+              valueColor: AlwaysStoppedAnimation<Color>(Brand.on),
+            ),
+          ),
+          if (showLabel) ...[
+            const SizedBox(width: 5),
+            const Text(
+              'ping...',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Brand.on,
+              ),
+            ),
+          ],
+        ],
+      );
+      if (onTap != null) {
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: loadingWidget,
+          ),
+        );
+      }
+      return loadingWidget;
+    }
+
     final n = signalBars(ms);
     final c = color ?? (n >= 3 ? Brand.on : (n == 2 ? Brand.busy : Brand.bad));
     final bars = Row(
@@ -322,7 +369,19 @@ class SignalBars extends StatelessWidget {
           ),
       ],
     );
-    if (!showLabel) return bars;
+    if (!showLabel) {
+      if (onTap != null) {
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: bars,
+          ),
+        );
+      }
+      return bars;
+    }
     final String labelText;
     final Color textColor;
     if (ms > 0) {
@@ -335,7 +394,7 @@ class SignalBars extends StatelessWidget {
       labelText = '— ms';
       textColor = Brand.textDim;
     }
-    return Row(
+    final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
@@ -350,5 +409,16 @@ class SignalBars extends StatelessWidget {
         bars,
       ],
     );
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: content,
+        ),
+      );
+    }
+    return content;
   }
 }

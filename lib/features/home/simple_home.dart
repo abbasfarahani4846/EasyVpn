@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../core/models/models.dart';
 import '../../core/providers/core_provider.dart';
 import '../../core/providers/env.dart';
+import '../../core/providers/ping_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/update/update_service.dart';
 import '../../core/util/formatters.dart';
@@ -198,7 +199,36 @@ class _OrbState extends ConsumerState<_Orb>
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 3),
-  )..repeat();
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(_Orb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.core.status != widget.core.status) {
+      _updateAnimation();
+    }
+  }
+
+  void _updateAnimation() {
+    final st = widget.core.status;
+    final active = st == CoreStatus.connected ||
+        st == CoreStatus.connecting ||
+        st == CoreStatus.disconnecting;
+    if (active) {
+      if (!_c.isAnimating) _c.repeat();
+    } else {
+      if (_c.isAnimating) {
+        _c.stop();
+        _c.value = 0;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -311,9 +341,28 @@ class _StatusTextState extends ConsumerState<_StatusText> {
   @override
   void initState() {
     super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _since != null) setState(() {});
-    });
+    _syncTick();
+  }
+
+  @override
+  void didUpdateWidget(_StatusText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.core.isConnected != widget.core.isConnected) {
+      _syncTick();
+    }
+  }
+
+  void _syncTick() {
+    if (widget.core.isConnected) {
+      _since ??= DateTime.now();
+      _tick ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted && _since != null) setState(() {});
+      });
+    } else {
+      _since = null;
+      _tick?.cancel();
+      _tick = null;
+    }
   }
 
   @override
@@ -615,7 +664,13 @@ class _LocationTile extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (row != null) SignalBars(row.latency, showLabel: true),
+                  if (row != null)
+                    SignalBars(
+                      row.latency,
+                      showLabel: true,
+                      isLoading: ref.watch(pingProvider.select((p) => p.isTesting(row.id))),
+                      onTap: () => ref.read(pingProvider.notifier).pingSingleNode(row.id),
+                    ),
                   const SizedBox(width: 6),
                   const Icon(Icons.chevron_right_rounded, color: Brand.textDim),
                 ],
@@ -908,7 +963,12 @@ class _WindscribeCard extends ConsumerWidget {
                                           ),
                                           const SizedBox(width: 4),
                                           if (row != null)
-                                            SignalBars(row.latency, showLabel: true),
+                                            SignalBars(
+                                              row.latency,
+                                              showLabel: true,
+                                              isLoading: ref.watch(pingProvider.select((p) => p.isTesting(row.id))),
+                                              onTap: () => ref.read(pingProvider.notifier).pingSingleNode(row.id),
+                                            ),
                                         ],
                                       ),
                                       const SizedBox(height: 3),

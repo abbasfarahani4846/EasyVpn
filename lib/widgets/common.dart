@@ -99,40 +99,97 @@ class EmptyState extends StatelessWidget {
 
 /// Colored latency pill (green < 300 ms, amber < 800 ms, red above).
 class LatencyBadge extends StatelessWidget {
-  const LatencyBadge(this.ms, {super.key});
+  const LatencyBadge(
+    this.ms, {
+    super.key,
+    this.isLoading = false,
+    this.onTap,
+  });
   final int ms;
+  final bool isLoading;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    if (ms <= 0) {
-      return Text('—', style: TextStyle(color: cs.outline));
-    }
-    final color = ms < 300
-        ? const Color(0xFF22C55E)
-        : (ms < 800 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$ms ms',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+    Widget body;
+    if (isLoading) {
+      body = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.8,
+                color: cs.primary,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          SignalBars(ms, color: color),
-        ],
-      ),
-    );
+            const SizedBox(width: 5),
+            Text(
+              'ping...',
+              style: TextStyle(
+                color: cs.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (ms <= 0) {
+      body = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          ms == -1 ? 'Timeout' : '—',
+          style: TextStyle(color: cs.outline, fontSize: 12),
+        ),
+      );
+    } else {
+      final color = ms < 300
+          ? const Color(0xFF22C55E)
+          : (ms < 800 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
+      body = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$ms ms',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 4),
+            SignalBars(ms, color: color),
+          ],
+        ),
+      );
+    }
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: body,
+      );
+    }
+    return body;
   }
 }
 

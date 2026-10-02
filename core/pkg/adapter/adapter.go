@@ -346,10 +346,11 @@ func (a *SingBoxAdapter) statsLoop(stop chan struct{}) {
 			fmt.Fprintln(os.Stderr, "stats loop panic:", r)
 		}
 	}()
-	ticker := time.NewTicker(250 * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	var lastUp, lastDown int64
 	last := time.Now()
+	zeroTicks := 0
 	for {
 		select {
 		case <-stop:
@@ -370,16 +371,26 @@ func (a *SingBoxAdapter) statsLoop(stop chan struct{}) {
 				downBps = int64(float64(down-lastDown) / dt)
 			}
 			lastUp, lastDown, last = up, down, now
+			conns := int32(tm.ConnectionsLen())
 			st := Stats{
 				UploadSpeed:   upBps,
 				DownloadSpeed: downBps,
 				TotalUpload:   up,
 				TotalDownload: down,
-				Connections:   int32(tm.ConnectionsLen()),
+				Connections:   conns,
 			}
 			a.mu.Lock()
 			a.latest = st
 			a.mu.Unlock()
+			if upBps == 0 && downBps == 0 && conns == 0 {
+				zeroTicks++
+				// If idle for several ticks, emit only every 3 seconds to save mobile battery
+				if zeroTicks > 2 && zeroTicks%3 != 0 {
+					continue
+				}
+			} else {
+				zeroTicks = 0
+			}
 			if hook != nil {
 				hook(st)
 			}

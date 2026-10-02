@@ -75,11 +75,19 @@ class CoreController extends Notifier<CoreState> {
     for (final e in batch) {
       if (e.type == 'state') {
         final m = (e.payload as Map).cast<String, dynamic>();
+        final st = parseStatus(m['state'] as String?);
         state = CoreState(
-          status: parseStatus(m['state'] as String?),
+          status: st,
           mode: ConnMode.parse(m['mode'] as String?),
           detail: (m['detail'] as String?) ?? '',
         );
+        if (st == CoreStatus.connected) {
+          final activeNodeId = ref.read(settingsProvider).activeNodeId;
+          if (activeNodeId != null) {
+            unawaited(ref.read(pingProvider.notifier).pingSingleNode(activeNodeId));
+          }
+          _pushWidget(true);
+        }
       } else if (e.type == 'crash') {
         state = CoreState(status: CoreStatus.error, detail: 'core crashed');
       } else if (e.type == 'restarted') {
@@ -120,6 +128,8 @@ class CoreController extends Notifier<CoreState> {
       state = const CoreState(status: CoreStatus.error, detail: 'no_node');
       return;
     }
+    // Auto-measure ping on connect
+    unawaited(ref.read(pingProvider.notifier).pingSingleNode(id));
     final rev = ++_revision;
     state = state.copyWith(
       status: CoreStatus.connecting,
@@ -356,6 +366,8 @@ class CoreController extends Notifier<CoreState> {
     ref
         .read(settingsProvider.notifier)
         .update((s) => s.copyWith(activeNodeId: id));
+    // Auto-measure ping for selected node
+    unawaited(ref.read(pingProvider.notifier).pingSingleNode(id));
     if (!state.isConnected) return;
     final raw = await env.repo.rawNode(id);
     if (raw == null) return;
@@ -364,6 +376,12 @@ class CoreController extends Notifier<CoreState> {
     } on CoreException catch (e) {
       lastFailure = ConnectFailure(e.message, capability: e.capability);
       state = state.copyWith(detail: e.message);
+    }
+  }
+
+  void refreshNotificationPing() {
+    if (state.isConnected) {
+      _pushWidget(true);
     }
   }
 
@@ -438,7 +456,6 @@ class LogNotifier extends Notifier<List<LogLine>> {
   final _ring = Queue<LogLine>();
   StreamSubscription<List<CoreEvent>>? _sub;
   Timer? _flush;
-  bool _dirty = false;
 
   @override
   List<LogLine> build() {
@@ -448,6 +465,7 @@ class LogNotifier extends Notifier<List<LogLine>> {
       _flush?.cancel();
     });
     _sub = env.core.events.listen((batch) {
+      var hasLogs = false;
       for (final e in batch) {
         if (e.type != 'log') continue;
         final m = (e.payload as Map).cast<String, dynamic>();
@@ -459,21 +477,25 @@ class LogNotifier extends Notifier<List<LogLine>> {
           ),
         );
         if (_ring.length > max) _ring.removeFirst();
-        _dirty = true;
+        hasLogs = true;
       }
-    });
-    // Publish at most 4x per second so a log storm never rebuilds the UI per line.
-    // (see also [add] for app-generated lines)
-    _flush = Timer.periodic(const Duration(milliseconds: 250), (_) {
-      if (_dirty) {
-        _dirty = false;
-        state = List.unmodifiable(_ring);
+      if (hasLogs) {
+        _scheduleFlush();
       }
     });
     return const [];
   }
 
+  void _scheduleFlush() {
+    _flush ??= Timer(const Duration(milliseconds: 300), () {
+      _flush = null;
+      state = List.unmodifiable(_ring);
+    });
+  }
+
   void clear() {
+    _flush?.cancel();
+    _flush = null;
     _ring.clear();
     state = const [];
   }
@@ -484,7 +506,7 @@ extension LogNotifierAdd on LogNotifier {
   void add(String level, String msg) {
     _ring.add(LogLine(DateTime.now(), level, msg));
     if (_ring.length > LogNotifier.max) _ring.removeFirst();
-    _dirty = true;
+    _scheduleFlush();
   }
 }
 
