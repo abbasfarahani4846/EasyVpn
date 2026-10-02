@@ -1,7 +1,7 @@
 # Graph Report - EasyVpn  (2026-10-02)
 
 ## Corpus Check
-- 197 files · ~196,688 words
+- 197 files · ~196,703 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2f645c8e`
+- Built from commit: `9762b340`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -259,7 +259,7 @@ Nodes (30): AnimationController, CustomPainter, DateTime?, availableModes, canCo
 
 ### Community 21 - "package:flutter_riverpod/flutter_riverpod.dart"
 Cohesion: 0.17
-Nodes (12): ../../core/providers/profiles_provider.dart, _addWarpWithLicense, build, _busy, ChainPage, _ChainPageState, createState, _pickNode (+4 more)
+Nodes (12): app.dart, ../../core/providers/nav_provider.dart, ../../core/providers/routing_actions.dart, build, _busy, _choices, createState, _detected (+4 more)
 
 ### Community 22 - "core_integration_test.dart"
 Cohesion: 0.06
@@ -436,7 +436,7 @@ Nodes (17): _Metric, _Small, _UnavailableBanner, _Empty, _FastestTile, _NodeTile
 
 ### Community 66 - "win32_window.cpp"
 Cohesion: 0.17
-Nodes (12): app.dart, ../../core/providers/nav_provider.dart, ../../core/providers/routing_actions.dart, build, _busy, _choices, createState, _detected (+4 more)
+Nodes (12): ../../core/providers/profiles_provider.dart, _addWarpWithLicense, build, _busy, ChainPage, _ChainPageState, createState, _pickNode (+4 more)
 
 ### Community 67 - "testChunk"
 Cohesion: 0.27
@@ -495,8 +495,8 @@ Cohesion: 0.18
 Nodes (10): SupportedProtocols(), _In_, _In_opt_, vector, wWinMain(), string, wchar_t, CreateAndAttachConsole() (+2 more)
 
 ### Community 81 - "file_io.dart"
-Cohesion: 0.18
-Nodes (10): dart:convert, f, null, path, pickTextFile, r, saveText, package:file_picker/file_picker.dart (+2 more)
+Cohesion: 0.21
+Nodes (7): ParseResult, cidrFromMask(), ParseOVPN(), Parser, looksLikeBase64(), LooksLikeWGQuick(), ParseWGQuick()
 
 ### Community 82 - "model.go"
 Cohesion: 0.31
@@ -547,24 +547,24 @@ Cohesion: 0.33
 Nodes (5): changed, _letterlike, out, plainName, toString
 
 ### Community 94 - "CoreTransport"
-Cohesion: 0.40
-Nodes (5): CoreTransport, FfiTransport, ProcessTransport, UnavailableTransport, FakeTransport
+Cohesion: 0.18
+Nodes (10): dart:convert, f, null, path, pickTextFile, r, saveText, package:file_picker/file_picker.dart (+2 more)
 
 ### Community 96 - "RegisterPlugins"
-Cohesion: 0.21
-Nodes (7): ParseResult, cidrFromMask(), ParseOVPN(), Parser, looksLikeBase64(), LooksLikeWGQuick(), ParseWGQuick()
+Cohesion: 0.36
+Nodes (6): RawMessage, ns(), parseNS(), services(), nsBackend, nsService
 
 ### Community 102 - "platformLogger"
 Cohesion: 0.27
 Nodes (9): classify(), DefaultSites(), Context, Engine, shortErr(), statusText(), errorString, Site (+1 more)
 
+### Community 104 - "TestWithLocalDNS"
+Cohesion: 0.40
+Nodes (5): CoreTransport, FfiTransport, ProcessTransport, UnavailableTransport, FakeTransport
+
 ### Community 127 - "main"
 Cohesion: 0.22
 Nodes (8): main(), serve(), InstallCrashLog(), LastCrash(), lastIndex(), T, TestCrashLogCapturesPanic(), ReadWriter
-
-### Community 128 - "sysproxy_darwin.go"
-Cohesion: 0.36
-Nodes (6): RawMessage, ns(), parseNS(), services(), nsBackend, nsService
 
 ### Community 129 - "EasyVPN v2 plan: all-in-one, one-button"
 Cohesion: 0.22
@@ -598,7 +598,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.346) - this node is a cross-community bridge._
 - **Why does `buildOptionsWithTags()` connect `adapter.go` to `Default`, `NewEngine`, `SingBoxAdapter`, `BuildRouteRules`, `build_outbound.go`, `buildChain`, `.OpenInterface`?**
   _High betweenness centrality (0.158) - this node is a cross-community bridge._
-- **Why does `ProxyNode` connect `ProxyNode` to `Server`, `freePort`, `Client`, `NewEngine`, `parser.go`, `build_outbound.go`, `adapter.go`, `Default`, `Engine`, `SingBoxAdapter`, `string`, `xray.go`, `testChunk`, `.Start`, `export.go`, `engine.go`, `.TestNodesURL`, `buildChain`, `RegisterPlugins`?**
+- **Why does `ProxyNode` connect `ProxyNode` to `Server`, `freePort`, `Client`, `NewEngine`, `parser.go`, `build_outbound.go`, `adapter.go`, `Default`, `Engine`, `SingBoxAdapter`, `string`, `xray.go`, `testChunk`, `.Start`, `export.go`, `engine.go`, `file_io.dart`, `.TestNodesURL`, `buildChain`?**
   _High betweenness centrality (0.119) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `string` (e.g. with `.parseSingboxOutboundRaw()` and `.ParseWithWarnings()`) actually correct?**
   _`string` has 45 INFERRED edges - model-reasoned connections that need verification._

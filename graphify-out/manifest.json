@@ -625,8 +625,8 @@
     "semantic_hash": "a5740ab4c7664ac7f4fe2d4853d9f34e"
   },
   "lib/core/update/update_service.dart": {
-    "mtime": 1790949071.3853545,
-    "ast_hash": "50cd326494900022b16ea1499ac0d92e",
+    "mtime": 1790953206.778801,
+    "ast_hash": "3f991dd612dc84fd74d37c6740a2a13c",
     "semantic_hash": ""
   },
   "lib/core/util/backup_service.dart": {
@@ -955,13 +955,13 @@
     "semantic_hash": "7569387d58711ab975940f4df3b4bcda"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1790948923.7646766,
-    "ast_hash": "ca7454d3f7d0b34702dbf13833a5209a",
+    "mtime": 1790953129.244845,
+    "ast_hash": "61eb5d54cbee9869c22dca1c2a41cf0c",
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1790948871.3656676,
-    "ast_hash": "c699bca42ab13ed6a4102574135c54a3",
+    "mtime": 1790953079.261502,
+    "ast_hash": "b4559a3d11ccfc27bbdfb1ff274ef830",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1020,8 +1020,8 @@
     "semantic_hash": ""
   },
   "pubspec.yaml": {
-    "mtime": 1790948970.6570032,
-    "ast_hash": "178939b619ccf35467f86b5a063f96c3",
+    "mtime": 1790953182.4412832,
+    "ast_hash": "b17b98a8da34b92396a0514dcc66e6a8",
     "semantic_hash": ""
   },
   "test/fixtures/sub_dart.txt": {
