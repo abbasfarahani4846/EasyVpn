@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/env.dart';
+import '../../core/update/update_service.dart';
 import '../../l10n/strings.dart';
 
 class AboutPage extends ConsumerWidget {
@@ -33,7 +34,7 @@ class AboutPage extends ConsumerWidget {
           const SizedBox(height: 16),
           ListTile(
             title: Text(s.t('about.version')),
-            trailing: const Text('1.0.0'),
+            trailing: Text(buildLabel.startsWith('v') ? buildLabel.substring(1) : buildLabel),
           ),
           FutureBuilder<Map<String, dynamic>>(
             future: core.isAvailable ? core.info() : Future.value(const {}),

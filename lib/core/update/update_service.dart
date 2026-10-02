@@ -9,15 +9,14 @@ import '../providers/env.dart';
 import '../providers/settings_provider.dart';
 import '../util/platform_service.dart';
 
-/// Build identity stamped by CI (`--dart-define=BUILD_LABEL=...`). Local builds
-/// are "dev" and never auto-update.
-const buildLabel = String.fromEnvironment('BUILD_LABEL', defaultValue: 'dev');
+/// Build identity stamped by CI (`--dart-define=BUILD_LABEL=...`).
+const buildLabel = String.fromEnvironment('BUILD_LABEL', defaultValue: '1.0.1');
 const _buildChannelDefine = String.fromEnvironment('BUILD_CHANNEL');
 
 /// 'stable' for tagged releases, 'nightly' otherwise (CI may override).
 String get buildChannel => _buildChannelDefine.isNotEmpty
     ? _buildChannelDefine
-    : (buildLabel == 'dev' || buildLabel.startsWith('nightly')
+    : (buildLabel.startsWith('nightly') || buildLabel == 'dev'
           ? 'nightly'
           : 'stable');
 
@@ -72,18 +71,21 @@ class UpdateState {
 /// installs updates the way each platform allows.
 class UpdateNotifier extends Notifier<UpdateState> {
   Timer? _timer;
+  Timer? _initialTimer;
   StreamSubscription? _sub;
 
   @override
   UpdateState build() {
     ref.onDispose(() {
       _timer?.cancel();
+      _initialTimer?.cancel();
       _sub?.cancel();
     });
     final auto = ref.watch(settingsProvider.select((s) => s.autoUpdateCheck));
     _timer?.cancel();
-    if (auto && buildLabel != 'dev') {
-      Future.delayed(const Duration(seconds: 20), () => check(silent: true));
+    _initialTimer?.cancel();
+    if (auto && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      _initialTimer = Timer(const Duration(seconds: 20), () => check(silent: true));
       _timer = Timer.periodic(
         const Duration(hours: 12),
         (_) => check(silent: true),
@@ -201,7 +203,7 @@ class UpdateNotifier extends Notifier<UpdateState> {
 tasklist /FI "PID eq $pid" 2>nul | find "$pid" >nul && (timeout /t 1 /nobreak >nul & goto wait)
 rmdir /s /q "$stage" 2>nul
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Force -LiteralPath '$zip' -DestinationPath '$stage'"
-robocopy "$stage" "$appDir" /E /XF portable /XD data >nul
+robocopy "$stage" "$appDir" /E /XF portable *.db *.db-shm *.db-wal >nul
 start "" "$appDir\\$exe"
 ''');
     await Process.start(

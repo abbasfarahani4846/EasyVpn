@@ -127,9 +127,9 @@ func pickAsset(as []Asset, t Target) *Asset {
 	switch t.Platform {
 	case "android":
 		if t.Arch == "x86_64" || t.Arch == "amd64" {
-			want = []string{"-android-x86_64.apk"}
+			want = []string{"-android-x86_64.apk", "-android-universal.apk", ".apk"}
 		} else {
-			want = []string{"-android-arm64-v8a.apk"}
+			want = []string{"-android-arm64-v8a.apk", "-android-arm64.apk", "-android-universal.apk", ".apk"}
 		}
 	case "windows":
 		if t.Portable {

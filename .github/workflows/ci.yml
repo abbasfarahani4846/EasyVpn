@@ -57,6 +57,7 @@ jobs:
         run: |
           NDK_BIN=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
           make -C core lib-android NDK_BIN=$NDK_BIN API=24
+      - run: sed -i '/org.gradle.java.home/d' android/gradle.properties || true
       - run: flutter pub get
       - run: flutter build apk --release
 

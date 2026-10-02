@@ -4,7 +4,6 @@ package adapter
 
 import (
 	"context"
-	"encoding/binary"
 	"io"
 	"net"
 	"net/http"
