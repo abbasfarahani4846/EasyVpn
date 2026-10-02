@@ -736,7 +736,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_cmd_easycoreproc_main",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "main.go"
     },
@@ -747,7 +747,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "core_cmd_easycoreproc_main_main",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "main()"
     },
@@ -758,7 +758,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "core_cmd_easycoreproc_main_serve",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "serve()"
     },
@@ -769,7 +769,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "readwriter",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "readwriter"
     },
@@ -780,8 +780,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "main.go"
     },
     {
@@ -791,8 +791,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_main",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "main()"
     },
     {
@@ -802,8 +802,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_getserver",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "getserver()"
     },
     {
@@ -813,8 +813,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_currentserver",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "currentserver()"
     },
     {
@@ -824,8 +824,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_pumpevents",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "pumpevents()"
     },
     {
@@ -835,8 +835,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_go_engine",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "engine"
     },
     {
@@ -846,8 +846,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_initcore",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "initcore()"
     },
     {
@@ -857,8 +857,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "char",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "char"
     },
     {
@@ -868,8 +868,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_registereventcallback",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "registereventcallback()"
     },
     {
@@ -879,8 +879,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "event_callback_t",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "event_callback_t"
     },
     {
@@ -890,8 +890,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_corecall",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "corecall()"
     },
     {
@@ -901,8 +901,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "core_cmd_libeasycore_main_freestring",
-      "community": 76,
-      "community_name": "Win32Window",
+      "community": 81,
+      "community_name": "main.go",
       "norm_label": "freestring()"
     },
     {
@@ -1937,7 +1937,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "chain.go"
     },
@@ -1948,7 +1948,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain_buildchain",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "buildchain()"
     },
@@ -1959,7 +1959,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain_go_tlstricks",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "tlstricks"
     },
@@ -1970,7 +1970,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain_go_endpoint",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "endpoint"
     },
@@ -1981,7 +1981,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain_setdetour",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "setdetour()"
     },
@@ -1992,7 +1992,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "core_pkg_adapter_chain_setdetourvalue",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "setdetourvalue()"
     },
@@ -2003,7 +2003,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "value",
-      "community": 89,
+      "community": 128,
       "community_name": "buildChain",
       "norm_label": "value"
     },
@@ -4027,8 +4027,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_config_ovpn",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "ovpn.go"
     },
     {
@@ -4038,8 +4038,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "core_pkg_config_ovpn_parseovpn",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "parseovpn()"
     },
     {
@@ -4049,8 +4049,8 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "core_pkg_config_ovpn_cidrfrommask",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "cidrfrommask()"
     },
     {
@@ -4060,8 +4060,8 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "core_pkg_config_ovpn_lookslikeovpn",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "lookslikeovpn()"
     },
     {
@@ -4170,8 +4170,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "config_parseresult",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "parseresult"
     },
     {
@@ -4181,8 +4181,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "core_pkg_config_parser_go_config_parser",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "parser"
     },
     {
@@ -4203,8 +4203,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "config_parser_parsecontent",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": ".parsecontent()"
     },
     {
@@ -4214,8 +4214,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "config_parser_parsewithwarnings",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": ".parsewithwarnings()"
     },
     {
@@ -4225,8 +4225,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "core_pkg_config_parser_lookslikebase64",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "lookslikebase64()"
     },
     {
@@ -4676,8 +4676,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_config_wgquick",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "wgquick.go"
     },
     {
@@ -4687,8 +4687,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "core_pkg_config_wgquick_parsewgquick",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "parsewgquick()"
     },
     {
@@ -4698,8 +4698,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "core_pkg_config_wgquick_lookslikewgquick",
-      "community": 81,
-      "community_name": "file_io.dart",
+      "community": 82,
+      "community_name": ".ParseWithWarnings",
       "norm_label": "lookslikewgquick()"
     },
     {
@@ -4940,7 +4940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_engine_crash",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "crash.go"
     },
@@ -4951,7 +4951,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_installcrashlog",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "installcrashlog()"
     },
@@ -4962,7 +4962,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_lastcrash",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "lastcrash()"
     },
@@ -4973,7 +4973,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_lastindex",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "lastindex()"
     },
@@ -4984,7 +4984,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_test",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "crash_test.go"
     },
@@ -4995,7 +4995,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_test_testcrashlogcapturespanic",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "testcrashlogcapturespanic()"
     },
@@ -5006,7 +5006,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_engine_crash_test_go_t",
-      "community": 127,
+      "community": 86,
       "community_name": "main",
       "norm_label": "t"
     },
@@ -5226,8 +5226,8 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "engine_engine_info",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": ".info()"
     },
     {
@@ -5237,8 +5237,8 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "engine_engine_capabilities",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": ".capabilities()"
     },
     {
@@ -5380,7 +5380,7 @@
       "source_location": "L462",
       "_origin": "ast",
       "id": "engine_engine_setroutingmode",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": ".setroutingmode()"
     },
@@ -5908,8 +5908,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_engine_localdns_test",
-      "community": 128,
-      "community_name": "sysproxy_darwin.go",
+      "community": 137,
+      "community_name": "TestWithLocalDNS",
       "norm_label": "localdns_test.go"
     },
     {
@@ -5919,8 +5919,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "core_pkg_engine_localdns_test_testwithlocaldns",
-      "community": 128,
-      "community_name": "sysproxy_darwin.go",
+      "community": 137,
+      "community_name": "TestWithLocalDNS",
       "norm_label": "testwithlocaldns()"
     },
     {
@@ -5930,8 +5930,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_engine_localdns_test_go_t",
-      "community": 128,
-      "community_name": "sysproxy_darwin.go",
+      "community": 137,
+      "community_name": "TestWithLocalDNS",
       "norm_label": "t"
     },
     {
@@ -5941,8 +5941,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "sitecheck.go"
     },
     {
@@ -5952,8 +5952,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "engine_site",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "site"
     },
     {
@@ -5963,8 +5963,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "engine_siteresult",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "siteresult"
     },
     {
@@ -5974,8 +5974,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_defaultsites",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "defaultsites()"
     },
     {
@@ -5985,8 +5985,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_classify",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "classify()"
     },
     {
@@ -5996,8 +5996,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_go_engine_engine",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "engine"
     },
     {
@@ -6007,8 +6007,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "engine_engine_sitecheck",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": ".sitecheck()"
     },
     {
@@ -6018,8 +6018,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_go_context",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "context"
     },
     {
@@ -6029,8 +6029,8 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_shorterr",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "shorterr()"
     },
     {
@@ -6040,8 +6040,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "core_pkg_engine_sitecheck_statustext",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "statustext()"
     },
     {
@@ -6051,8 +6051,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "engine_errorstring",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": "errorstring"
     },
     {
@@ -6062,8 +6062,8 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "engine_errorstring_error",
-      "community": 102,
-      "community_name": "platformLogger",
+      "community": 84,
+      "community_name": "sitecheck.go",
       "norm_label": ".error()"
     },
     {
@@ -6887,8 +6887,8 @@
       "source_location": "L307",
       "_origin": "ast",
       "id": "core_pkg_protocol_types_supportedprotocols",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "supportedprotocols()"
     },
     {
@@ -7151,8 +7151,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_router_compile",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "compile.go"
     },
     {
@@ -7162,8 +7162,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "core_pkg_router_compile_go_router_model",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "model"
     },
     {
@@ -7173,8 +7173,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "router_model_hasset",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": ".hasset()"
     },
     {
@@ -7184,8 +7184,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "router_model_setpath",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": ".setpath()"
     },
     {
@@ -7195,8 +7195,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "router_model_present",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": ".present()"
     },
     {
@@ -7206,8 +7206,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "router_model_countrydirectsets",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": ".countrydirectsets()"
     },
     {
@@ -7217,8 +7217,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "router_model_usescountry",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": ".usescountry()"
     },
     {
@@ -7228,8 +7228,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "core_pkg_router_compile_buildrouterules",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "buildrouterules()"
     },
     {
@@ -7239,8 +7239,8 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "core_pkg_router_compile_rule",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "rule()"
     },
     {
@@ -7250,8 +7250,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "defaultrule",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "defaultrule"
     },
     {
@@ -7261,8 +7261,8 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "core_pkg_router_compile_routeaction",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "routeaction()"
     },
     {
@@ -7272,8 +7272,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ruleaction",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "ruleaction"
     },
     {
@@ -7283,8 +7283,8 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "core_pkg_router_compile_actionfor",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "actionfor()"
     },
     {
@@ -7294,8 +7294,8 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "core_pkg_router_compile_routefinal",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "routefinal()"
     },
     {
@@ -7305,8 +7305,8 @@
       "source_location": "L208",
       "_origin": "ast",
       "id": "core_pkg_router_compile_rawruleisempty",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "rawruleisempty()"
     },
     {
@@ -7316,8 +7316,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "rawdefaultrule",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "rawdefaultrule"
     },
     {
@@ -7327,8 +7327,8 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "core_pkg_router_compile_parseuint16",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "parseuint16()"
     },
     {
@@ -7338,8 +7338,8 @@
       "source_location": "L225",
       "_origin": "ast",
       "id": "core_pkg_router_compile_buildrulesets",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "buildrulesets()"
     },
     {
@@ -7349,8 +7349,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ruleset",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "ruleset"
     },
     {
@@ -7360,8 +7360,8 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "core_pkg_router_compile_builddnsoptions",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "builddnsoptions()"
     },
     {
@@ -7371,8 +7371,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_router_compile_go_dnsoptions",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "dnsoptions"
     },
     {
@@ -7382,8 +7382,8 @@
       "source_location": "L331",
       "_origin": "ast",
       "id": "core_pkg_router_compile_ordefault",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "ordefault()"
     },
     {
@@ -7415,8 +7415,8 @@
       "source_location": "L398",
       "_origin": "ast",
       "id": "core_pkg_router_compile_rejectaction",
-      "community": 45,
-      "community_name": "BuildRouteRules",
+      "community": 28,
+      "community_name": "home_menu.dart",
       "norm_label": "rejectaction()"
     },
     {
@@ -7426,7 +7426,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_router_model",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "model.go"
     },
@@ -7448,7 +7448,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "router_routingmode",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "routingmode"
     },
@@ -7459,7 +7459,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "router_rulekind",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "rulekind"
     },
@@ -7470,7 +7470,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "router_rule",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "rule"
     },
@@ -7481,7 +7481,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "router_rulesetref",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "rulesetref"
     },
@@ -7492,7 +7492,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "core_pkg_router_model_go_router_model",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "model"
     },
@@ -7503,7 +7503,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "serviceoverrides",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "serviceoverrides"
     },
@@ -7514,7 +7514,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "router_serviceoverrides",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "serviceoverrides"
     },
@@ -7525,7 +7525,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "core_pkg_router_model_defaultserviceoverrides",
-      "community": 82,
+      "community": 89,
       "community_name": "model.go",
       "norm_label": "defaultserviceoverrides()"
     },
@@ -7547,7 +7547,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_router_router_test",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "router_test.go"
     },
@@ -7558,7 +7558,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_fakesets",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "fakesets()"
     },
@@ -7569,7 +7569,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_go_t",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "t"
     },
@@ -7580,7 +7580,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_actions",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "actions()"
     },
@@ -7591,7 +7591,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_testiranruleorder",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "testiranruleorder()"
     },
@@ -7602,7 +7602,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_testmissingrulesetsareneverreferenced",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "testmissingrulesetsareneverreferenced()"
     },
@@ -7613,7 +7613,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_testmodes",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "testmodes()"
     },
@@ -7624,7 +7624,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "core_pkg_router_router_test_testdnsschema",
-      "community": 86,
+      "community": 127,
       "community_name": "router_test.go",
       "norm_label": "testdnsschema()"
     },
@@ -8504,7 +8504,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_subs_b64",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "b64.go"
     },
@@ -8515,7 +8515,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "core_pkg_subs_b64_decodeb64",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "decodeb64()"
     },
@@ -8526,7 +8526,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_subs_subs",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "subs.go"
     },
@@ -8537,7 +8537,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "subs_userinfo",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "userinfo"
     },
@@ -8548,7 +8548,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "subs_result",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "result"
     },
@@ -8559,7 +8559,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_fetch",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "fetch()"
     },
@@ -8570,7 +8570,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_go_context",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "context"
     },
@@ -8581,7 +8581,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_parseuserinfo",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "parseuserinfo()"
     },
@@ -8592,7 +8592,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_decodetitle",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "decodetitle()"
     },
@@ -8603,7 +8603,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_test",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "subs_test.go"
     },
@@ -8614,7 +8614,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_test_testfetchparsesheaders",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "testfetchparsesheaders()"
     },
@@ -8625,7 +8625,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_test_go_t",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "t"
     },
@@ -8636,7 +8636,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_pkg_subs_subs_test_testfetchfallsbacktoproxy",
-      "community": 63,
+      "community": 76,
       "community_name": "Fetch",
       "norm_label": "testfetchfallsbacktoproxy()"
     },
@@ -8758,7 +8758,7 @@
       "_origin": "ast",
       "id": "core_pkg_sysproxy_sysproxy_darwin",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "sysproxy_darwin.go"
     },
     {
@@ -8769,7 +8769,7 @@
       "_origin": "ast",
       "id": "sysproxy_nsbackend",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "nsbackend"
     },
     {
@@ -8791,7 +8791,7 @@
       "_origin": "ast",
       "id": "sysproxy_nsservice",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "nsservice"
     },
     {
@@ -8802,7 +8802,7 @@
       "_origin": "ast",
       "id": "core_pkg_sysproxy_sysproxy_darwin_services",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "services()"
     },
     {
@@ -8813,7 +8813,7 @@
       "_origin": "ast",
       "id": "core_pkg_sysproxy_sysproxy_darwin_ns",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "ns()"
     },
     {
@@ -8824,7 +8824,7 @@
       "_origin": "ast",
       "id": "sysproxy_nsbackend_snapshot",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": ".snapshot()"
     },
     {
@@ -8835,7 +8835,7 @@
       "_origin": "ast",
       "id": "core_pkg_sysproxy_sysproxy_darwin_go_rawmessage",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "rawmessage"
     },
     {
@@ -8846,7 +8846,7 @@
       "_origin": "ast",
       "id": "sysproxy_nsbackend_apply",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": ".apply()"
     },
     {
@@ -8857,7 +8857,7 @@
       "_origin": "ast",
       "id": "core_pkg_sysproxy_sysproxy_darwin_parsens",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": "parsens()"
     },
     {
@@ -8868,7 +8868,7 @@
       "_origin": "ast",
       "id": "sysproxy_nsbackend_restore",
       "community": 96,
-      "community_name": "RegisterPlugins",
+      "community_name": "sysproxy_darwin.go",
       "norm_label": ".restore()"
     },
     {
@@ -9992,8 +9992,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "consumerstatefulwidget",
-      "community": 64,
-      "community_name": "add_sheet.dart",
+      "community": 25,
+      "community_name": "simple_home.dart",
       "norm_label": "consumerstatefulwidget"
     },
     {
@@ -10333,8 +10333,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "core_providers_profiles_provider_dart",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "../../core/providers/profiles_provider.dart"
     },
     {
@@ -10344,8 +10344,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "core_providers_settings_provider_dart",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "../core/providers/settings_provider.dart"
     },
     {
@@ -10366,8 +10366,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "theme_brand_dart",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "../theme/brand.dart"
     },
     {
@@ -10487,8 +10487,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "l10n_strings_dart",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "../l10n/strings.dart"
     },
     {
@@ -10850,7 +10850,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "bool_get",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "bool get"
     },
@@ -11235,7 +11235,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "core_transport_dart",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "core_transport.dart"
     },
@@ -11433,8 +11433,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_core_transport_coretransport",
-      "community": 104,
-      "community_name": "TestWithLocalDNS",
+      "community": 130,
+      "community_name": "CoreTransport",
       "norm_label": "coretransport"
     },
     {
@@ -11598,8 +11598,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_ffi_transport_ffitransport",
-      "community": 104,
-      "community_name": "TestWithLocalDNS",
+      "community": 130,
+      "community_name": "CoreTransport",
       "norm_label": "ffitransport"
     },
     {
@@ -12104,8 +12104,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_process_transport_processtransport",
-      "community": 104,
-      "community_name": "TestWithLocalDNS",
+      "community": 130,
+      "community_name": "CoreTransport",
       "norm_label": "processtransport"
     },
     {
@@ -12236,7 +12236,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "int_get",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "int get"
     },
@@ -12346,7 +12346,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "unavailable_transport.dart"
     },
@@ -12357,8 +12357,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_unavailabletransport",
-      "community": 104,
-      "community_name": "TestWithLocalDNS",
+      "community": 130,
+      "community_name": "CoreTransport",
       "norm_label": "unavailabletransport"
     },
     {
@@ -12368,7 +12368,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_reason",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "reason"
     },
@@ -12379,7 +12379,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_events",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "events"
     },
@@ -12390,7 +12390,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_isavailable",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "isavailable"
     },
@@ -12401,7 +12401,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_unavailablereason",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "unavailablereason"
     },
@@ -12412,7 +12412,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_call",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "call"
     },
@@ -12423,7 +12423,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_bridge_unavailable_transport_dispose",
-      "community": 84,
+      "community": 102,
       "community_name": "bool get",
       "norm_label": "dispose"
     },
@@ -12434,7 +12434,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "app_database.dart"
     },
@@ -12467,7 +12467,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_alltables",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "alltables"
     },
@@ -12478,7 +12478,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "iterable",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "iterable"
     },
@@ -12489,7 +12489,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_allschemaentities",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "allschemaentities"
     },
@@ -12500,7 +12500,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_schemaversion",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "schemaversion"
     },
@@ -12511,7 +12511,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_migration",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "migration"
     },
@@ -12522,7 +12522,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "migrationstrategy_get",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "migrationstrategy get"
     },
@@ -12533,7 +12533,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_schemav1",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "_schemav1"
     },
@@ -12544,7 +12544,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_open",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "open"
     },
@@ -12555,7 +12555,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_memory",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "memory"
     },
@@ -12566,7 +12566,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_query",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "query"
     },
@@ -12577,7 +12577,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_exec",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "exec"
     },
@@ -12588,7 +12588,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_kvget",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "kvget"
     },
@@ -12599,7 +12599,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_kvset",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "kvset"
     },
@@ -12610,7 +12610,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_app_database_kvdelete",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "kvdelete"
     },
@@ -12621,7 +12621,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_drift_drift_dart",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "package:drift/drift.dart"
     },
@@ -12632,7 +12632,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_drift_native_dart",
-      "community": 59,
+      "community": 45,
       "community_name": "app_database.dart",
       "norm_label": "package:drift/native.dart"
     },
@@ -12676,7 +12676,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_database_node_repository_noderepository",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "noderepository"
     },
@@ -14909,8 +14909,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_providers_core_provider_connectfastest",
-      "community": 6,
-      "community_name": "settingsProvider",
+      "community": 61,
+      "community_name": "profilesProvider",
       "norm_label": "connectfastest"
     },
     {
@@ -16141,8 +16141,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_providers_profiles_provider_reload",
-      "community": 37,
-      "community_name": "profiles_provider.dart",
+      "community": 61,
+      "community_name": "profilesProvider",
       "norm_label": "reload"
     },
     {
@@ -16251,8 +16251,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_providers_profiles_provider_saveprofile",
-      "community": 61,
-      "community_name": "profilesProvider",
+      "community": 37,
+      "community_name": "profiles_provider.dart",
       "norm_label": "saveprofile"
     },
     {
@@ -16273,8 +16273,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_providers_profiles_provider_adoptactive",
-      "community": 61,
-      "community_name": "profilesProvider",
+      "community": 6,
+      "community_name": "settingsProvider",
       "norm_label": "_adoptactive"
     },
     {
@@ -17109,8 +17109,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_core_update_update_service_updateprovider",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "updateprovider"
     },
     {
@@ -17527,8 +17527,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_share_plus_share_plus_dart",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "package:share_plus/share_plus.dart"
     },
     {
@@ -17989,7 +17989,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "add_sheet.dart"
     },
@@ -18000,8 +18000,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_addsheet",
-      "community": 64,
-      "community_name": "add_sheet.dart",
+      "community": 25,
+      "community_name": "simple_home.dart",
       "norm_label": "_addsheet"
     },
     {
@@ -18033,7 +18033,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_text",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_text"
     },
@@ -18044,7 +18044,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_busy",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_busy"
     },
@@ -18055,7 +18055,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_error",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_error"
     },
@@ -18066,7 +18066,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_showaddconfigsheet",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "showaddconfigsheet"
     },
@@ -18077,7 +18077,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_showmodalbottomsheet",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "showmodalbottomsheet"
     },
@@ -18088,7 +18088,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_createstate",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "createstate"
     },
@@ -18099,7 +18099,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_dispose",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "dispose"
     },
@@ -18121,7 +18121,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_paste",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_paste"
     },
@@ -18132,7 +18132,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_camera",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_camera"
     },
@@ -18143,7 +18143,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_qrimage",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_qrimage"
     },
@@ -18154,7 +18154,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_file",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "_file"
     },
@@ -18165,7 +18165,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_add_add_sheet_build",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "build"
     },
@@ -18209,7 +18209,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "scan_scan_page_dart",
-      "community": 64,
+      "community": 66,
       "community_name": "add_sheet.dart",
       "norm_label": "../scan/scan_page.dart"
     },
@@ -18220,8 +18220,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "chain_page.dart"
     },
     {
@@ -18231,8 +18231,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_chainpage",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "chainpage"
     },
     {
@@ -18242,8 +18242,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_chainpagestate",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_chainpagestate"
     },
     {
@@ -18253,8 +18253,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_busy",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_busy"
     },
     {
@@ -18264,8 +18264,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_createstate",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "createstate"
     },
     {
@@ -18275,8 +18275,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_row",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_row"
     },
     {
@@ -18286,8 +18286,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_run",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_run"
     },
     {
@@ -18297,8 +18297,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_warpexit",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_warpexit"
     },
     {
@@ -18308,8 +18308,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_warpinwarp",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_warpinwarp"
     },
     {
@@ -18319,8 +18319,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_addwarpwithlicense",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_addwarpwithlicense"
     },
     {
@@ -18330,8 +18330,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_picknode",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "_picknode"
     },
     {
@@ -18341,8 +18341,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_chain_chain_page_build",
-      "community": 66,
-      "community_name": "win32_window.cpp",
+      "community": 80,
+      "community_name": "chain_page.dart",
       "norm_label": "build"
     },
     {
@@ -18913,7 +18913,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "home_menu.dart"
     },
@@ -18924,7 +18924,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_menutarget",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "menutarget"
     },
@@ -18935,7 +18935,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_menusheet",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "_menusheet"
     },
@@ -18946,7 +18946,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_items",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "_items"
     },
@@ -18957,7 +18957,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_pagefor",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "_pagefor"
     },
@@ -18990,7 +18990,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_showhomemenu",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "showhomemenu"
     },
@@ -19001,7 +19001,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_showmodalbottomsheet",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "showmodalbottomsheet"
     },
@@ -19012,7 +19012,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_home_menu_build",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "build"
     },
@@ -19023,7 +19023,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "add_add_sheet_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../add/add_sheet.dart"
     },
@@ -19045,7 +19045,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "tools_site_check_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../tools/site_check_page.dart"
     },
@@ -19056,7 +19056,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "tools_speed_test_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../tools/speed_test_page.dart"
     },
@@ -19067,7 +19067,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "logs_logs_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../logs/logs_page.dart"
     },
@@ -19078,7 +19078,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "proxies_proxies_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../proxies/proxies_page.dart"
     },
@@ -19089,7 +19089,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "routing_routing_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../routing/routing_page.dart"
     },
@@ -19100,7 +19100,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "settings_settings_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../settings/settings_page.dart"
     },
@@ -19111,7 +19111,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "settings_updates_page_dart",
-      "community": 28,
+      "community": 58,
       "community_name": "home_menu.dart",
       "norm_label": "../settings/updates_page.dart"
     },
@@ -19672,8 +19672,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_home_simple_home_updatebanner",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "_updatebanner"
     },
     {
@@ -20420,8 +20420,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_qr_flutter_qr_flutter_dart",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "package:qr_flutter/qr_flutter.dart"
     },
     {
@@ -21168,8 +21168,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_settings_updates_page",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "updates_page.dart"
     },
     {
@@ -21179,8 +21179,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_settings_updates_page_updatespage",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "updatespage"
     },
     {
@@ -21190,8 +21190,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_settings_updates_page_build",
-      "community": 40,
-      "community_name": "Options",
+      "community": 64,
+      "community_name": "add_sheet.dart",
       "norm_label": "build"
     },
     {
@@ -21212,8 +21212,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "share_sheet.dart"
     },
     {
@@ -21223,8 +21223,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_env",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "env"
     },
     {
@@ -21234,8 +21234,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_raw",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "raw"
     },
     {
@@ -21245,8 +21245,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_link",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "link"
     },
     {
@@ -21256,8 +21256,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_name",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "name"
     },
     {
@@ -21267,8 +21267,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_showsharenode",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "showsharenode"
     },
     {
@@ -21278,8 +21278,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_share_share_sheet_showmodalbottomsheet",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "showmodalbottomsheet"
     },
     {
@@ -21311,8 +21311,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_subscription_subscription_page_addsheet",
-      "community": 64,
-      "community_name": "add_sheet.dart",
+      "community": 25,
+      "community_name": "simple_home.dart",
       "norm_label": "_addsheet"
     },
     {
@@ -21971,8 +21971,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_tools_tools_page",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "tools_page.dart"
     },
     {
@@ -21982,8 +21982,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_tools_tools_page_toolspage",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "toolspage"
     },
     {
@@ -21993,8 +21993,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_tools_tools_page_items",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "_items"
     },
     {
@@ -22004,8 +22004,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "lib_features_tools_tools_page_build",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "build"
     },
     {
@@ -22015,8 +22015,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "home_home_menu_dart",
-      "community": 58,
-      "community_name": "package:flutter/material.dart",
+      "community": 59,
+      "community_name": "../l10n/strings.dart",
       "norm_label": "../home/home_menu.dart"
     },
     {
@@ -24532,7 +24532,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_database_test",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "database_test.dart"
     },
@@ -24543,7 +24543,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_database_test_db",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "db"
     },
@@ -24554,7 +24554,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_database_test_repo",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "repo"
     },
@@ -24565,7 +24565,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_database_test_node",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "node"
     },
@@ -24576,7 +24576,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_database_test_main",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "main"
     },
@@ -24587,7 +24587,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_easyvpn_core_bridge_core_bridge_dart",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "package:easyvpn/core/bridge/core_bridge.dart"
     },
@@ -24598,7 +24598,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_easyvpn_core_database_app_database_dart",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "package:easyvpn/core/database/app_database.dart"
     },
@@ -24609,7 +24609,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "package_easyvpn_core_database_node_repository_dart",
-      "community": 130,
+      "community": 104,
       "community_name": "database_test.dart",
       "norm_label": "package:easyvpn/core/database/node_repository.dart"
     },
@@ -25016,8 +25016,8 @@
       "source_location": null,
       "_origin": "ast",
       "id": "test_support_fake_transport_faketransport",
-      "community": 104,
-      "community_name": "TestWithLocalDNS",
+      "community": 130,
+      "community_name": "CoreTransport",
       "norm_label": "faketransport"
     },
     {
@@ -25599,8 +25599,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "windows_runner_main",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "main.cpp"
     },
     {
@@ -25610,8 +25610,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "windows_runner_main_wwinmain",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "wwinmain()"
     },
     {
@@ -25621,8 +25621,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "in",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "_in_"
     },
     {
@@ -25632,8 +25632,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "in_opt",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "_in_opt_"
     },
     {
@@ -25654,8 +25654,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "windows_runner_utils_cpp_windows_runner_utils",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "utils.cpp"
     },
     {
@@ -25665,8 +25665,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "windows_runner_utils_createandattachconsole",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "createandattachconsole()"
     },
     {
@@ -25676,8 +25676,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "windows_runner_utils_getcommandlinearguments",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "getcommandlinearguments()"
     },
     {
@@ -25687,8 +25687,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "vector",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "vector"
     },
     {
@@ -25698,8 +25698,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "windows_runner_utils_cpp_string",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "string"
     },
     {
@@ -25709,8 +25709,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "windows_runner_utils_utf8fromutf16",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "utf8fromutf16()"
     },
     {
@@ -25720,8 +25720,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "windows_runner_utils_cpp_wchar_t",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "wchar_t"
     },
     {
@@ -25731,8 +25731,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "windows_runner_utils_h_windows_runner_utils",
-      "community": 80,
-      "community_name": "wWinMain",
+      "community": 63,
+      "community_name": "string",
       "norm_label": "utils.h"
     },
     {
@@ -76030,5 +76030,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9762b340313dc8a94ca05b5261719c1c8bb80907"
+  "built_at_commit": "07b4a21914d4c9dd570affa3f93ab13cdbc846a7"
 }

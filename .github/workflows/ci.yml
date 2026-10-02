@@ -61,7 +61,7 @@ jobs:
           sed -i '/org.gradle.java.home/d' android/gradle.properties || true
           sed -i 's/-Djava.io.tmpdir=[^ ]*//' android/gradle.properties || true
       - run: flutter pub get
-      - run: flutter build apk --release
+      - run: flutter build apk --release --android-skip-build-dependency-validation
 
   windows:
     runs-on: windows-latest

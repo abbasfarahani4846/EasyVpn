@@ -10,7 +10,7 @@ import '../providers/settings_provider.dart';
 import '../util/platform_service.dart';
 
 /// Build identity stamped by CI (`--dart-define=BUILD_LABEL=...`).
-const buildLabel = String.fromEnvironment('BUILD_LABEL', defaultValue: '1.0.2');
+const buildLabel = String.fromEnvironment('BUILD_LABEL', defaultValue: '1.0.3');
 const _buildChannelDefine = String.fromEnvironment('BUILD_CHANNEL');
 
 /// 'stable' for tagged releases, 'nightly' otherwise (CI may override).

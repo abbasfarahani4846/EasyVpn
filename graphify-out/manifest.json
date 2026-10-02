@@ -40,9 +40,9 @@
     "semantic_hash": "803fe22651fbe96ed401eb0b66a492d1"
   },
   "android/settings.gradle.kts": {
-    "mtime": 1790860851.962001,
-    "ast_hash": "95f59cca4f052736ceec0cd9b95a1fad",
-    "semantic_hash": "95f59cca4f052736ceec0cd9b95a1fad"
+    "mtime": 1790954319.155566,
+    "ast_hash": "f276a44edd917afd836899357fdae60e",
+    "semantic_hash": ""
   },
   "core/cmd/easycoreproc/main.go": {
     "mtime": 1790802428.1788874,
@@ -625,8 +625,8 @@
     "semantic_hash": "a5740ab4c7664ac7f4fe2d4853d9f34e"
   },
   "lib/core/update/update_service.dart": {
-    "mtime": 1790953206.778801,
-    "ast_hash": "3f991dd612dc84fd74d37c6740a2a13c",
+    "mtime": 1790954830.8005154,
+    "ast_hash": "bc239f0e00a9d201a8964cbfd872ca3f",
     "semantic_hash": ""
   },
   "lib/core/util/backup_service.dart": {
@@ -955,13 +955,13 @@
     "semantic_hash": "7569387d58711ab975940f4df3b4bcda"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1790953129.244845,
-    "ast_hash": "61eb5d54cbee9869c22dca1c2a41cf0c",
+    "mtime": 1790954728.4589164,
+    "ast_hash": "85fc9c7e0f894be1404fa8db147da169",
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1790953079.261502,
-    "ast_hash": "b4559a3d11ccfc27bbdfb1ff274ef830",
+    "mtime": 1790954668.566692,
+    "ast_hash": "d9cf3f1c2583efef050389193a48f372",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1020,8 +1020,8 @@
     "semantic_hash": ""
   },
   "pubspec.yaml": {
-    "mtime": 1790953182.4412832,
-    "ast_hash": "b17b98a8da34b92396a0514dcc66e6a8",
+    "mtime": 1790954777.124766,
+    "ast_hash": "8576c9c8f3e545ef7710d4be72040440",
     "semantic_hash": ""
   },
   "test/fixtures/sub_dart.txt": {

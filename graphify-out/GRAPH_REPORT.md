@@ -1,16 +1,16 @@
 # Graph Report - EasyVpn  (2026-10-02)
 
 ## Corpus Check
-- 197 files · ~196,703 words
+- 197 files · ~196,705 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2441 nodes · 4297 edges · 137 communities (112 shown, 25 thin omitted)
+- 2441 nodes · 4297 edges · 138 communities (113 shown, 25 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 337 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9762b340`
+- Built from commit: `07b4a219`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -60,7 +60,7 @@
 - proxies_page.dart
 - SingBoxAdapter
 - ProxyNode
-- BuildRouteRules
+- app_database.dart
 - pump_app.dart
 - process_transport.dart
 - subscription_page.dart
@@ -73,15 +73,15 @@
 - MainActivity
 - routing_actions.dart
 - core_transport.dart
-- package:flutter/material.dart
-- app_database.dart
+- home_menu.dart
+- ../l10n/strings.dart
 - bootstrap.dart
 - profilesProvider
 - FlutterWindow
-- Fetch
+- string
 - add_sheet.dart
 - Create
-- win32_window.cpp
+- add_sheet.dart
 - testChunk
 - .Start
 - Tracker
@@ -91,35 +91,35 @@
 - site_check_page.dart
 - update
 - nav_provider.dart
-- Win32Window
+- Fetch
 - engine.go
 - Detect
 - secret_store.dart
-- wWinMain
-- file_io.dart
-- model.go
+- chain_page.dart
+- main.go
+- .ParseWithWarnings
 - fake_transport.dart
-- bool get
+- sitecheck.go
 - .TestNodesURL
-- router_test.go
+- main
 - models/models.dart
 - VpnTileService
-- buildChain
+- model.go
 - dart:io
 - .OpenInterface
 - BootReceiver
 - display_text.dart
 - CoreTransport
 - .OpenShellSession
-- RegisterPlugins
+- sysproxy_darwin.go
 - .CloseNeighborMonitor
 - .CreateBridge
 - .CreateDefaultInterfaceMonitor
 - .FindConnectionOwner
 - .ReadWIFIState
-- platformLogger
+- bool get
 - newFDPlatform
-- TestWithLocalDNS
+- database_test.dart
 - strings_v2.dart
 - generate_icons.py
 - .Initialize
@@ -133,16 +133,17 @@
 - String?
 - T
 - easyvpn/core
-- main
-- sysproxy_darwin.go
+- router_test.go
+- buildChain
 - EasyVPN v2 plan: all-in-one, one-button
-- database_test.dart
+- CoreTransport
 - Building EasyVPN
 - Exception
 - package:flutter_test/flutter_test.dart
 - CLAUDE.md
 - README.md
 - README.md
+- TestWithLocalDNS
 
 ## God Nodes (most connected - your core abstractions)
 1. `ProxyNode` - 115 edges
@@ -171,7 +172,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (137 total, 25 thin omitted)
+## Communities (138 total, 25 thin omitted)
 
 ### Community 0 - "models.dart"
 Cohesion: 0.02
@@ -274,8 +275,8 @@ Cohesion: 0.06
 Nodes (31): _arch, asset, buildChannel, _buildChannelDefine, buildLabel, check, copyWith, _core (+23 more)
 
 ### Community 25 - "simple_home.dart"
-Cohesion: 0.07
-Nodes (31): CoreStatus, _c, compact, core, createState, didUpdateWidget, dispose, icon (+23 more)
+Cohesion: 0.06
+Nodes (34): ConsumerStatefulWidget, CoreStatus, _AddSheet, _c, compact, core, createState, didUpdateWidget (+26 more)
 
 ### Community 26 - "ConsumerState"
 Cohesion: 0.05
@@ -286,8 +287,8 @@ Cohesion: 0.09
 Nodes (22): FlPluginRegistry, FlView, GApplication, gboolean, gchar, GObject, GtkApplication, fl_register_plugins() (+14 more)
 
 ### Community 28 - "home_menu.dart"
-Cohesion: 0.12
-Nodes (15): ../add/add_sheet.dart, build, _items, _MenuSheet, MenuTarget, _pageFor, showHomeMenu, showModalBottomSheet (+7 more)
+Cohesion: 0.19
+Nodes (17): actionFor(), BuildDNSOptions(), BuildRouteRules(), BuildRuleSets(), DNSOptions, Model, orDefault(), parseUint16() (+9 more)
 
 ### Community 29 - "adapter.go"
 Cohesion: 0.13
@@ -334,8 +335,8 @@ Cohesion: 0.08
 Nodes (23): app_database.dart, allIds, clearLatencies, core, count, cursor, db, deleteNode (+15 more)
 
 ### Community 40 - "Options"
-Cohesion: 0.09
-Nodes (25): about_page.dart, appearance_page.dart, backup_page.dart, ../chain/chain_page.dart, connection_page.dart, core/bootstrap.dart, ../core/providers/env.dart, ../core/providers/settings_provider.dart (+17 more)
+Cohesion: 0.10
+Nodes (20): about_page.dart, appearance_page.dart, backup_page.dart, ../chain/chain_page.dart, connection_page.dart, core/bootstrap.dart, ../core/providers/env.dart, ../../core/update/update_service.dart (+12 more)
 
 ### Community 41 - "app_test.dart"
 Cohesion: 0.20
@@ -353,9 +354,9 @@ Nodes (10): ProbeResult, SingBoxAdapter, Stats, DumpConfig(), Box, Context, Mana
 Cohesion: 0.19
 Nodes (14): boolStr(), itoa(), XrayRawNeedsCore(), Hysteria2Config, MuxConfig, OpenVPNConfig, OVPNRemote, ProxyNode (+6 more)
 
-### Community 45 - "BuildRouteRules"
-Cohesion: 0.19
-Nodes (17): actionFor(), BuildDNSOptions(), BuildRouteRules(), BuildRuleSets(), DNSOptions, Model, orDefault(), parseUint16() (+9 more)
+### Community 45 - "app_database.dart"
+Cohesion: 0.11
+Nodes (17): int get, Iterable, allSchemaEntities, allTables, exec, kvDelete, kvGet, kvSet (+9 more)
 
 ### Community 46 - "pump_app.dart"
 Cohesion: 0.09
@@ -402,13 +403,13 @@ Nodes (17): CoreBridge get, dart:ui, build, _core, detect, detectAndApply, Routi
 Cohesion: 0.14
 Nodes (13): call, CoreEvent, dispose, events, fromJson, heavyMethods, isAvailable, isUnsupported (+5 more)
 
-### Community 58 - "package:flutter/material.dart"
+### Community 58 - "home_menu.dart"
+Cohesion: 0.12
+Nodes (15): ../add/add_sheet.dart, build, _items, _MenuSheet, MenuTarget, _pageFor, showHomeMenu, showModalBottomSheet (+7 more)
+
+### Community 59 - "../l10n/strings.dart"
 Cohesion: 0.13
 Nodes (14): ../home/home_menu.dart, ../l10n/strings.dart, env, link, name, raw, showModalBottomSheet, showShareNode (+6 more)
-
-### Community 59 - "app_database.dart"
-Cohesion: 0.11
-Nodes (17): int get, Iterable, allSchemaEntities, allTables, exec, kvDelete, kvGet, kvSet (+9 more)
 
 ### Community 60 - "bootstrap.dart"
 Cohesion: 0.12
@@ -416,27 +417,27 @@ Nodes (15): bridge/core_locator.dart, bootstrap, core, dataDir, db, dir, join, p
 
 ### Community 61 - "profilesProvider"
 Cohesion: 0.13
-Nodes (22): CoreState, supportedCapsProvider, CoreController, disconnect, _ensureOpenVpnCredentials, _onEvents, _pullCrashReport, selectNode (+14 more)
+Nodes (22): CoreState, supportedCapsProvider, connectFastest, CoreController, disconnect, _ensureOpenVpnCredentials, _onEvents, _pullCrashReport (+14 more)
 
 ### Community 62 - "FlutterWindow"
 Cohesion: 0.06
 Nodes (53): PluginRegistry, Point, RECT, unique_ptr, RegisterPlugins(), DartProject, HWND, LPARAM (+45 more)
 
-### Community 63 - "Fetch"
-Cohesion: 0.24
-Nodes (10): decodeB64(), decodeTitle(), Fetch(), Context, ParseUserInfo(), T, TestFetchFallsBackToProxy(), TestFetchParsesHeaders() (+2 more)
+### Community 63 - "string"
+Cohesion: 0.18
+Nodes (10): SupportedProtocols(), _In_, _In_opt_, vector, wWinMain(), string, wchar_t, CreateAndAttachConsole() (+2 more)
 
 ### Community 64 - "add_sheet.dart"
-Cohesion: 0.07
-Nodes (29): ConsumerStatefulWidget, ../../core/util/file_io.dart, _AddSheet, build, _busy, _camera, createState, dispose (+21 more)
+Cohesion: 0.12
+Nodes (18): ../core/providers/settings_provider.dart, ../../core/util/file_io.dart, updateProvider, _UpdateBanner, build, UpdatesPage, build, _busy (+10 more)
 
 ### Community 65 - "Create"
 Cohesion: 0.12
 Nodes (17): _Metric, _Small, _UnavailableBanner, _Empty, _FastestTile, _NodeTile, _Chip, _TopBar (+9 more)
 
-### Community 66 - "win32_window.cpp"
-Cohesion: 0.17
-Nodes (12): ../../core/providers/profiles_provider.dart, _addWarpWithLicense, build, _busy, ChainPage, _ChainPageState, createState, _pickNode (+4 more)
+### Community 66 - "add_sheet.dart"
+Cohesion: 0.14
+Nodes (13): build, _busy, _camera, createState, dispose, _error, _file, _paste (+5 more)
 
 ### Community 67 - "testChunk"
 Cohesion: 0.27
@@ -474,9 +475,9 @@ Nodes (9): Context, Intent, refresh(), setInfo(), update(), VpnWidget, AppWidget
 Cohesion: 0.10
 Nodes (19): ../core/models/models.dart, build, dashboard, Dest, go, profiles, proxies, routing (+11 more)
 
-### Community 76 - "Win32Window"
+### Community 76 - "Fetch"
 Cohesion: 0.24
-Nodes (10): char, CoreCall(), currentServer(), FreeString(), getServer(), Engine, InitCore(), pumpEvents() (+2 more)
+Nodes (10): decodeB64(), decodeTitle(), Fetch(), Context, ParseUserInfo(), T, TestFetchFallsBackToProxy(), TestFetchParsesHeaders() (+2 more)
 
 ### Community 77 - "engine.go"
 Cohesion: 0.21
@@ -490,33 +491,33 @@ Nodes (8): Detect(), Context, LookupIP(), norm(), T, TestDetectPriority(), Resul
 Cohesion: 0.18
 Nodes (10): dart:math, fixed, _generate, keyB64, _name, open, SecretStore, usesKeystore (+2 more)
 
-### Community 80 - "wWinMain"
-Cohesion: 0.18
-Nodes (10): SupportedProtocols(), _In_, _In_opt_, vector, wWinMain(), string, wchar_t, CreateAndAttachConsole() (+2 more)
+### Community 80 - "chain_page.dart"
+Cohesion: 0.17
+Nodes (12): ../../core/providers/profiles_provider.dart, _addWarpWithLicense, build, _busy, ChainPage, _ChainPageState, createState, _pickNode (+4 more)
 
-### Community 81 - "file_io.dart"
+### Community 81 - "main.go"
+Cohesion: 0.24
+Nodes (10): char, CoreCall(), currentServer(), FreeString(), getServer(), Engine, InitCore(), pumpEvents() (+2 more)
+
+### Community 82 - ".ParseWithWarnings"
 Cohesion: 0.21
 Nodes (7): ParseResult, cidrFromMask(), ParseOVPN(), Parser, looksLikeBase64(), LooksLikeWGQuick(), ParseWGQuick()
-
-### Community 82 - "model.go"
-Cohesion: 0.31
-Nodes (8): DefaultServiceOverrides(), Model, RoutingMode, Rule, RuleKind, RuleSetRef, ServiceOverrides, ServiceOverrides
 
 ### Community 83 - "fake_transport.dart"
 Cohesion: 0.18
 Nodes (10): >, dart:async, Stream, call, calls, dispose, emit, _events (+2 more)
 
-### Community 84 - "bool get"
-Cohesion: 0.22
-Nodes (8): bool get, core_transport.dart, call, dispose, events, isAvailable, reason, unavailableReason
+### Community 84 - "sitecheck.go"
+Cohesion: 0.27
+Nodes (9): classify(), DefaultSites(), Context, Engine, shortErr(), statusText(), errorString, Site (+1 more)
 
 ### Community 85 - ".TestNodesURL"
 Cohesion: 0.53
 Nodes (4): Model, usableDNS(), useSystemResolver(), withLocalDNS()
 
-### Community 86 - "router_test.go"
-Cohesion: 0.54
-Nodes (7): actions(), fakeSets(), T, TestDNSSchema(), TestIranRuleOrder(), TestMissingRuleSetsAreNeverReferenced(), TestModes()
+### Community 86 - "main"
+Cohesion: 0.22
+Nodes (8): main(), serve(), InstallCrashLog(), LastCrash(), lastIndex(), T, TestCrashLogCapturesPanic(), ReadWriter
 
 ### Community 87 - "models/models.dart"
 Cohesion: 0.25
@@ -526,9 +527,9 @@ Nodes (7): accentPresets, AppTheme, build, mode, withDynamic, ../models/models.d
 Cohesion: 0.33
 Nodes (4): Context, refresh(), VpnTileService, TileService
 
-### Community 89 - "buildChain"
-Cohesion: 0.38
-Nodes (6): buildChain(), Endpoint, TLSTricks, setDetour(), setDetourValue(), Value
+### Community 89 - "model.go"
+Cohesion: 0.31
+Nodes (8): DefaultServiceOverrides(), Model, RoutingMode, Rule, RuleKind, RuleSetRef, ServiceOverrides, ServiceOverrides
 
 ### Community 90 - "dart:io"
 Cohesion: 0.25
@@ -550,29 +551,33 @@ Nodes (5): changed, _letterlike, out, plainName, toString
 Cohesion: 0.18
 Nodes (10): dart:convert, f, null, path, pickTextFile, r, saveText, package:file_picker/file_picker.dart (+2 more)
 
-### Community 96 - "RegisterPlugins"
+### Community 96 - "sysproxy_darwin.go"
 Cohesion: 0.36
 Nodes (6): RawMessage, ns(), parseNS(), services(), nsBackend, nsService
 
-### Community 102 - "platformLogger"
-Cohesion: 0.27
-Nodes (9): classify(), DefaultSites(), Context, Engine, shortErr(), statusText(), errorString, Site (+1 more)
-
-### Community 104 - "TestWithLocalDNS"
-Cohesion: 0.40
-Nodes (5): CoreTransport, FfiTransport, ProcessTransport, UnavailableTransport, FakeTransport
-
-### Community 127 - "main"
+### Community 102 - "bool get"
 Cohesion: 0.22
-Nodes (8): main(), serve(), InstallCrashLog(), LastCrash(), lastIndex(), T, TestCrashLogCapturesPanic(), ReadWriter
+Nodes (8): bool get, core_transport.dart, call, dispose, events, isAvailable, reason, unavailableReason
+
+### Community 104 - "database_test.dart"
+Cohesion: 0.22
+Nodes (8): NodeRepository, package:easyvpn/core/bridge/core_bridge.dart, package:easyvpn/core/database/app_database.dart, package:easyvpn/core/database/node_repository.dart, db, main, node, repo
+
+### Community 127 - "router_test.go"
+Cohesion: 0.54
+Nodes (7): actions(), fakeSets(), T, TestDNSSchema(), TestIranRuleOrder(), TestMissingRuleSetsAreNeverReferenced(), TestModes()
+
+### Community 128 - "buildChain"
+Cohesion: 0.38
+Nodes (6): buildChain(), Endpoint, TLSTricks, setDetour(), setDetourValue(), Value
 
 ### Community 129 - "EasyVPN v2 plan: all-in-one, one-button"
 Cohesion: 0.22
 Nodes (8): 1. Auto-update from GitHub Releases (open source → GitHub is the update server), 2. Distinct look (Windscribe / NordVPN-class, not "stock Flutter Material"), 3. Windscribe servers (your account + the free locations), 4. Chains: proxy-in-proxy, WARP, WARP-in-WARP, "exit via WARP", 5. Shortcuts everywhere, 6. More connection types (all-in-one), EasyVPN v2 plan: all-in-one, one-button, Order of work
 
-### Community 130 - "database_test.dart"
-Cohesion: 0.22
-Nodes (8): NodeRepository, package:easyvpn/core/bridge/core_bridge.dart, package:easyvpn/core/database/app_database.dart, package:easyvpn/core/database/node_repository.dart, db, main, node, repo
+### Community 130 - "CoreTransport"
+Cohesion: 0.40
+Nodes (5): CoreTransport, FfiTransport, ProcessTransport, UnavailableTransport, FakeTransport
 
 ### Community 131 - "Building EasyVPN"
 Cohesion: 0.33
@@ -594,11 +599,11 @@ Nodes (3): package:easyvpn/core/util/display_text.dart, package:flutter_test/flu
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_Duration` connect `SingBoxAdapter` to `add_sheet.dart`, `Client`, `testChunk`, `NewEngine`, `dashboard_page.dart`, `adapter.go`?**
+- **Why does `_Duration` connect `SingBoxAdapter` to `Client`, `testChunk`, `NewEngine`, `dashboard_page.dart`, `simple_home.dart`, `adapter.go`?**
   _High betweenness centrality (0.346) - this node is a cross-community bridge._
-- **Why does `buildOptionsWithTags()` connect `adapter.go` to `Default`, `NewEngine`, `SingBoxAdapter`, `BuildRouteRules`, `build_outbound.go`, `buildChain`, `.OpenInterface`?**
+- **Why does `buildOptionsWithTags()` connect `adapter.go` to `buildChain`, `Default`, `NewEngine`, `SingBoxAdapter`, `build_outbound.go`, `.OpenInterface`, `home_menu.dart`?**
   _High betweenness centrality (0.158) - this node is a cross-community bridge._
-- **Why does `ProxyNode` connect `ProxyNode` to `Server`, `freePort`, `Client`, `NewEngine`, `parser.go`, `build_outbound.go`, `adapter.go`, `Default`, `Engine`, `SingBoxAdapter`, `string`, `xray.go`, `testChunk`, `.Start`, `export.go`, `engine.go`, `file_io.dart`, `.TestNodesURL`, `buildChain`?**
+- **Why does `ProxyNode` connect `ProxyNode` to `buildChain`, `Server`, `freePort`, `Client`, `NewEngine`, `parser.go`, `build_outbound.go`, `adapter.go`, `Default`, `Engine`, `SingBoxAdapter`, `string`, `xray.go`, `testChunk`, `.Start`, `export.go`, `engine.go`, `.ParseWithWarnings`, `.TestNodesURL`?**
   _High betweenness centrality (0.119) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `string` (e.g. with `.parseSingboxOutboundRaw()` and `.ParseWithWarnings()`) actually correct?**
   _`string` has 45 INFERRED edges - model-reasoned connections that need verification._

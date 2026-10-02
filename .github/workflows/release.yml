@@ -225,7 +225,7 @@ jobs:
             echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: APKs are signed with the debug key (fine for testing, not for stores)."
           fi
       - run: flutter pub get
-      - run: flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64 --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
+      - run: flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64 --android-skip-build-dependency-validation --dart-define=BUILD_LABEL=${{ needs.version.outputs.label }} --dart-define=BUILD_CHANNEL=${{ needs.version.outputs.nightly == 'true' && 'nightly' || 'stable' }}
       - name: Package
         env:
           L: ${{ needs.version.outputs.label }}
