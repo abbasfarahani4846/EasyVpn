@@ -4,6 +4,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../psiphon/psiphon_nodes.dart';
 import 'entry_server_store.dart';
 
 /// Puts the chain route card above the dashboard grid.
@@ -58,13 +59,16 @@ class EasyRouteCard extends ConsumerWidget {
           final entryName = '${entry['name']}';
           final isEntryItself =
               leaf == entryName || leaf == '$entryName [entry]';
+          // Psiphon runs on this machine, so the entry server is not used.
+          final skipsEntry = leaf != null && PsiphonNodes.parse(leaf).isPsiphon;
           final hops = <_Hop>[
             _Hop(label: fa ? 'شما' : 'You', icon: Icons.computer),
-            _Hop(
-              label: entryName,
-              icon: Icons.login,
-              caption: fa ? 'ورودی' : 'Entry',
-            ),
+            if (!skipsEntry)
+              _Hop(
+                label: entryName,
+                icon: Icons.login,
+                caption: fa ? 'ورودی' : 'Entry',
+              ),
             if (leaf != null && !isEntryItself)
               _Hop(
                 label: leaf,
@@ -99,6 +103,15 @@ class EasyRouteCard extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    if (skipsEntry) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        fa
+                            ? 'Psiphon روی همین دستگاه اجرا می‌شود، پس از سرور ورودی رد نمی‌شود.'
+                            : 'Psiphon runs on this device, so the entry server is not used for it.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 6,

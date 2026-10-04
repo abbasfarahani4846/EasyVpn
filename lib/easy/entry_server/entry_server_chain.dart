@@ -32,6 +32,10 @@ class EntryServerChain {
 
     for (final proxy in proxies) {
       if (proxy['name'] == entryName) continue;
+      // A local proxy (Psiphon's SOCKS port) listens on this machine only;
+      // dialling it through a remote entry server would reach that server's
+      // own loopback instead.
+      if (isLocal(proxy)) continue;
       proxy.putIfAbsent(dialerKey, () => entryName);
     }
     config['proxies'] = proxies;
@@ -56,6 +60,13 @@ class EntryServerChain {
     override.putIfAbsent(dialerKey, () => entry);
     copy['override'] = override;
     return copy;
+  }
+
+  static bool isLocal(Map proxy) {
+    final server = '${proxy['server']}'.toLowerCase();
+    return server == 'localhost' ||
+        server == '::1' ||
+        server.startsWith('127.');
   }
 
   static bool _sameServer(Map a, Map b) =>

@@ -69,6 +69,23 @@ void main() {
     expect(named.single.containsKey('dialer-proxy'), isFalse);
   });
 
+  test('local proxies (Psiphon socks) are never routed through the entry', () {
+    final raw = base();
+    (raw['proxies'] as List).add({
+      'name': 'Psiphon',
+      'type': 'socks5',
+      'server': '127.0.0.1',
+      'port': 20830,
+    });
+    final out = EntryServerChain.apply(raw, entry);
+    final psiphon = (out['proxies'] as List).firstWhere(
+      (p) => p['name'] == 'Psiphon',
+    );
+    expect(psiphon.containsKey('dialer-proxy'), isFalse);
+    final remote = (out['proxies'] as List).firstWhere((p) => p['name'] == 'A');
+    expect(remote['dialer-proxy'], 'E');
+  });
+
   test('input config is not mutated', () {
     final raw = base();
     EntryServerChain.apply(raw, entry);
