@@ -86,6 +86,32 @@ void main() {
     expect(remote['dialer-proxy'], 'E');
   });
 
+  test('adds a local socks listener pinned to the entry for Psiphon', () {
+    final out = EntryServerChain.apply(base(), entry);
+    final listeners = out['listeners'] as List;
+    expect(listeners, hasLength(1));
+    expect(listeners.single, {
+      'name': 'easy-entry',
+      'type': 'socks',
+      'listen': '127.0.0.1',
+      'port': EntryServerChain.listenerPort,
+      'proxy': 'E',
+    });
+    // Applying twice must not duplicate it, and other listeners survive.
+    final raw = base()
+      ..['listeners'] = [
+        {'name': 'mine', 'type': 'http', 'port': 1},
+      ];
+    final twice = EntryServerChain.apply(
+      EntryServerChain.apply(raw, entry),
+      entry,
+    );
+    expect((twice['listeners'] as List).map((l) => l['name']), [
+      'mine',
+      'easy-entry',
+    ]);
+  });
+
   test('input config is not mutated', () {
     final raw = base();
     EntryServerChain.apply(raw, entry);

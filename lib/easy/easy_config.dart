@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'country_bypass/country_bypass_store.dart';
+import 'entry_server/entry_server_chain.dart';
 import 'entry_server/entry_server_store.dart';
 import 'psiphon/psiphon_manager.dart';
 
@@ -19,7 +20,15 @@ class EasyConfig {
     config = await EntryServerStore.applyStored(config);
     config = await CountryBypassStore.applyStored(config);
     if (_running && PsiphonManager.isPsiphonNodeIn(config)) {
-      await PsiphonManager.instance.startAndWait();
+      final entry = await EntryServerStore.load();
+      await PsiphonManager.instance.setUpstream(
+        entry == null
+            ? null
+            : 'socks5://127.0.0.1:${EntryServerChain.listenerPort}',
+      );
+      // Not awaited: with an entry server the Psiphon core can only connect
+      // once this config is applied and the listener below is up.
+      unawaited(PsiphonManager.instance.start());
     }
     return config;
   }

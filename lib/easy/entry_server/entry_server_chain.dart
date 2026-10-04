@@ -6,6 +6,11 @@ class EntryServerChain {
 
   static const dialerKey = 'dialer-proxy';
 
+  /// Local SOCKS port whose traffic is pinned to the entry server; Psiphon
+  /// uses it as its upstream so it too reaches the internet through the entry.
+  static const listenerPort = 20840;
+  static const listenerName = 'easy-entry';
+
   static Map<String, dynamic> apply(
     Map<String, dynamic> rawConfig,
     Map<String, Object?>? entry,
@@ -39,6 +44,17 @@ class EntryServerChain {
       proxy.putIfAbsent(dialerKey, () => entryName);
     }
     config['proxies'] = proxies;
+    config['listeners'] = [
+      for (final l in (config['listeners'] as List? ?? const []))
+        if (l is Map && l['name'] != listenerName) l,
+      {
+        'name': listenerName,
+        'type': 'socks',
+        'listen': '127.0.0.1',
+        'port': listenerPort,
+        'proxy': entryName,
+      },
+    ];
 
     final providers = config['proxy-providers'];
     if (providers is Map) {

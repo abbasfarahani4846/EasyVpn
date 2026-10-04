@@ -16,6 +16,7 @@ Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(
 void main() {
   psiphonNodeTests();
   psiphonRegionTests();
+  psiphonSpeedTests();
   test('every rung is present and the winner goes first', () {
     expect(PsiphonLadder.rungs.map((r) => r.name), ['A', 'D', 'C']);
     expect(PsiphonLadder.order().map((r) => r.name), ['A', 'D', 'C']);
@@ -70,6 +71,45 @@ void main() {
     expect(psiphonServerEntrySignatureKey, hasLength(44));
     expect(psiphonExchangeObfuscationKey, hasLength(44));
     expect(psiphonAlternateDns, hasLength(3));
+  });
+}
+
+void psiphonSpeedTests() {
+  test('budgets start short and grow with each pass', () {
+    final a = PsiphonLadder.byName('A')!;
+    final d = PsiphonLadder.byName('D')!;
+    expect(PsiphonLadder.budgetFor(a, 0), lessThanOrEqualTo(10));
+    expect(PsiphonLadder.budgetFor(d, 0), lessThanOrEqualTo(10));
+    expect(
+      PsiphonLadder.budgetFor(a, 1),
+      greaterThan(PsiphonLadder.budgetFor(a, 0)),
+    );
+    expect(
+      PsiphonLadder.budgetFor(a, 2),
+      greaterThan(PsiphonLadder.budgetFor(a, 1)),
+    );
+  });
+
+  test('chained runs drop the in-proxy rung and use an upstream proxy', () {
+    expect(PsiphonLadder.orderFor(chained: true).map((r) => r.name), [
+      'A',
+      'D',
+    ]);
+    expect(
+      PsiphonLadder.orderFor(winner: 'C', chained: true).map((r) => r.name),
+      ['A', 'D'],
+    );
+    expect(PsiphonLadder.orderFor().map((r) => r.name), ['A', 'D', 'C']);
+    final c = PsiphonLadder.buildConfig(
+      rung: PsiphonLadder.byName('D')!,
+      dataDir: 'C:/d',
+      socksPort: 20830,
+      upstreamProxyUrl: 'socks5://127.0.0.1:20840',
+    );
+    expect(c['UpstreamProxyURL'], 'socks5://127.0.0.1:20840');
+    expect(c['LimitTunnelProtocols'], PsiphonLadder.chainable);
+    expect(c['InproxyEnabled'], false);
+    expect((c['LimitTunnelProtocols'] as List).contains('QUIC-OSSH'), isFalse);
   });
 }
 

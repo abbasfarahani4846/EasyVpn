@@ -18,11 +18,15 @@ class PsiphonStatus {
   final String? protocol;
   final String? error;
 
+  /// How many full passes over the methods found nothing yet.
+  final int pass;
+
   const PsiphonStatus({
     this.stage = PsiphonStage.idle,
     this.rung,
     this.protocol,
     this.error,
+    this.pass = 0,
   });
 }
 
@@ -89,6 +93,7 @@ class PsiphonManager {
   bool _stopRequested = false;
   bool _networkChanged = false;
   String? _fingerprint;
+  String? _upstream;
 
   bool get isRunning =>
       status.value.stage != PsiphonStage.idle &&
@@ -144,6 +149,17 @@ class PsiphonManager {
     _networkWatch?.cancel();
     await _kill();
     status.value = const PsiphonStatus();
+  }
+
+  /// Dial Psiphon's servers through this SOCKS5 URL (the entry server), or
+  /// directly when null. Restarts a running core when it changes.
+  Future<void> setUpstream(String? url) async {
+    if (_upstream == url) return;
+    _upstream = url;
+    if (isRunning) {
+      await stop();
+      await start();
+    }
   }
 
   /// A new egress country (null = automatic). Remembered, and applied right
@@ -213,7 +229,10 @@ class PsiphonManager {
   ) async {
     final networks = await _networks(prefs);
     final here = (networks[fingerprint] as Map?)?['winner'] as String?;
-    return PsiphonLadder.order(winner: here ?? prefs.getString(_winnerKey));
+    return PsiphonLadder.orderFor(
+      winner: here ?? prefs.getString(_winnerKey),
+      chained: _upstream != null,
+    );
   }
 
   Future<void> _remember(
@@ -245,6 +264,7 @@ class PsiphonManager {
   Future<void> _loop(int session, File exe, String dataDir) async {
     final prefs = await SharedPreferences.getInstance();
     _watchNetwork(session);
+    var pass = 0;
     while (session == _session && !_stopRequested) {
       _fingerprint = await NetworkFingerprint.current();
       _networkChanged = false;
@@ -258,15 +278,18 @@ class PsiphonManager {
           rung,
           prefs,
           prefs.getString(_regionKey),
+          pass,
         );
         if (session != _session) return;
         if (connected || _networkChanged) {
           // The tunnel ended or the network changed: start over, which
           // re-reads what is remembered for the (possibly new) network.
+          pass = 0;
           status.value = const PsiphonStatus(stage: PsiphonStage.starting);
           break;
         }
       }
+      if (session == _session && !_networkChanged) pass++;
     }
   }
 
@@ -278,6 +301,7 @@ class PsiphonManager {
     PsiphonRung rung,
     SharedPreferences prefs,
     String? region,
+    int pass,
   ) async {
     await _kill();
     final config = PsiphonLadder.buildConfig(
@@ -285,11 +309,16 @@ class PsiphonManager {
       dataDir: dataDir,
       socksPort: socksPort,
       egressRegion: region,
+      upstreamProxyUrl: _upstream,
     );
     final configFile = File('$dataDir/psiphon-${rung.name}.config');
     await configFile.writeAsString(jsonEncode(config));
 
-    status.value = PsiphonStatus(stage: PsiphonStage.dialling, rung: rung.name);
+    status.value = PsiphonStatus(
+      stage: PsiphonStage.dialling,
+      rung: rung.name,
+      pass: pass,
+    );
     final Process process;
     try {
       process = await Process.start(exe.path, ['-config', configFile.path]);
@@ -345,9 +374,12 @@ class PsiphonManager {
       }),
     );
 
-    final timer = Timer(Duration(seconds: rung.budgetSeconds), () {
-      if (!connected && !done.isCompleted) done.complete(false);
-    });
+    final timer = Timer(
+      Duration(seconds: PsiphonLadder.budgetFor(rung, pass)),
+      () {
+        if (!connected && !done.isCompleted) done.complete(false);
+      },
+    );
     final result = await done.future;
     timer.cancel();
     await sub.cancel();

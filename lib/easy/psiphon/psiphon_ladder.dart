@@ -80,6 +80,38 @@ class PsiphonLadder {
     ),
   ]);
 
+  /// Fast first, patient later: a server that answers connects within
+  /// seconds, so a slow first try usually means that method does not work on
+  /// this network. Later passes wait longer for the hard networks.
+  static int budgetFor(PsiphonRung rung, int pass) {
+    if (pass <= 0) return 8;
+    if (pass == 1) return 15;
+    return rung.name == 'A' ? 40 : 25;
+  }
+
+  /// Protocols that can cross a SOCKS5 upstream (TCP only).
+  static const chainable = [
+    'FRONTED-MEEK-OSSH',
+    'FRONTED-MEEK-HTTP-OSSH',
+    'TLS-OSSH',
+    'UNFRONTED-MEEK-HTTPS-OSSH',
+    'UNFRONTED-MEEK-OSSH',
+    'SHADOWSOCKS-OSSH',
+    'OSSH',
+    'SSH',
+  ];
+
+  /// In-proxy needs raw UDP, which a SOCKS5 upstream cannot carry.
+  static List<PsiphonRung> orderFor({String? winner, bool chained = false}) {
+    final all = order(winner: winner);
+    return chained
+        ? [
+            for (final r in all)
+              if (r.name != 'C') r,
+          ]
+        : all;
+  }
+
   static PsiphonRung? byName(String? name) {
     for (final r in rungs) {
       if (r.name == name) return r;
@@ -112,6 +144,7 @@ class PsiphonLadder {
     required int socksPort,
     String deviceRegion = 'IR',
     String? egressRegion,
+    String? upstreamProxyUrl,
   }) {
     final sep = dataDir.endsWith('/') || dataDir.endsWith('\\') ? '' : '/';
     final config = <String, Object?>{
@@ -141,6 +174,14 @@ class PsiphonLadder {
       'DNSResolverAttemptsPerPreferredServer': 2,
     };
     rung.apply(config);
+    if (upstreamProxyUrl != null) {
+      config['UpstreamProxyURL'] = upstreamProxyUrl;
+      config['LimitTunnelProtocols'] = chainable;
+      config.remove('InitialLimitTunnelProtocols');
+      config.remove('InitialLimitTunnelProtocolsCandidateCount');
+      config['InproxyEnabled'] = false;
+      config['InproxyAllowClient'] = false;
+    }
     if (egressRegion != null) {
       config['EgressRegion'] = egressRegion;
       // A hard country filter plus a fronted-only limit would leave no
