@@ -21,12 +21,16 @@ class PsiphonStatus {
   /// How many full passes over the methods found nothing yet.
   final int pass;
 
+  /// Why the previous attempt failed: refused | timeout | blocked.
+  final String? hint;
+
   const PsiphonStatus({
     this.stage = PsiphonStage.idle,
     this.rung,
     this.protocol,
     this.error,
     this.pass = 0,
+    this.hint,
   });
 }
 
@@ -94,6 +98,7 @@ class PsiphonManager {
   bool _networkChanged = false;
   String? _fingerprint;
   String? _upstream;
+  String? _lastHint;
   final List<String> _log = [];
   String? _dataDirPath;
 
@@ -321,6 +326,7 @@ class PsiphonManager {
       stage: PsiphonStage.dialling,
       rung: rung.name,
       pass: pass,
+      hint: _lastHint,
     );
     final Process process;
     try {
@@ -336,6 +342,7 @@ class PsiphonManager {
     final done = Completer<bool>();
     var connected = false;
     String? protocol;
+    final failures = <String, int>{};
 
     final sub = process.stdout
         .transform(utf8.decoder)
@@ -348,8 +355,21 @@ class PsiphonManager {
             return;
           }
           final type = notice['noticeType'];
-          _record(rung.name, '$type', notice['data']);
           final data = (notice['data'] as Map?) ?? const {};
+          _record(rung.name, '$type', notice['data']);
+          if (type == 'Info') {
+            final message = '${data['message']}'.toLowerCase();
+            if (message.contains('failed to connect')) {
+              final kind =
+                  message.contains('actively refused') ||
+                      message.contains('connection refused')
+                  ? 'refused'
+                  : message.contains('deadline') || message.contains('timeout')
+                  ? 'timeout'
+                  : 'blocked';
+              failures.update(kind, (n) => n + 1, ifAbsent: () => 1);
+            }
+          }
           if (type == 'ConnectingServer') {
             protocol = '${data['protocol']}';
           }
@@ -385,6 +405,14 @@ class PsiphonManager {
       },
     );
     final result = await done.future;
+    if (failures.isNotEmpty) {
+      final top = failures.entries.reduce((a, b) => a.value >= b.value ? a : b);
+      _lastHint = top.key;
+    }
+    final dir = _dataDirPath;
+    if (dir != null) {
+      unawaited(File('$dir/psiphon.log').writeAsString(_log.join('\n')));
+    }
     timer.cancel();
     await sub.cancel();
     if (!result || session != _session) await _kill();

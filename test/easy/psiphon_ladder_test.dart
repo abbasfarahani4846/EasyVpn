@@ -133,25 +133,29 @@ void psiphonRegionTests() {
     expect(PsiphonNodes.nameFor('DE'), startsWith(PsiphonNodes.flag('DE')));
   });
 
-  test(
-    'a chosen region sets EgressRegion; fronted limit only where it fits',
-    () {
-      Map<String, Object?> forRegion(String? r) => PsiphonLadder.buildConfig(
-        rung: PsiphonLadder.byName('A')!,
-        dataDir: 'C:/d',
-        socksPort: 20830,
-        egressRegion: r,
-      );
-      expect(forRegion(null)['EgressRegion'], '');
-      final de = forRegion('DE');
-      expect(de['EgressRegion'], 'DE');
-      expect(de['LimitTunnelProtocols'], PsiphonLadder.fronted);
-      final jp = forRegion('JP');
-      expect(jp['EgressRegion'], 'JP');
-      expect(jp.containsKey('LimitTunnelProtocols'), isFalse);
-      expect(jp.containsKey('InitialLimitTunnelProtocols'), isFalse);
-    },
-  );
+  test('a chosen region never leaves a hard protocol limit behind', () {
+    Map<String, Object?> forRegion(String? r, {String? upstream}) =>
+        PsiphonLadder.buildConfig(
+          rung: PsiphonLadder.byName('A')!,
+          dataDir: 'C:/d',
+          socksPort: 20830,
+          egressRegion: r,
+          upstreamProxyUrl: upstream,
+        );
+    expect(forRegion(null)['EgressRegion'], '');
+    // The country is a hard filter, so no hard protocol limit on top of it
+    // (CA has no fronted server and used to leave zero candidates).
+    for (final region in ['CA', 'DE', 'JP']) {
+      final c = forRegion(region);
+      expect(c['EgressRegion'], region);
+      expect(c.containsKey('LimitTunnelProtocols'), isFalse, reason: region);
+      expect(c['InitialLimitTunnelProtocols'], PsiphonLadder.fronted);
+    }
+    // Through an upstream proxy only TCP protocols can work.
+    final chained = forRegion('DE', upstream: 'socks5://127.0.0.1:20840');
+    expect(chained['LimitTunnelProtocols'], PsiphonLadder.chainable);
+    expect(chained['EgressRegion'], 'DE');
+  });
 
   test('network fingerprint ignores virtual adapters and is stable', () {
     final wifi = {

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'psiphon_constants.dart';
-import 'psiphon_nodes.dart';
 
 /// One way of asking Psiphon to connect, and how long to wait for it.
 ///
@@ -184,13 +183,11 @@ class PsiphonLadder {
     }
     if (egressRegion != null) {
       config['EgressRegion'] = egressRegion;
-      // A hard country filter plus a fronted-only limit would leave no
-      // candidates where Psiphon has no fronted server, so drop the limit.
-      if (!PsiphonNodes.frontedRegions.contains(egressRegion)) {
-        config.remove('LimitTunnelProtocols');
-        config.remove('InitialLimitTunnelProtocols');
-        config.remove('InitialLimitTunnelProtocolsCandidateCount');
-      }
+      // The country is a hard filter, so a hard protocol limit on top of it
+      // can leave no candidates at all (CA has no fronted server). Keep the
+      // limit only as a preference, except through an upstream proxy where
+      // only TCP protocols can work anyway.
+      if (upstreamProxyUrl == null) config.remove('LimitTunnelProtocols');
     }
     return config;
   }

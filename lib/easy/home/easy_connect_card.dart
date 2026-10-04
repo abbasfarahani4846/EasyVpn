@@ -153,6 +153,13 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
       return;
     }
     final running = ref.read(isStartProvider);
+    if (!running) {
+      // The country follows the server actually selected, never a stale one.
+      final selected = ref.read(visibleGroupsStateProvider).value;
+      await PsiphonManager.noteSelection(
+        _selectedName(selected) ?? PsiphonNodes.autoName,
+      );
+    }
     if (!running && _isPsiphonProfile) {
       // The bypass rule for the Psiphon process needs process matching.
       ref
@@ -160,6 +167,11 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
           .update((s) => s.copyWith(findProcessMode: FindProcessMode.always));
     }
     await ref.read(setupActionProvider.notifier).setRunning(!running);
+  }
+
+  String? _selectedName(List<Group> groups) {
+    if (groups.isEmpty) return null;
+    return ref.read(selectedProxyNameProvider(groups.first.name));
   }
 
   void _goto(PageLabel page) =>
@@ -183,9 +195,24 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
         final tries = s.pass > 0
             ? _t(' · تلاش ${s.pass + 1}', ' · attempt ${s.pass + 1}')
             : '';
+        final why = switch (s.hint) {
+          'refused' => _t(
+            ' · پورت سرور واسط جواب نمی‌دهد',
+            ' · the entry server port refuses connections',
+          ),
+          'timeout' => _t(
+            ' · سرورها جواب نمی‌دهند',
+            ' · servers are not answering',
+          ),
+          'blocked' => _t(
+            ' · شبکه اتصال‌ها را می‌بندد',
+            ' · the network closes the connections',
+          ),
+          _ => '',
+        };
         return _t(
-          'Psiphon در حال اتصال (روش $method$tries)…',
-          'Psiphon connecting (method $method$tries)…',
+          'Psiphon در حال اتصال (روش $method$tries)…$why',
+          'Psiphon connecting (method $method$tries)…$why',
         );
       case PsiphonStage.connected:
         return _t(
