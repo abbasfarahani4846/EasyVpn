@@ -34,6 +34,11 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   proxy in the Default profile. Needs access to api.cloudflareclient.com (blocked in some networks;
   works through an active proxy). No upstream hook.
 
+- `psiphon`: runs the official Psiphon core (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not
+  committed) as a child process and walks a ladder of methods (A fronted/CDN, D all direct protocols,
+  C in-proxy relay), remembering the winner. Psiphon fetches its own server list; local SOCKS5 on
+  127.0.0.1:20830, added to the Default profile as a `socks5` node. Windows only for now. No upstream hook.
+
 New features that only change the generated config go through `lib/easy/easy_config.dart`;
 new Tools entries go into `lib/easy/easy_tools.dart`. Neither needs another upstream hook.
 

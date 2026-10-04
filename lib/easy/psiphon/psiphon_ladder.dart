@@ -1,0 +1,144 @@
+import 'dart:convert';
+
+import 'psiphon_constants.dart';
+
+/// One way of asking Psiphon to connect, and how long to wait for it.
+///
+/// Which one works depends on the network, so the manager walks them all: the
+/// fronted path survives address blocklists, the direct one is fastest where
+/// nothing is blocked, and the in-proxy one borrows other users' devices when
+/// every server address and CDN front is unreachable.
+class PsiphonRung {
+  final String name;
+  final String labelEn;
+  final String labelFa;
+  final int budgetSeconds;
+  final void Function(Map<String, Object?> config) apply;
+
+  const PsiphonRung({
+    required this.name,
+    required this.labelEn,
+    required this.labelFa,
+    required this.budgetSeconds,
+    required this.apply,
+  });
+}
+
+class PsiphonLadder {
+  const PsiphonLadder._();
+
+  static const fronted = [
+    'FRONTED-MEEK-OSSH',
+    'FRONTED-MEEK-HTTP-OSSH',
+    'FRONTED-MEEK-QUIC-OSSH',
+  ];
+
+  static void _noTactics(Map<String, Object?> c) {
+    c['DisableTactics'] = true;
+    c['InproxyEnabled'] = false;
+    c['InproxyAllowClient'] = false;
+  }
+
+  static final List<PsiphonRung> rungs = List.unmodifiable([
+    PsiphonRung(
+      name: 'A',
+      labelEn: 'Domain fronting (CDN)',
+      labelFa: 'دامین‌فرانتینگ (CDN)',
+      budgetSeconds: 100,
+      apply: (c) {
+        c['InitialLimitTunnelProtocols'] = fronted;
+        c['InitialLimitTunnelProtocolsCandidateCount'] = 30;
+        c['LimitTunnelProtocols'] = fronted;
+        c['ConnectionWorkerPoolSize'] = 12;
+        c['NetworkLatencyMultiplier'] = 2.0;
+        _noTactics(c);
+      },
+    ),
+    PsiphonRung(
+      name: 'D',
+      labelEn: 'All protocols (direct)',
+      labelFa: 'همه‌ی پروتکل‌ها (مستقیم)',
+      budgetSeconds: 60,
+      apply: (c) {
+        c['ConnectionWorkerPoolSize'] = 16;
+        _noTactics(c);
+      },
+    ),
+    PsiphonRung(
+      name: 'C',
+      labelEn: 'Relay through other users',
+      labelFa: 'رله از طریق کاربران دیگر',
+      budgetSeconds: 90,
+      apply: (c) {
+        c['InproxyEnabled'] = true;
+        c['InproxyAllowClient'] = true;
+        c['InproxySkipAwaitFullyConnected'] = true;
+        c['ConnectionWorkerPoolSize'] = 16;
+        c['NetworkLatencyMultiplier'] = 3.0;
+      },
+    ),
+  ]);
+
+  static PsiphonRung? byName(String? name) {
+    for (final r in rungs) {
+      if (r.name == name) return r;
+    }
+    return null;
+  }
+
+  /// The remembered winner goes first (this network connected there last
+  /// time); the rest keep their natural order behind it.
+  static List<PsiphonRung> order({String? winner}) {
+    final first = byName(winner);
+    if (first == null) return rungs;
+    return [first, ...rungs.where((r) => r.name != first.name)];
+  }
+
+  static String _b64(String url) => base64.encode(utf8.encode(url));
+
+  static List<Map<String, Object?>> _drops(List<PsiphonDrop> drops) => [
+    for (final d in drops)
+      {
+        'URL': _b64(d.url),
+        'SkipVerify': d.skipVerify,
+        'OnlyAfterAttempts': d.onlyAfterAttempts,
+      },
+  ];
+
+  static Map<String, Object?> buildConfig({
+    required PsiphonRung rung,
+    required String dataDir,
+    required int socksPort,
+    String deviceRegion = 'IR',
+  }) {
+    final sep = dataDir.endsWith('/') || dataDir.endsWith('\\') ? '' : '/';
+    final config = <String, Object?>{
+      'PropagationChannelId': psiphonPropagationChannelId,
+      'SponsorId': psiphonSponsorId,
+      'ClientVersion': '1',
+      'EgressRegion': '',
+      'TunnelProtocol': '',
+      'EstablishTunnelTimeoutSeconds': 0,
+      'DataRootDirectory': dataDir,
+      'LocalSocksProxyPort': socksPort,
+      'RemoteServerListURLs': _drops(psiphonRemoteServerListDrops),
+      'DisableRemoteServerListFetcher': false,
+      'FetchRemoteServerListRetryPeriodMilliseconds': 30000,
+      'RemoteServerListDownloadFilename': '$dataDir${sep}remote_server_list',
+      'ObfuscatedServerListRootURLs': _drops(psiphonObfuscatedServerListDrops),
+      'ObfuscatedServerListDownloadDirectory': '$dataDir${sep}osl',
+      'RemoteServerListSignaturePublicKey': psiphonRemoteServerListSignatureKey,
+      'ServerEntrySignaturePublicKey': psiphonServerEntrySignatureKey,
+      'ExchangeObfuscationKey': psiphonExchangeObfuscationKey,
+      'EmitBytesTransferred': true,
+      'EmitDiagnosticNotices': true,
+      'DeviceRegion': deviceRegion,
+      'ConnectionWorkerPoolSize': 12,
+      'DNSResolverPreferredAlternateServers': psiphonAlternateDns,
+      'DNSResolverPreferAlternateServerProbability': 1.0,
+      'DNSResolverAttemptsPerPreferredServer': 2,
+    };
+    rung.apply(config);
+    return config;
+  }
+}
