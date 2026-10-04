@@ -1,0 +1,177 @@
+name: easy-build
+
+# Builds Android, Windows and Linux on every push and keeps the newest build
+# of the branch as the "nightly" pre-release. A tag like v1.2.3 makes a normal
+# release. Separate from FlClash's own workflows (disabled on this fork) so
+# merging upstream never touches this file.
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: easy-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.47.4'
+  GO_VERSION: '1.26.4'
+  NDK_VERSION: r28c
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Android
+            platform: android
+            os: ubuntu-latest
+          - name: Windows
+            platform: windows
+            os: windows-2022
+          - name: Linux
+            platform: linux
+            os: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: easy-${{ matrix.platform }}
+          workspaces: |
+            services/helper
+            plugins/rust_api/rust
+          cache-directories: .dart_tool/hooks_runner
+
+      - name: Setup Gradle
+        if: matrix.platform == 'android'
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Enable git long paths (Windows)
+        if: matrix.platform == 'windows'
+        run: git config --global core.longpaths true
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup NDK
+        if: matrix.platform == 'android'
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+          add-to-path: true
+          link-to-sdk: true
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev libayatana-appindicator3-dev libsecret-1-dev
+
+      - name: Get Flutter dependencies
+        run: |
+          flutter --version
+          flutter pub get
+
+      # ------------------------------------------------------------ Android
+      # Signed with the debug key unless a release keystore is provided as
+      # android/app/keystore.jks (the Gradle file falls back by itself).
+      - name: Build Android
+        if: matrix.platform == 'android'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: dart setup.dart android -v
+
+      # ------------------------------------------------------------ Windows
+      - name: Build Windows
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: flutter build windows --release
+
+      # The Psiphon core and the country lists sit beside the exe; the app
+      # looks for easy_bin next to itself.
+      - name: Add the easy extras (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $release = 'build/windows/x64/runner/Release'
+          New-Item -ItemType Directory -Force "$release/easy_bin/psiphon" | Out-Null
+          New-Item -ItemType Directory -Force "$release/easy_bin/country" | Out-Null
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Psiphon-Labs/psiphon-tunnel-core-binaries/master/windows/psiphon-tunnel-core-i686.exe' -OutFile "$release/easy_bin/psiphon/psiphon-tunnel-core-i686.exe"
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Chocolate4U/Iran-clash-rules/release/ir.mrs' -OutFile "$release/easy_bin/country/ir-domain.mrs"
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Chocolate4U/Iran-clash-rules/release/ircidr.mrs' -OutFile "$release/easy_bin/country/ir-ip.mrs"
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "$release/*" -DestinationPath 'dist/EasyFlClash-windows-x64.zip' -Force
+
+      # -------------------------------------------------------------- Linux
+      - name: Build Linux
+        if: matrix.platform == 'linux'
+        run: |
+          flutter build linux --release
+          mkdir -p dist
+          tar -czf dist/EasyFlClash-linux-x64.tar.gz -C build/linux/x64/release bundle
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: easy-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+          overwrite: true
+
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: easy-*
+          path: out
+          merge-multiple: true
+
+      - name: List files
+        run: ls -la out
+
+      # Branch pushes keep one rolling pre-release; v* tags make a release.
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+            gh release create "$TAG" out/* --repo "${{ github.repository }}" --title "$TAG" --generate-notes
+          else
+            TAG="nightly"
+            gh release delete "$TAG" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+            gh release create "$TAG" out/* --repo "${{ github.repository }}" --prerelease \
+              --target "${{ github.sha }}" --title "Nightly (${{ github.ref_name }} @ ${GITHUB_SHA::7})" \
+              --notes "Automatic build of ${{ github.ref_name }} at ${{ github.sha }}."
+          fi
