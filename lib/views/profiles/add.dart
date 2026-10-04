@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/easy/single_config/single_config_page.dart'; // EASY-HOOK
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/scan.dart';
@@ -97,6 +98,21 @@ class AddProfileView extends ConsumerWidget {
           title: Text(appLocalizations.url),
           subtitle: Text(appLocalizations.urlDesc),
           onTap: () => _toAdd(ref),
+        ),
+        // EASY-HOOK: single config -> default profile
+        ListItem(
+          leading: const Icon(Icons.add_link),
+          title: Text(
+            Localizations.localeOf(context).languageCode == 'fa'
+                ? 'کانفیگ تکی'
+                : 'Single config',
+          ),
+          subtitle: Text(
+            Localizations.localeOf(context).languageCode == 'fa'
+                ? 'افزودن لینک یا کانفیگ به پروفایل پیش‌فرض'
+                : 'Add a link or config to the default profile',
+          ),
+          onTap: showSingleConfigPage,
         ),
       ],
     );
