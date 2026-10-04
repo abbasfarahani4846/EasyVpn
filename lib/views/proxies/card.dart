@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/easy/entry_server/proxy_picker.dart'; // EASY-HOOK
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -14,6 +15,7 @@ void selectGroupProxy(
   required GroupType groupType,
   required String proxyName,
 }) {
+  if (EasyProxyPicker.tryPick(proxyName)) return; // EASY-HOOK
   final isComputedSelected = groupType.isComputedSelected;
   if (isComputedSelected || groupType == GroupType.Selector) {
     final currentProxyName = ref.read(proxyNameProvider(groupName));

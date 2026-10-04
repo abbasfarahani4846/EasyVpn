@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'entry_server_store.dart';
+import 'proxy_picker.dart';
 
 bool _isFa(BuildContext context) =>
     Localizations.localeOf(context).languageCode == 'fa';
@@ -32,8 +34,6 @@ class EasyEntryServerItem extends StatelessWidget {
   }
 }
 
-typedef _Candidate = ({Map<String, Object?> proxy, String profile});
-
 class EntryServerView extends ConsumerStatefulWidget {
   const EntryServerView({super.key});
 
@@ -43,9 +43,6 @@ class EntryServerView extends ConsumerStatefulWidget {
 
 class _EntryServerViewState extends ConsumerState<EntryServerView> {
   Map<String, Object?>? _entry;
-  List<_Candidate> _candidates = const [];
-  String _filter = '';
-  bool _loading = true;
 
   @override
   void initState() {
@@ -53,47 +50,80 @@ class _EntryServerViewState extends ConsumerState<EntryServerView> {
     unawaited(_load());
   }
 
-  Future<void> _load() async {
-    final entry = await EntryServerStore.load();
-    final core = ref.read(coreHandlerProvider);
-    final candidates = <_Candidate>[];
-    for (final profile in ref.read(profilesProvider)) {
-      try {
-        final config = await core.getConfig(profile.id);
-        for (final item in (config['proxies'] as List? ?? const [])) {
-          if (item is Map && item['name'] != null && item['server'] != null) {
-            candidates.add((
-              proxy: Map<String, Object?>.from(item),
-              profile: profile.realLabel,
-            ));
-          }
-        }
-      } catch (_) {}
-    }
-    if (!mounted) return;
-    setState(() {
-      _entry = entry;
-      _candidates = candidates;
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    EasyProxyPicker.disarm();
+    super.dispose();
   }
 
-  Future<void> _set(Map<String, Object?>? proxy) async {
-    if (proxy == null) {
-      await EntryServerStore.clear();
-    } else {
-      await EntryServerStore.save(proxy);
+  Future<void> _load() async {
+    final entry = await EntryServerStore.load();
+    if (!mounted) return;
+    setState(() => _entry = entry);
+  }
+
+  /// Opens the real Proxies page; the next proxy tapped there becomes the entry.
+  Future<void> _choose() async {
+    final fa = _isFa(context);
+    EasyProxyPicker.arm((name) => unawaited(_picked(name, fa)));
+    try {
+      await BaseNavigator.push<void>(context, const ProxiesView());
+    } finally {
+      EasyProxyPicker.disarm();
     }
+  }
+
+  Future<void> _picked(String name, bool fa) async {
+    final proxy = await _resolve(name);
+    if (proxy == null) {
+      dialogs.showNotifier(
+        fa
+            ? 'این مورد گروه است یا سرور مستقل نیست؛ یک سرور را انتخاب کنید'
+            : 'That is a group or a provider server; pick a plain server',
+        level: MessageLevel.warning,
+      );
+      return;
+    }
+    EasyProxyPicker.disarm();
+    await EntryServerStore.save(proxy);
+    ref.read(setupActionProvider.notifier).applyProfileDebounce();
+    globalState.navigatorKey.currentState?.pop();
     if (!mounted) return;
     setState(() => _entry = proxy);
-    ref.read(setupActionProvider.notifier).applyProfileDebounce();
-    final fa = _isFa(context);
     dialogs.showNotifier(
-      proxy == null
-          ? (fa ? 'سرور ورودی غیرفعال شد' : 'Entry server disabled')
-          : (fa
-                ? 'سرور ورودی: ${proxy['name']}'
-                : 'Entry server: ${proxy['name']}'),
+      fa ? 'سرور ورودی: ${proxy['name']}' : 'Entry server: ${proxy['name']}',
+      level: MessageLevel.success,
+    );
+  }
+
+  Future<Map<String, Object?>?> _resolve(String name) async {
+    final core = ref.read(coreHandlerProvider);
+    final configs = <Map<String, dynamic>>[];
+    try {
+      configs.add(await core.getAppliedConfig());
+    } catch (_) {}
+    for (final profile in ref.read(profilesProvider)) {
+      try {
+        configs.add(await core.getConfig(profile.id));
+      } catch (_) {}
+    }
+    for (final config in configs) {
+      for (final item in (config['proxies'] as List? ?? const [])) {
+        if (item is Map && item['name'] == name && item['server'] != null) {
+          return Map<String, Object?>.from(item)..remove('dialer-proxy');
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<void> _disable() async {
+    await EntryServerStore.clear();
+    ref.read(setupActionProvider.notifier).applyProfileDebounce();
+    if (!mounted) return;
+    setState(() => _entry = null);
+    dialogs.showNotifier(
+      _isFa(context) ? 'سرور ورودی غیرفعال شد' : 'Entry server disabled',
       level: MessageLevel.success,
     );
   }
@@ -101,15 +131,7 @@ class _EntryServerViewState extends ConsumerState<EntryServerView> {
   @override
   Widget build(BuildContext context) {
     final fa = _isFa(context);
-    final filter = _filter.toLowerCase();
-    final shown = [
-      for (final c in _candidates)
-        if (filter.isEmpty ||
-            '${c.proxy['name']} ${c.proxy['server']}'.toLowerCase().contains(
-              filter,
-            ))
-          c,
-    ];
+    final entry = _entry;
     return CommonScaffold(
       title: fa ? 'سرور ورودی (Chain)' : 'Entry server (chain)',
       body: ListView(
@@ -117,64 +139,50 @@ class _EntryServerViewState extends ConsumerState<EntryServerView> {
         children: [
           Text(
             fa
-                ? 'با انتخاب یک سرور، همه‌ی سرورهای دیگر از طریق آن وصل '
-                      'می‌شوند (اتصال و تست پینگ هر دو). خود آن سرور مستقیم '
-                      'وصل می‌شود.'
-                : 'Pick a server and every other server connects through it, '
-                      'for both real connections and delay tests. The entry '
-                      'server itself connects directly.',
+                ? 'یک سرور را از صفحه‌ی پروکسی‌ها انتخاب کنید. همه‌ی سرورهای '
+                      'دیگر از طریق آن وصل می‌شوند (اتصال و تست پینگ هر دو). '
+                      'خود آن سرور مستقیم وصل می‌شود.'
+                : 'Choose a server from the Proxies page. Every other server '
+                      'then connects through it, for both real connections and '
+                      'delay tests. The entry server itself connects directly.',
           ),
-          const SizedBox(height: 12),
-          if (_entry != null)
+          const SizedBox(height: 16),
+          if (entry != null)
             Card(
               child: ListTile(
                 leading: const Icon(Icons.alt_route),
-                title: Text('${_entry!['name']}'),
+                title: EmojiText(
+                  '${entry['name']}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(
-                  '${_entry!['type']} · ${_entry!['server']}:${_entry!['port']}',
+                  '${entry['type']} · ${entry['server']}:${entry['port']}',
                 ),
                 trailing: TextButton(
-                  onPressed: () => _set(null),
+                  onPressed: _disable,
                   child: Text(fa ? 'غیرفعال' : 'Disable'),
                 ),
               ),
-            ),
-          const SizedBox(height: 12),
-          TextField(
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              border: const OutlineInputBorder(),
-              labelText: fa ? 'جستجو' : 'Search',
-            ),
-            onChanged: (v) => setState(() => _filter = v),
-          ),
-          const SizedBox(height: 8),
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                fa ? 'سروری پیدا نشد' : 'No servers found',
-                textAlign: TextAlign.center,
-              ),
             )
           else
-            for (final c in shown)
-              ListTile(
-                title: Text('${c.proxy['name']}'),
-                subtitle: Text(
-                  '${c.proxy['type']} · ${c.proxy['server']}:${c.proxy['port']}'
-                  ' · ${c.profile}',
-                ),
-                selected:
-                    _entry?['name'] == c.proxy['name'] &&
-                    _entry?['server'] == c.proxy['server'],
-                onTap: () => _set(c.proxy),
+            Text(
+              fa ? 'سرور ورودی انتخاب نشده' : 'No entry server selected',
+              style: context.textTheme.bodyMedium,
+            ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton.icon(
+              onPressed: _choose,
+              icon: const Icon(Icons.dns),
+              label: Text(
+                entry == null
+                    ? (fa ? 'انتخاب از پروکسی‌ها' : 'Choose from Proxies')
+                    : (fa ? 'تغییر سرور' : 'Change server'),
               ),
+            ),
+          ),
         ],
       ),
     );
