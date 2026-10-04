@@ -6,7 +6,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 
 | File | Hook | Feature |
 |------|------|---------|
-| `lib/views/profiles/add.dart` | import + `...easyAddProfileItems(context)` in the Add profile list (single config, WARP, Psiphon) | single_config, warp, psiphon |
+| `lib/views/profiles/add.dart` | import + `...easyAddProfileItems(context)` in the Add profile list (single config, WARP, Windscribe/OpenVPN/WireGuard files, Psiphon) | single_config, warp, windscribe, psiphon |
 | `lib/views/tools.dart` | import + `...easySettingItems` in the settings list | entry_server, country_bypass |
 | `lib/providers/actions/setup.dart` | `EasyConfig.apply(rawConfig)` before the profile task; `EasyConfig.onRunning(running)` at the top of `setRunning` | entry_server, country_bypass, psiphon |
 | `lib/views/proxies/card.dart` | import + `EasyProxyPicker.tryPick` at the top of `selectGroupProxy` (lets the Proxies page act as a server chooser) | entry_server |
@@ -47,6 +47,11 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   (X25519 key pair made in Dart, `lib/easy/warp/x25519.dart`) and stores a mihomo `wireguard`
   proxy in its own selected `WARP` profile. Needs access to api.cloudflareclient.com (blocked in some networks;
   works through an active proxy). No upstream hook.
+
+- `windscribe`: Add profile > "Windscribe / OpenVPN / WireGuard" takes a downloaded `.ovpn` (inline certificates;
+  username/password asked when the file has `auth-user-pass`) or wg-quick `.conf` (pick a file or paste), checks it with the
+  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. mihomo has no IKEv2.
+  No upstream hook.
 
 - `psiphon`: one tap in Add profile creates and selects a `Psiphon` profile (an Auto node plus one node per
   egress country, all on 127.0.0.1:20830) and connects. The official Psiphon core
