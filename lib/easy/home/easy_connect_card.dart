@@ -7,6 +7,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../entry_server/entry_server_store.dart';
 import '../psiphon/psiphon_manager.dart';
 import '../psiphon/psiphon_nodes.dart';
 import 'connection_verifier.dart';
@@ -71,10 +72,18 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
     if (mounted && !ref.read(isStartProvider)) setState(() => _baseline = ip);
   }
 
-  void _begin() {
+  /// A chain or an OpenVPN session takes several seconds to set up, so the
+  /// first checks must wait longer before calling it a failure.
+  bool _slow = false;
+
+  Future<void> _begin() async {
     _timer?.cancel();
+    final entry = await EntryServerStore.load();
+    if (!mounted) return;
+    final label = ref.read(currentProfileProvider)?.label;
+    _slow = entry != null || label == 'Windscribe';
     _deadline = DateTime.now().add(
-      Duration(seconds: _isPsiphonProfile ? 30 : 12),
+      Duration(seconds: _isPsiphonProfile ? 30 : (_slow ? 45 : 12)),
     );
     setState(() {
       _phase = _Phase.connecting;
@@ -103,11 +112,18 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
     if (_checking || !ref.read(isStartProvider)) return;
     _checking = true;
     try {
+      final fetchTimeout = Duration(seconds: _slow ? 10 : 4);
       final port = ref.read(patchClashConfigProvider).mixedPort;
       final tunOn = ref.read(patchClashConfigProvider).tun.enable;
       final results = await Future.wait([
-        ConnectionVerifier.fetchIp(proxy: '127.0.0.1:$port'),
-        if (tunOn) ConnectionVerifier.fetchIp() else Future.value(null),
+        ConnectionVerifier.fetchIp(
+          proxy: '127.0.0.1:$port',
+          timeout: fetchTimeout,
+        ),
+        if (tunOn)
+          ConnectionVerifier.fetchIp(timeout: fetchTimeout)
+        else
+          Future.value(null),
       ]);
       if (!mounted || !ref.read(isStartProvider)) return;
       final coreIp = results[0];
@@ -166,7 +182,43 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
           .read(patchClashConfigProvider.notifier)
           .update((s) => s.copyWith(findProcessMode: FindProcessMode.always));
     }
+    if (!running && _needsDiagnostics) {
+      // Connection failures are logged as warnings; at the default "error"
+      // level the real reason would never show up below the button.
+      ref
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (s) => s.logLevel.index > LogLevel.warning.index
+                ? s.copyWith(logLevel: LogLevel.warning)
+                : s,
+          );
+    }
     await ref.read(setupActionProvider.notifier).setRunning(!running);
+  }
+
+  bool get _needsDiagnostics {
+    final label = ref.read(currentProfileProvider)?.label;
+    return label == PsiphonNodes.profileLabel || label == 'Windscribe';
+  }
+
+  static final _issuePattern = RegExp(
+    r'openvpn|wireguard|handshake|auth|dial|timeout|refused|reset|deadline',
+    caseSensitive: false,
+  );
+
+  /// The newest warning or error from the core that explains a failure.
+  String? _lastIssue() {
+    final logs = ref.watch(logsProvider).list;
+    for (var i = logs.length - 1; i >= 0; i--) {
+      final log = logs[i];
+      final serious =
+          log.logLevel == LogLevel.warning || log.logLevel == LogLevel.error;
+      if (serious && _issuePattern.hasMatch(log.payload)) {
+        final text = log.payload.replaceAll(RegExp(r'\s+'), ' ').trim();
+        return text.length > 220 ? '${text.substring(0, 220)}…' : text;
+      }
+    }
+    return null;
   }
 
   String? _selectedName(List<Group> groups) {
@@ -360,6 +412,23 @@ class _EasyConnectCardState extends ConsumerState<EasyConnectCard> {
                     style: text.bodySmall?.copyWith(color: scheme.primary),
                   ),
                 ),
+              ),
+            if (running && _phase != _Phase.verified)
+              Builder(
+                builder: (context) {
+                  final issue = _lastIssue();
+                  if (issue == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      issue,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodySmall?.copyWith(color: scheme.error),
+                    ),
+                  );
+                },
               ),
             if (_phase == _Phase.timedOut || _phase == _Phase.problem)
               Padding(

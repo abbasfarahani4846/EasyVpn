@@ -109,6 +109,14 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
           'No locations found for this account type',
         );
       }
+      // Connection failures are logged as warnings; make them visible.
+      ref
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (s) => s.logLevel.index > LogLevel.warning.index
+                ? s.copyWith(logLevel: LogLevel.warning)
+                : s,
+          );
       final result = await SingleConfigService.addParsed(
         ref,
         ShareLinkParseResult(proxies, const []),

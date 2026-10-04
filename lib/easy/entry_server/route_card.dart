@@ -6,8 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import '../home/selected_server.dart';
 import 'entry_server_store.dart';
 
-/// Shows "You -> entry server -> selected server -> Internet" while an entry
-/// server (chain proxy) is set.
+/// One line: You -> entry server -> selected server -> Internet, shown while
+/// an entry server (chain proxy) is set.
 class EasyRouteCard extends ConsumerWidget {
   /// As a dashboard widget it stays visible with a hint when no entry is set.
   final bool alwaysShow;
@@ -19,6 +19,8 @@ class EasyRouteCard extends ConsumerWidget {
     final fa = Localizations.localeOf(context).languageCode == 'fa';
     final running = ref.watch(isStartProvider);
     final leaf = easySelectedServer(ref);
+    final scheme = Theme.of(context).colorScheme;
+    final accent = running ? scheme.primary : scheme.outline;
     return ValueListenableBuilder<int>(
       valueListenable: EntryServerStore.version,
       builder: (context, _, _) => FutureBuilder<Map<String, Object?>?>(
@@ -28,13 +30,26 @@ class EasyRouteCard extends ConsumerWidget {
           if (entry == null) {
             if (!alwaysShow) return const SizedBox.shrink();
             return Card(
-              child: ListTile(
-                leading: const Icon(Icons.alt_route),
-                title: Text(fa ? 'مسیر زنجیره' : 'Chain route'),
-                subtitle: Text(
-                  fa
-                      ? 'سرور ورودی انتخاب نشده (ابزارها ← سرور ورودی)'
-                      : 'No entry server (Tools ▸ Entry server)',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.alt_route, size: 16, color: scheme.outline),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        fa
+                            ? 'مسیر زنجیره: سرور ورودی انتخاب نشده'
+                            : 'Chain route: no entry server',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -42,62 +57,43 @@ class EasyRouteCard extends ConsumerWidget {
           final entryName = '${entry['name']}';
           final isEntryItself =
               leaf == entryName || leaf == '$entryName [entry]';
-          final hops = <_Hop>[
-            _Hop(label: fa ? 'شما' : 'You', icon: Icons.computer),
-            _Hop(
-              label: entryName,
-              icon: Icons.login,
-              caption: fa ? 'ورودی' : 'Entry',
-            ),
-            if (leaf != null && !isEntryItself)
-              _Hop(
-                label: leaf,
-                icon: Icons.dns,
-                caption: fa ? 'سرور' : 'Server',
-              ),
-            _Hop(label: fa ? 'اینترنت' : 'Internet', icon: Icons.public),
+          final hops = <String>[
+            fa ? 'شما' : 'You',
+            entryName,
+            if (leaf != null && !isEntryItself) leaf,
+            fa ? 'اینترنت' : 'Internet',
           ];
-          final scheme = Theme.of(context).colorScheme;
-          final accent = running ? scheme.primary : scheme.outline;
-          return Padding(
-            padding: EdgeInsets.only(bottom: alwaysShow ? 0 : 16),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.alt_route, size: 18, color: accent),
-                        const SizedBox(width: 8),
-                        Text(
-                          running
-                              ? (fa
-                                    ? 'مسیر زنجیره (فعال)'
-                                    : 'Chain route (active)')
-                              : (fa
-                                    ? 'مسیر زنجیره (متصل نیست)'
-                                    : 'Chain route (not connected)'),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        for (var i = 0; i < hops.length; i++) ...[
-                          if (i > 0)
-                            Icon(Icons.arrow_forward, size: 16, color: accent),
-                          _HopChip(hop: hops[i], active: running),
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.alt_route, size: 16, color: accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < hops.length; i++) ...[
+                            if (i > 0)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: Icon(
+                                  Icons.arrow_forward,
+                                  size: 14,
+                                  color: accent,
+                                ),
+                              ),
+                            _Hop(label: hops[i], active: running),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
@@ -107,58 +103,31 @@ class EasyRouteCard extends ConsumerWidget {
   }
 }
 
-class _Hop {
+class _Hop extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final String? caption;
-
-  const _Hop({required this.label, required this.icon, this.caption});
-}
-
-class _HopChip extends StatelessWidget {
-  final _Hop hop;
   final bool active;
 
-  const _HopChip({required this.hop, required this.active});
+  const _Hop({required this.label, required this.active});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 220),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: active
-              ? scheme.secondaryContainer
-              : scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(hop.icon, size: 16),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hop.caption != null)
-                      Text(
-                        hop.caption!,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    EmojiText(
-                      hop.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: active
+            ? scheme.secondaryContainer
+            : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 170),
+          child: EmojiText(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
       ),

@@ -16,5 +16,5 @@ const GridItem easyConnectItem = GridItem(
 const GridItem easyRouteItem = GridItem(
   key: ValueKey(DashboardWidget.easyRoute),
   crossAxisCellCount: 8,
-  child: SizedBox(height: 112, child: EasyRouteCard(alwaysShow: true)),
+  child: SizedBox(height: 56, child: EasyRouteCard(alwaysShow: true)),
 );
