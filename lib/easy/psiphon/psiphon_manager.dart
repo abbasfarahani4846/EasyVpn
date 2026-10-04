@@ -6,23 +6,21 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'network_fingerprint.dart';
 import 'psiphon_ladder.dart';
+import 'psiphon_nodes.dart';
 
 enum PsiphonStage { idle, starting, dialling, connected, failed }
 
 class PsiphonStatus {
   final PsiphonStage stage;
   final String? rung;
-  final int rungIndex;
-  final int rungCount;
   final String? protocol;
   final String? error;
 
   const PsiphonStatus({
     this.stage = PsiphonStage.idle,
     this.rung,
-    this.rungIndex = 0,
-    this.rungCount = 0,
     this.protocol,
     this.error,
   });
@@ -53,15 +51,19 @@ class PsiphonBinary {
   }
 }
 
-/// Runs the Psiphon core as a child process and walks the ladder of rungs
-/// until one carries a tunnel, remembering which one did.
+/// Runs the Psiphon core as a child process in the background. It walks the
+/// ladder of methods until one carries a tunnel, remembers per network which
+/// one did (and refreshes that every time it connects), and starts over when
+/// the network changes or the tunnel drops.
 class PsiphonManager {
   PsiphonManager._();
 
   static final PsiphonManager instance = PsiphonManager._();
 
-  static const socksPort = 20830;
+  static const socksPort = PsiphonNodes.socksPort;
+  static const _networksKey = 'easy.psiphon.networks';
   static const _winnerKey = 'easy.psiphon.winner';
+  static const _regionKey = 'easy.psiphon.region';
 
   /// True when [config] holds the node [PsiphonManager] serves, so the app
   /// knows it must run the Psiphon core while that profile is in use.
@@ -82,8 +84,11 @@ class PsiphonManager {
   );
 
   Process? _process;
+  Timer? _networkWatch;
   int _session = 0;
   bool _stopRequested = false;
+  bool _networkChanged = false;
+  String? _fingerprint;
 
   bool get isRunning =>
       status.value.stage != PsiphonStage.idle &&
@@ -104,10 +109,7 @@ class PsiphonManager {
     status.value = const PsiphonStatus(stage: PsiphonStage.starting);
     final dataDir = await _dataDir();
     await _seed(exe, dataDir);
-    final prefs = await SharedPreferences.getInstance();
-    final order = PsiphonLadder.order(winner: prefs.getString(_winnerKey));
-
-    unawaited(_loop(session, exe, dataDir, order, prefs));
+    unawaited(_loop(session, exe, dataDir));
   }
 
   /// Starts the core and completes once a tunnel is up, or after [timeout]
@@ -139,16 +141,41 @@ class PsiphonManager {
   Future<void> stop() async {
     _stopRequested = true;
     _session++;
+    _networkWatch?.cancel();
     await _kill();
     status.value = const PsiphonStatus();
+  }
+
+  /// A new egress country (null = automatic). Remembered, and applied right
+  /// away when the core is running.
+  Future<void> setRegion(String? region) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getString(_regionKey);
+    if (current == region) return;
+    if (region == null) {
+      await prefs.remove(_regionKey);
+    } else {
+      await prefs.setString(_regionKey, region);
+    }
+    if (isRunning) {
+      await stop();
+      await start();
+    }
+  }
+
+  /// Called when the user picks a proxy in the app's lists.
+  static Future<void> noteSelection(String proxyName) async {
+    final parsed = PsiphonNodes.parse(proxyName);
+    if (!parsed.isPsiphon) return;
+    await instance.setRegion(parsed.region);
   }
 
   Future<String> _dataDir() async {
     final base = await getApplicationSupportDirectory();
     final dir = Directory('${base.path}${Platform.pathSeparator}easy_psiphon');
-    await Directory('${dir.path}${Platform.pathSeparator}osl').create(
-      recursive: true,
-    );
+    await Directory(
+      '${dir.path}${Platform.pathSeparator}osl',
+    ).create(recursive: true);
     return dir.path.replaceAll('\\', '/');
   }
 
@@ -168,30 +195,74 @@ class PsiphonManager {
     }
   }
 
-  Future<void> _loop(
-    int session,
-    File exe,
-    String dataDir,
-    List<PsiphonRung> order,
+  Future<Map<String, dynamic>> _networks(SharedPreferences prefs) async {
+    try {
+      return Map<String, dynamic>.from(
+        jsonDecode(prefs.getString(_networksKey) ?? '{}') as Map,
+      );
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Which method to try first on this network: what worked here last time,
+  /// else what worked anywhere last, else the natural order.
+  Future<List<PsiphonRung>> _orderFor(
     SharedPreferences prefs,
+    String fingerprint,
   ) async {
+    final networks = await _networks(prefs);
+    final here = (networks[fingerprint] as Map?)?['winner'] as String?;
+    return PsiphonLadder.order(winner: here ?? prefs.getString(_winnerKey));
+  }
+
+  Future<void> _remember(
+    SharedPreferences prefs,
+    String fingerprint,
+    String rung,
+  ) async {
+    final networks = await _networks(prefs);
+    networks[fingerprint] = {
+      'winner': rung,
+      'at': DateTime.now().toUtc().toIso8601String(),
+    };
+    await prefs.setString(_networksKey, jsonEncode(networks));
+    await prefs.setString(_winnerKey, rung);
+  }
+
+  void _watchNetwork(int session) {
+    _networkWatch?.cancel();
+    _networkWatch = Timer.periodic(const Duration(seconds: 15), (_) async {
+      if (session != _session) return;
+      final now = await NetworkFingerprint.current();
+      if (_fingerprint != null && now != _fingerprint) {
+        _networkChanged = true;
+        await _kill();
+      }
+    });
+  }
+
+  Future<void> _loop(int session, File exe, String dataDir) async {
+    final prefs = await SharedPreferences.getInstance();
+    _watchNetwork(session);
     while (session == _session && !_stopRequested) {
-      for (var i = 0; i < order.length; i++) {
-        if (session != _session) return;
-        final rung = order[i];
+      _fingerprint = await NetworkFingerprint.current();
+      _networkChanged = false;
+      final order = await _orderFor(prefs, _fingerprint!);
+      for (final rung in order) {
+        if (session != _session || _networkChanged) break;
         final connected = await _runRung(
           session,
           exe,
           dataDir,
           rung,
-          i,
-          order.length,
+          prefs,
+          prefs.getString(_regionKey),
         );
         if (session != _session) return;
-        if (connected) {
-          await prefs.setString(_winnerKey, rung.name);
-          // The tunnel ended (process exited): start over from the winner.
-          order = PsiphonLadder.order(winner: rung.name);
+        if (connected || _networkChanged) {
+          // The tunnel ended or the network changed: start over, which
+          // re-reads what is remembered for the (possibly new) network.
           status.value = const PsiphonStatus(stage: PsiphonStage.starting);
           break;
         }
@@ -205,24 +276,20 @@ class PsiphonManager {
     File exe,
     String dataDir,
     PsiphonRung rung,
-    int index,
-    int count,
+    SharedPreferences prefs,
+    String? region,
   ) async {
     await _kill();
     final config = PsiphonLadder.buildConfig(
       rung: rung,
       dataDir: dataDir,
       socksPort: socksPort,
+      egressRegion: region,
     );
     final configFile = File('$dataDir/psiphon-${rung.name}.config');
     await configFile.writeAsString(jsonEncode(config));
 
-    status.value = PsiphonStatus(
-      stage: PsiphonStage.dialling,
-      rung: rung.name,
-      rungIndex: index,
-      rungCount: count,
-    );
+    status.value = PsiphonStatus(stage: PsiphonStage.dialling, rung: rung.name);
     final Process process;
     try {
       process = await Process.start(exe.path, ['-config', configFile.path]);
@@ -258,13 +325,16 @@ class PsiphonManager {
             status.value = PsiphonStatus(
               stage: PsiphonStage.connected,
               rung: rung.name,
-              rungIndex: index,
-              rungCount: count,
               protocol: protocol,
             );
+            // Refresh what is remembered for this network every time it
+            // connects, so the next run starts on the method that works now.
+            final fingerprint = _fingerprint;
+            if (fingerprint != null) {
+              unawaited(_remember(prefs, fingerprint, rung.name));
+            }
           }
           if (type == 'Tunnels' && data['count'] == 0 && connected) {
-            // Lost the tunnel; let the loop restart from this rung.
             if (!done.isCompleted) done.complete(true);
           }
         });

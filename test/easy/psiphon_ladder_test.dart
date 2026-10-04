@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:fl_clash/easy/psiphon/psiphon_constants.dart';
 import 'package:fl_clash/easy/psiphon/psiphon_ladder.dart';
+import 'package:fl_clash/easy/psiphon/network_fingerprint.dart';
 import 'package:fl_clash/easy/psiphon/psiphon_manager.dart';
+import 'package:fl_clash/easy/psiphon/psiphon_nodes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(
@@ -13,11 +15,20 @@ Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(
 
 void main() {
   psiphonNodeTests();
+  psiphonRegionTests();
   test('every rung is present and the winner goes first', () {
     expect(PsiphonLadder.rungs.map((r) => r.name), ['A', 'D', 'C']);
     expect(PsiphonLadder.order().map((r) => r.name), ['A', 'D', 'C']);
-    expect(PsiphonLadder.order(winner: 'C').map((r) => r.name), ['C', 'A', 'D']);
-    expect(PsiphonLadder.order(winner: 'zz').map((r) => r.name), ['A', 'D', 'C']);
+    expect(PsiphonLadder.order(winner: 'C').map((r) => r.name), [
+      'C',
+      'A',
+      'D',
+    ]);
+    expect(PsiphonLadder.order(winner: 'zz').map((r) => r.name), [
+      'A',
+      'D',
+      'C',
+    ]);
   });
 
   test('base config carries the drops and keys, URLs base64 encoded', () {
@@ -52,10 +63,87 @@ void main() {
   });
 
   test('constants are intact', () {
-    expect(psiphonRemoteServerListSignatureKey, startsWith('MIICIDANBgkqhkiG9w0'));
+    expect(
+      psiphonRemoteServerListSignatureKey,
+      startsWith('MIICIDANBgkqhkiG9w0'),
+    );
     expect(psiphonServerEntrySignatureKey, hasLength(44));
     expect(psiphonExchangeObfuscationKey, hasLength(44));
     expect(psiphonAlternateDns, hasLength(3));
+  });
+}
+
+void psiphonRegionTests() {
+  test('profile lists Auto plus one node per region, each parseable', () {
+    final nodes = PsiphonNodes.build();
+    expect(nodes, hasLength(1 + PsiphonNodes.regions.length));
+    expect(nodes.map((n) => n['name']).toSet(), hasLength(nodes.length));
+    expect(PsiphonNodes.parse(PsiphonNodes.autoName), (
+      isPsiphon: true,
+      region: null,
+    ));
+    expect(PsiphonNodes.parse(PsiphonNodes.nameFor('DE')), (
+      isPsiphon: true,
+      region: 'DE',
+    ));
+    expect(PsiphonNodes.parse('some other node'), (
+      isPsiphon: false,
+      region: null,
+    ));
+    expect(PsiphonNodes.nameFor('DE'), startsWith(PsiphonNodes.flag('DE')));
+  });
+
+  test(
+    'a chosen region sets EgressRegion; fronted limit only where it fits',
+    () {
+      Map<String, Object?> forRegion(String? r) => PsiphonLadder.buildConfig(
+        rung: PsiphonLadder.byName('A')!,
+        dataDir: 'C:/d',
+        socksPort: 20830,
+        egressRegion: r,
+      );
+      expect(forRegion(null)['EgressRegion'], '');
+      final de = forRegion('DE');
+      expect(de['EgressRegion'], 'DE');
+      expect(de['LimitTunnelProtocols'], PsiphonLadder.fronted);
+      final jp = forRegion('JP');
+      expect(jp['EgressRegion'], 'JP');
+      expect(jp.containsKey('LimitTunnelProtocols'), isFalse);
+      expect(jp.containsKey('InitialLimitTunnelProtocols'), isFalse);
+    },
+  );
+
+  test('network fingerprint ignores virtual adapters and is stable', () {
+    final wifi = {
+      'Wi-Fi': ['192.168.1.20'],
+    };
+    final a = NetworkFingerprint.of(wifi);
+    final withTun = NetworkFingerprint.of({
+      ...wifi,
+      'Meta': ['198.18.0.1'],
+      'sing-tun': ['172.19.0.1'],
+    });
+    expect(withTun, a);
+    expect(
+      NetworkFingerprint.of({
+        'Wi-Fi': ['192.168.1.99'],
+      }),
+      a,
+      reason: 'same /24',
+    );
+    expect(
+      NetworkFingerprint.of({
+        'Wi-Fi': ['10.0.0.5'],
+      }),
+      isNot(a),
+    );
+    expect(
+      NetworkFingerprint.of({
+        'Ethernet': ['192.168.1.20'],
+      }),
+      isNot(a),
+    );
+    expect(NetworkFingerprint.of({}), 'offline');
   });
 }
 
@@ -65,7 +153,12 @@ void psiphonNodeTests() {
       PsiphonManager.isPsiphonNodeIn({
         'proxies': [
           {'name': 'x', 'type': 'ss', 'server': 'a', 'port': 1},
-          {'name': 'Psiphon', 'type': 'socks5', 'server': '127.0.0.1', 'port': 20830},
+          {
+            'name': 'Psiphon',
+            'type': 'socks5',
+            'server': '127.0.0.1',
+            'port': 20830,
+          },
         ],
       }),
       isTrue,

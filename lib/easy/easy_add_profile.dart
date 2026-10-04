@@ -1,7 +1,7 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'psiphon/psiphon_page.dart';
+import 'psiphon/psiphon_add.dart';
 import 'single_config/single_config_page.dart';
 import 'warp/warp_page.dart';
 
@@ -29,15 +29,6 @@ List<Widget> easyAddProfileItems(BuildContext context) {
       ),
       widget: const WarpView(),
     ),
-    ListItem.open(
-      leading: const Icon(Icons.travel_explore),
-      title: const Text('Psiphon'),
-      subtitle: Text(
-        fa
-            ? 'اتصال رایگان؛ بعد از افزودن، از لیست سرورها انتخاب کنید'
-            : 'Free tunnel; after adding, pick it from the servers list',
-      ),
-      widget: const PsiphonView(),
-    ),
+    const EasyPsiphonAddItem(),
   ];
 }

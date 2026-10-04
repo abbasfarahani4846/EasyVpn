@@ -4,7 +4,8 @@ import 'package:fl_clash/easy/warp/x25519.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Uint8List hex(String s) => Uint8List.fromList([
-  for (var i = 0; i < s.length; i += 2) int.parse(s.substring(i, i + 2), radix: 16),
+  for (var i = 0; i < s.length; i += 2)
+    int.parse(s.substring(i, i + 2), radix: 16),
 ]);
 
 String toHex(Uint8List b) =>
@@ -40,7 +41,10 @@ void main() {
       'de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f',
     );
     final shared = toHex(X25519.scalarMult(alicePriv, bobPub));
-    expect(shared, '4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742');
+    expect(
+      shared,
+      '4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742',
+    );
     expect(toHex(X25519.scalarMult(bobPriv, alicePub)), shared);
   });
 

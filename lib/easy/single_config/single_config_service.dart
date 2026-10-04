@@ -47,6 +47,8 @@ class SingleConfigService {
     ShareLinkParseResult parsed, {
     String label = DefaultProfileConfig.label,
     bool select = false,
+    bool replace = false,
+    bool urlTest = true,
   }) async {
     if (parsed.proxies.isEmpty) {
       throw MessageException(
@@ -77,10 +79,14 @@ class SingleConfigService {
       }
     }
 
-    final merged = DefaultProfileConfig.merge(current, valid);
+    final merged = replace
+        ? (proxies: valid, added: valid.length, skipped: 0)
+        : DefaultProfileConfig.merge(current, valid);
     if (merged.added > 0 || existing == null) {
       final bytes = Uint8List.fromList(
-        utf8.encode(DefaultProfileConfig.build(merged.proxies)),
+        utf8.encode(
+          DefaultProfileConfig.build(merged.proxies, urlTest: urlTest),
+        ),
       );
       final base = existing ?? Profile.normal(label: label);
       final saved = await base.saveFile(

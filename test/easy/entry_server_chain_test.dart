@@ -22,7 +22,12 @@ void main() {
       },
     },
   };
-  final entry = <String, Object?>{'name': 'E', 'type': 'vless', 'server': 'e.com', 'port': 3};
+  final entry = <String, Object?>{
+    'name': 'E',
+    'type': 'vless',
+    'server': 'e.com',
+    'port': 3,
+  };
 
   test('no entry leaves config untouched', () {
     final raw = base();
@@ -31,9 +36,7 @@ void main() {
 
   test('every other proxy and provider dials through the entry', () {
     final out = EntryServerChain.apply(base(), entry);
-    final byName = {
-      for (final p in out['proxies'] as List) p['name']: p,
-    };
+    final byName = {for (final p in out['proxies'] as List) p['name']: p};
     expect(byName['E'].containsKey('dialer-proxy'), isFalse);
     expect(byName['A']['dialer-proxy'], 'E');
     expect(byName['B']['dialer-proxy'], 'X', reason: 'explicit chains stay');

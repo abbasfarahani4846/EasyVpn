@@ -56,7 +56,8 @@ class EasyRouteCard extends ConsumerWidget {
           final entry = snapshot.data;
           if (entry == null) return const SizedBox.shrink();
           final entryName = '${entry['name']}';
-          final isEntryItself = leaf == entryName || leaf == '$entryName [entry]';
+          final isEntryItself =
+              leaf == entryName || leaf == '$entryName [entry]';
           final hops = <_Hop>[
             _Hop(label: fa ? 'شما' : 'You', icon: Icons.computer),
             _Hop(

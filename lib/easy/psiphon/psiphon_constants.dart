@@ -18,17 +18,49 @@ const String psiphonPropagationChannelId = 'FFFFFFFFFFFFFFFF';
 const String psiphonSponsorId = '1111111111111111';
 
 const List<PsiphonDrop> psiphonRemoteServerListDrops = [
-    PsiphonDrop('https://s3.amazonaws.com/psiphon/web/iohq-waa4-q4dt/server_list_compressed', skipVerify: false, onlyAfterAttempts: 0),
-    PsiphonDrop('https://www.gpallthingsnumberweather.com/web/iohq-waa4-q4dt/server_list_compressed', skipVerify: true, onlyAfterAttempts: 2),
-    PsiphonDrop('https://www.storagejsstrategiesfabulous.com/web/iohq-waa4-q4dt/server_list_compressed', skipVerify: true, onlyAfterAttempts: 2),
-    PsiphonDrop('https://www.diamondberlingamerplanet.com/web/iohq-waa4-q4dt/server_list_compressed', skipVerify: true, onlyAfterAttempts: 2),
+  PsiphonDrop(
+    'https://s3.amazonaws.com/psiphon/web/iohq-waa4-q4dt/server_list_compressed',
+    skipVerify: false,
+    onlyAfterAttempts: 0,
+  ),
+  PsiphonDrop(
+    'https://www.gpallthingsnumberweather.com/web/iohq-waa4-q4dt/server_list_compressed',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
+  PsiphonDrop(
+    'https://www.storagejsstrategiesfabulous.com/web/iohq-waa4-q4dt/server_list_compressed',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
+  PsiphonDrop(
+    'https://www.diamondberlingamerplanet.com/web/iohq-waa4-q4dt/server_list_compressed',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
 ];
 
 const List<PsiphonDrop> psiphonObfuscatedServerListDrops = [
-    PsiphonDrop('https://s3.amazonaws.com/psiphon/web/iohq-waa4-q4dt/osl', skipVerify: false, onlyAfterAttempts: 0),
-    PsiphonDrop('https://www.gpallthingsnumberweather.com/web/iohq-waa4-q4dt/osl', skipVerify: true, onlyAfterAttempts: 2),
-    PsiphonDrop('https://www.storagejsstrategiesfabulous.com/web/iohq-waa4-q4dt/osl', skipVerify: true, onlyAfterAttempts: 2),
-    PsiphonDrop('https://www.diamondberlingamerplanet.com/web/iohq-waa4-q4dt/osl', skipVerify: true, onlyAfterAttempts: 2),
+  PsiphonDrop(
+    'https://s3.amazonaws.com/psiphon/web/iohq-waa4-q4dt/osl',
+    skipVerify: false,
+    onlyAfterAttempts: 0,
+  ),
+  PsiphonDrop(
+    'https://www.gpallthingsnumberweather.com/web/iohq-waa4-q4dt/osl',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
+  PsiphonDrop(
+    'https://www.storagejsstrategiesfabulous.com/web/iohq-waa4-q4dt/osl',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
+  PsiphonDrop(
+    'https://www.diamondberlingamerplanet.com/web/iohq-waa4-q4dt/osl',
+    skipVerify: true,
+    onlyAfterAttempts: 2,
+  ),
 ];
 
 const String psiphonRemoteServerListSignatureKey =

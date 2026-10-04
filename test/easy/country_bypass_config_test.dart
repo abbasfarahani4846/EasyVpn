@@ -28,7 +28,10 @@ void main() {
       const CountrySelection(code: 'ir'),
     );
     final providers = out['rule-providers'] as Map;
-    expect(providers.keys, containsAll(['mine', 'easy-ir-domain', 'easy-ir-ip']));
+    expect(
+      providers.keys,
+      containsAll(['mine', 'easy-ir-domain', 'easy-ir-ip']),
+    );
     expect(providers['easy-ir-domain']['behavior'], 'domain');
     expect(providers['easy-ir-domain']['format'], 'mrs');
     expect(
@@ -59,7 +62,10 @@ void main() {
       const CountrySelection(code: 'tr'),
     );
     expect((out['rule-providers'] as Map).keys, ['mine', 'easy-tr-ip']);
-    expect((out['rules'] as List).first, 'RULE-SET,easy-tr-ip,DIRECT,no-resolve');
+    expect(
+      (out['rules'] as List).first,
+      'RULE-SET,easy-tr-ip,DIRECT,no-resolve',
+    );
     expect(
       CountryBypassConfig.providerNames(const CountrySelection(code: 'tr')),
       ['easy-tr-ip'],

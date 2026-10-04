@@ -31,7 +31,9 @@ void main() {
       'vless://$uuid@e.com:33017?type=tcp&headerType=http&host=a.com&path=%2F#x',
     ).proxies.single;
     expect(p['network'], 'http');
-    expect((p['http-opts'] as Map)['headers'], {'Host': ['a.com']});
+    expect((p['http-opts'] as Map)['headers'], {
+      'Host': ['a.com'],
+    });
   });
 
   test('vless reality', () {
@@ -55,7 +57,9 @@ void main() {
 
   test('shadowsocks sip002', () {
     final cred = base64Encode(utf8.encode('aes-256-gcm:pass'));
-    final p = ShareLinkParser.parse('ss://$cred@1.2.3.4:8388#ss1').proxies.single;
+    final p = ShareLinkParser.parse(
+      'ss://$cred@1.2.3.4:8388#ss1',
+    ).proxies.single;
     expect(p['type'], 'ss');
     expect(p['cipher'], 'aes-256-gcm');
     expect(p['password'], 'pass');
@@ -70,7 +74,12 @@ tuic://$uuid:pw@u.com:443?congestion_control=bbr&alpn=h3&sni=u.com#u
 anytls://pw@a.com:443?sni=a.com#a
 ''');
     expect(r.errors, isEmpty);
-    expect(r.proxies.map((p) => p['type']), ['trojan', 'hysteria2', 'tuic', 'anytls']);
+    expect(r.proxies.map((p) => p['type']), [
+      'trojan',
+      'hysteria2',
+      'tuic',
+      'anytls',
+    ]);
     expect(r.proxies[1]['skip-cert-verify'], true);
     expect(r.proxies[1]['obfs-password'], 'o');
   });

@@ -51,7 +51,10 @@ class DefaultProfileConfig {
     return (proxies: result, added: addedCount, skipped: skipped);
   }
 
-  static String build(List<Map<String, Object?>> proxies) {
+  static String build(
+    List<Map<String, Object?>> proxies, {
+    bool urlTest = true,
+  }) {
     final names = [for (final p in proxies) '${p['name']}'];
     return yaml.encode({
       'proxies': proxies,
@@ -59,16 +62,17 @@ class DefaultProfileConfig {
         {
           'name': selectGroup,
           'type': 'select',
-          'proxies': [autoGroup, ...names],
+          'proxies': [if (urlTest) autoGroup, ...names],
         },
-        {
-          'name': autoGroup,
-          'type': 'url-test',
-          'url': _testUrl,
-          'interval': 300,
-          'tolerance': 50,
-          'proxies': names,
-        },
+        if (urlTest)
+          {
+            'name': autoGroup,
+            'type': 'url-test',
+            'url': _testUrl,
+            'interval': 300,
+            'tolerance': 50,
+            'proxies': names,
+          },
       ],
       'rules': ['MATCH,$selectGroup'],
     });

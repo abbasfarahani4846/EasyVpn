@@ -51,17 +51,13 @@ void main() {
   // Calls the real Cloudflare API, so it only runs when asked:
   //   EASY_LIVE_WARP=<yaml output path> flutter test test/easy/warp_registration_test.dart
   final livePath = Platform.environment['EASY_LIVE_WARP'];
-  test(
-    'live registration writes a usable proxy',
-    () async {
-      final proxy = await WarpRegistration.register(name: 'WARP');
-      File(livePath!).writeAsStringSync(
-        yaml.encode({
-          'proxies': [proxy],
-        }),
-      );
-      expect(proxy['type'], 'wireguard');
-    },
-    skip: livePath == null ? 'set EASY_LIVE_WARP to run' : false,
-  );
+  test('live registration writes a usable proxy', () async {
+    final proxy = await WarpRegistration.register(name: 'WARP');
+    File(livePath!).writeAsStringSync(
+      yaml.encode({
+        'proxies': [proxy],
+      }),
+    );
+    expect(proxy['type'], 'wireguard');
+  }, skip: livePath == null ? 'set EASY_LIVE_WARP to run' : false);
 }

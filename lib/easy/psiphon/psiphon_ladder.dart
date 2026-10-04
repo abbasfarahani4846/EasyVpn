@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'psiphon_constants.dart';
+import 'psiphon_nodes.dart';
 
 /// One way of asking Psiphon to connect, and how long to wait for it.
 ///
@@ -110,6 +111,7 @@ class PsiphonLadder {
     required String dataDir,
     required int socksPort,
     String deviceRegion = 'IR',
+    String? egressRegion,
   }) {
     final sep = dataDir.endsWith('/') || dataDir.endsWith('\\') ? '' : '/';
     final config = <String, Object?>{
@@ -139,6 +141,16 @@ class PsiphonLadder {
       'DNSResolverAttemptsPerPreferredServer': 2,
     };
     rung.apply(config);
+    if (egressRegion != null) {
+      config['EgressRegion'] = egressRegion;
+      // A hard country filter plus a fronted-only limit would leave no
+      // candidates where Psiphon has no fronted server, so drop the limit.
+      if (!PsiphonNodes.frontedRegions.contains(egressRegion)) {
+        config.remove('LimitTunnelProtocols');
+        config.remove('InitialLimitTunnelProtocols');
+        config.remove('InitialLimitTunnelProtocolsCandidateCount');
+      }
+    }
     return config;
   }
 }

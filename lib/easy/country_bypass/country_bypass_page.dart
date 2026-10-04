@@ -180,7 +180,10 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
                 const SizedBox(height: 4),
                 for (final c in countries)
                   ListTile(
-                    leading: EmojiText(c.flag, style: const TextStyle(fontSize: 24)),
+                    leading: EmojiText(
+                      c.flag,
+                      style: const TextStyle(fontSize: 24),
+                    ),
                     title: Text(fa ? c.nameFa : c.nameEn),
                     subtitle: Text(
                       c.domain != null
@@ -214,7 +217,10 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
         child: Column(
           children: [
             ListTile(
-              leading: EmojiText(country.flag, style: const TextStyle(fontSize: 28)),
+              leading: EmojiText(
+                country.flag,
+                style: const TextStyle(fontSize: 28),
+              ),
               title: Text(fa ? country.nameFa : country.nameEn),
               trailing: TextButton(
                 onPressed: () => _save(null),
@@ -238,7 +244,9 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
             ),
             SwitchListTile(
               value: selection.mirror,
-              title: Text(fa ? 'دانلود از آینه (jsDelivr)' : 'Use mirror (jsDelivr)'),
+              title: Text(
+                fa ? 'دانلود از آینه (jsDelivr)' : 'Use mirror (jsDelivr)',
+              ),
               subtitle: Text(
                 fa
                     ? 'اگر raw.githubusercontent.com باز نمی‌شود روشن کنید'

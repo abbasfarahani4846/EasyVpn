@@ -414,7 +414,10 @@ class ShareLinkParser {
     }
   }
 
-  static void _applyTransport(Map<String, Object?> proxy, Map<String, String> q) {
+  static void _applyTransport(
+    Map<String, Object?> proxy,
+    Map<String, String> q,
+  ) {
     var network = (q['type'] ?? '').toLowerCase();
     if (network.isEmpty) network = 'tcp';
     final headerType = (q['headerType'] ?? '').toLowerCase();
@@ -432,7 +435,10 @@ class ShareLinkParser {
         proxy['network'] = 'http';
         proxy['http-opts'] = {
           'path': [path.isEmpty ? '/' : path],
-          if (host.isNotEmpty) 'headers': {'Host': [host]},
+          if (host.isNotEmpty)
+            'headers': {
+              'Host': [host],
+            },
           if ((q['method'] ?? '').isNotEmpty) 'method': q['method'],
         };
       case 'h2':

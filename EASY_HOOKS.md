@@ -35,13 +35,15 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   proxy in its own selected `WARP` profile. Needs access to api.cloudflareclient.com (blocked in some networks;
   works through an active proxy). No upstream hook.
 
-- `psiphon`: runs the official Psiphon core (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not
-  committed) as a child process and walks a ladder of methods (A fronted/CDN, D all direct protocols,
-  C in-proxy relay), remembering the winner. Psiphon fetches its own server list; local SOCKS5 on
-  127.0.0.1:20830, added to its own selected `Psiphon` profile as a `socks5` node. Starts automatically when a profile
-  containing that node is connected and stops on disconnect (`EasyConfig`). A server list downloaded
-  once ships beside the core in `easy_bin/psiphon/seed/` and is copied into the data dir on first run.
-  Windows only for now.
+- `psiphon`: one tap in Add profile creates and selects a `Psiphon` profile (an Auto node plus one node per
+  egress country, all on 127.0.0.1:20830) and connects. The official Psiphon core
+  (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not committed) runs in the background: it starts when a
+  profile containing the node is connected (the connect waits for the tunnel) and stops on disconnect.
+  Picking a country node restarts it with that `EgressRegion` (tap observed in `EasyProxyPicker.tryPick`).
+  A ladder of methods (A fronted/CDN, D all direct, C in-proxy) is tried in order; the winner is remembered
+  per network (interface + /24 fingerprint), refreshed on every connect, and the ladder restarts when the
+  network changes or the tunnel drops. A server list downloaded once ships beside the core in
+  `easy_bin/psiphon/seed/` and is copied into the data dir on first run. Windows only for now.
 
 New features that only change the generated config go through `lib/easy/easy_config.dart`;
 new Tools entries go into `lib/easy/easy_tools.dart`. Neither needs another upstream hook.
