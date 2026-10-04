@@ -37,38 +37,14 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   After merging upstream, regenerate with `dart run build_runner build --delete-conflicting-outputs`
   (all targets: a `--build-filter` run deletes the other generated files).
 
-- `country_bypass`: pick a country; its IP and domain lists are added as mihomo
-  `rule-providers` (format `mrs`, refreshed every 24 h by the core, manual "Update now"
-  via `updateExternalProvider`) with `DIRECT` rules put ahead of the profile's rules.
-  Sources: MetaCubeX/meta-rules-dat (IPs for all countries, China and Russia domains) and
-  Chocolate4U/Iran-clash-rules (Iran domains and CIDRs); jsDelivr mirror toggle.
-
-- `warp`: the WARP item in Add profile registers an anonymous Cloudflare WARP device
-  (X25519 key pair made in Dart, `lib/easy/warp/x25519.dart`) and stores a mihomo `wireguard`
-  proxy in its own selected `WARP` profile. Needs access to api.cloudflareclient.com (blocked in some networks;
-  works through an active proxy). No upstream hook.
-
-- `windscribe`: Add profile > "Windscribe / OpenVPN / WireGuard" takes a downloaded `.ovpn` (inline certificates;
-  username/password asked when the file has `auth-user-pass`) or wg-quick `.conf` (pick a file or paste), checks it with the
-  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. The server host in a file is looked up over DNS-over-HTTPS (`doh_resolver.dart`, resolvers asked in parallel, private/bogon
-  answers rejected) and stored as an IP, because some networks answer ordinary DNS for these hosts with a private address
-  (10.10.34.x). Verified on the author's network: direct OpenVPN handshakes get no reply there, but through an entry server the
-  handshake completes (AUTH_FAILED with dummy credentials). A WireGuard file can be
-  expanded into every location: its private key, address, preshared key and DNS are combined with each city's public key and
-  endpoint from Windscribe's public server list (`assets.windscribe.com/serverlist/mob-v2/{1,0}/1`; free = the 25 cities
-  `pro=0` in the free list). No login, no private API: Windscribe's login needs a client-authentication secret from its own
-  app, which we deliberately do not use. Whether one location's key works on the others is untested. mihomo has no IKEv2.
-  No upstream hook.
-
-- `psiphon`: one tap in Add profile creates and selects a `Psiphon` profile (an Auto node plus one node per
-  egress country, all on 127.0.0.1:20830) and connects. The official Psiphon core
-  (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not committed) runs in the background: it starts when a
-  profile containing the node is connected (the connect waits for the tunnel) and stops on disconnect.
-  Picking a country node restarts it with that `EgressRegion` (tap observed in `EasyProxyPicker.tryPick`).
-  A ladder of methods (A fronted/CDN, D all direct, C in-proxy) is tried in order with short budgets that grow each pass (8 s, 15 s, then 25-40 s); the winner is remembered
-  per network (interface + /24 fingerprint), refreshed on every connect, and the ladder restarts when the
-  network changes or the tunnel drops. The Psiphon process is sent DIRECT by a `PROCESS-NAME` rule (needs `find-process-mode: always`, set when Psiphon is added or connected) so TUN does not feed its traffic back into itself. Diagnostics go to `psiphon.log` in its data dir. A server list downloaded once ships beside the core in
-  `easy_bin/psiphon/seed/` and is copied into the data dir on first run. Windows only for now.
+- `country_bypass`: pick a country; its IP and domain lists become mihomo `rule-providers` (format `mrs`) with `DIRECT` rules
+  ahead of the profile's rules. The app downloads the lists itself into `easy_country/` (normal request, then straight to an
+  address found over DNS-over-HTTPS, primary URL then jsDelivr mirror) and serves them to the core from `127.0.0.1:20841`,
+  so the core's own fetch is instant: connecting never waits for the internet, and a list that is not available yet is simply
+  left out until it is. (Before this, the core fetched from raw.githubusercontent.com itself; on a network that answers DNS for
+  it with 10.10.34.x that blocked every new profile.) A seed copy can ship in `easy_bin/country/`; lists refresh after 24 h
+  and on "Update now".
+  Sources: MetaCubeX/meta-rules-dat (IPs for all countries, China and Russia domains) and Chocolate4U/Iran-clash-rules.
 
 New features that only change the generated config go through `lib/easy/easy_config.dart`;
 new Tools entries go into `lib/easy/easy_tools.dart`. Neither needs another upstream hook.

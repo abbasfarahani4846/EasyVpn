@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'country_bypass_config.dart';
 import 'country_bypass_store.dart';
 import 'country_catalog.dart';
+import 'country_rules_cache.dart';
 
 bool _isFa(BuildContext context) =>
     Localizations.localeOf(context).languageCode == 'fa';
@@ -94,7 +95,23 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
     setState(() {
       _selection = selection;
       _status.clear();
+      _updating = selection != null;
     });
+    if (selection != null) {
+      // Lists are fetched here, by the app, so connecting never waits for them.
+      final urls = await CountryRulesCache.prepare(selection, wait: true);
+      if (!mounted) return;
+      setState(() => _updating = false);
+      final missing = CountryRulesCache.sources(selection).length - urls.length;
+      if (missing > 0) {
+        dialogs.showNotifier(
+          _isFa(context)
+              ? 'دانلود بعضی لیست‌ها ممکن نشد؛ بعداً خودکار دوباره امتحان می‌شود'
+              : 'Some lists could not be downloaded; will retry automatically',
+          level: MessageLevel.warning,
+        );
+      }
+    }
     ref.read(setupActionProvider.notifier).applyProfileDebounce();
     Timer(const Duration(seconds: 6), () {
       if (mounted) unawaited(_refreshStatus());
@@ -108,6 +125,7 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
     final fa = _isFa(context);
     final core = ref.read(coreHandlerProvider);
     final errors = <String>[];
+    await CountryRulesCache.prepare(selection, wait: true, force: true);
     for (final name in CountryBypassConfig.providerNames(selection)) {
       try {
         final message = await core.updateExternalProvider(providerName: name);

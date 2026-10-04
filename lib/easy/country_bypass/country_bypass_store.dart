@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'country_bypass_config.dart';
+import 'country_rules_cache.dart';
 
 class CountryBypassStore {
   const CountryBypassStore._();
@@ -32,5 +33,11 @@ class CountryBypassStore {
 
   static Future<Map<String, dynamic>> applyStored(
     Map<String, dynamic> rawConfig,
-  ) async => CountryBypassConfig.apply(rawConfig, await load());
+  ) async {
+    final selection = await load();
+    if (selection == null) return rawConfig;
+    // Local URLs for the cached lists; never waits for the internet.
+    final urls = await CountryRulesCache.prepare(selection);
+    return CountryBypassConfig.apply(rawConfig, selection, urls: urls);
+  }
 }

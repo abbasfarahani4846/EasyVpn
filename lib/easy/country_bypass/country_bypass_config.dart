@@ -62,8 +62,9 @@ class CountryBypassConfig {
 
   static Map<String, dynamic> apply(
     Map<String, dynamic> rawConfig,
-    CountrySelection? selection,
-  ) {
+    CountrySelection? selection, {
+    Map<String, String>? urls,
+  }) {
     final country = CountryCatalog.byCode(selection?.code);
     if (selection == null || country == null) return rawConfig;
     final useDomain = selection.domain && country.domain != null;
@@ -75,20 +76,24 @@ class CountryBypassConfig {
     );
     final rules = <String>[];
 
-    if (useDomain) {
-      providers[country.domainProvider] = _provider(
-        'domain',
-        country.domain!.url(mirror: selection.mirror),
-      );
+    final domainUrl = urls == null
+        ? country.domain?.url(mirror: selection.mirror)
+        : urls[country.domainProvider];
+    final ipUrl = urls == null
+        ? country.ip.url(mirror: selection.mirror)
+        : urls[country.ipProvider];
+
+    if (useDomain && domainUrl != null) {
+      providers[country.domainProvider] = _provider('domain', domainUrl);
       rules.add('RULE-SET,${country.domainProvider},DIRECT');
     }
-    if (selection.ip) {
-      providers[country.ipProvider] = _provider(
-        'ipcidr',
-        country.ip.url(mirror: selection.mirror),
-      );
+    if (selection.ip && ipUrl != null) {
+      providers[country.ipProvider] = _provider('ipcidr', ipUrl);
       rules.add('RULE-SET,${country.ipProvider},DIRECT,no-resolve');
     }
+    // Nothing available yet (not downloaded): leave the profile untouched
+    // rather than reference a list the core would have to wait for.
+    if (rules.isEmpty) return rawConfig;
 
     config['rule-providers'] = providers;
     config['rules'] = [
