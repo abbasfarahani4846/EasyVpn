@@ -63,6 +63,20 @@ class PsiphonManager {
   static const socksPort = 20830;
   static const _winnerKey = 'easy.psiphon.winner';
 
+  /// True when [config] holds the node [PsiphonManager] serves, so the app
+  /// knows it must run the Psiphon core while that profile is in use.
+  static bool isPsiphonNodeIn(Map<String, dynamic> config) {
+    for (final item in (config['proxies'] as List? ?? const [])) {
+      if (item is Map &&
+          item['type'] == 'socks5' &&
+          item['server'] == '127.0.0.1' &&
+          '${item['port']}' == '$socksPort') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   final ValueNotifier<PsiphonStatus> status = ValueNotifier(
     const PsiphonStatus(),
   );
@@ -89,6 +103,7 @@ class PsiphonManager {
     _stopRequested = false;
     status.value = const PsiphonStatus(stage: PsiphonStage.starting);
     final dataDir = await _dataDir();
+    await _seed(exe, dataDir);
     final prefs = await SharedPreferences.getInstance();
     final order = PsiphonLadder.order(winner: prefs.getString(_winnerKey));
 
@@ -109,6 +124,22 @@ class PsiphonManager {
       recursive: true,
     );
     return dir.path.replaceAll('\\', '/');
+  }
+
+  /// First run on a network that cannot reach Psiphon's server-list drops
+  /// still has servers to dial: copy the list that shipped beside the core
+  /// (`seed/`), never over files the core has already written.
+  Future<void> _seed(File exe, String dataDir) async {
+    final seed = Directory('${exe.parent.path}${Platform.pathSeparator}seed');
+    if (!seed.existsSync()) return;
+    await for (final entity in seed.list(recursive: true)) {
+      if (entity is! File) continue;
+      final relative = entity.path.substring(seed.path.length + 1);
+      final target = File('$dataDir/${relative.replaceAll('\\', '/')}');
+      if (target.existsSync()) continue;
+      await target.parent.create(recursive: true);
+      await entity.copy(target.path);
+    }
   }
 
   Future<void> _loop(

@@ -139,6 +139,7 @@ class SetupAction extends _$SetupAction {
   }
 
   Future<bool> setRunning(bool running, {bool initialize = false}) {
+    EasyConfig.onRunning(running); // EASY-HOOK
     if (running && !initialize && !ref.read(initProvider)) {
       return Future.value(true);
     }

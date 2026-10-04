@@ -6,9 +6,9 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 
 | File | Hook | Feature |
 |------|------|---------|
-| `lib/views/profiles/add.dart` | import + `ListItem` "Single config" | single_config |
+| `lib/views/profiles/add.dart` | import + `...easyAddProfileItems(context)` in the Add profile list (single config, WARP, Psiphon) | single_config, warp, psiphon |
 | `lib/views/tools.dart` | import + `...easySettingItems` in the settings list | entry_server, country_bypass |
-| `lib/providers/actions/setup.dart` | `EasyConfig.apply(rawConfig)` before the profile task | entry_server, country_bypass |
+| `lib/providers/actions/setup.dart` | `EasyConfig.apply(rawConfig)` before the profile task; `EasyConfig.onRunning(running)` at the top of `setRunning` | entry_server, country_bypass, psiphon |
 | `lib/views/proxies/card.dart` | import + `EasyProxyPicker.tryPick` at the top of `selectGroupProxy` (lets the Proxies page act as a server chooser) | entry_server |
 | `lib/providers/action.dart` | import for the line above (`setup.dart` is a `part of`) | entry_server, country_bypass |
 
@@ -37,7 +37,10 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 - `psiphon`: runs the official Psiphon core (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not
   committed) as a child process and walks a ladder of methods (A fronted/CDN, D all direct protocols,
   C in-proxy relay), remembering the winner. Psiphon fetches its own server list; local SOCKS5 on
-  127.0.0.1:20830, added to the Default profile as a `socks5` node. Windows only for now. No upstream hook.
+  127.0.0.1:20830, added to the Default profile as a `socks5` node. Starts automatically when a profile
+  containing that node is connected and stops on disconnect (`EasyConfig`). A server list downloaded
+  once ships beside the core in `easy_bin/psiphon/seed/` and is copied into the data dir on first run.
+  Windows only for now.
 
 New features that only change the generated config go through `lib/easy/easy_config.dart`;
 new Tools entries go into `lib/easy/easy_tools.dart`. Neither needs another upstream hook.

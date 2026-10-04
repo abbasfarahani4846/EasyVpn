@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_clash/easy/psiphon/psiphon_constants.dart';
 import 'package:fl_clash/easy/psiphon/psiphon_ladder.dart';
+import 'package:fl_clash/easy/psiphon/psiphon_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(
@@ -11,6 +12,7 @@ Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(
 );
 
 void main() {
+  psiphonNodeTests();
   test('every rung is present and the winner goes first', () {
     expect(PsiphonLadder.rungs.map((r) => r.name), ['A', 'D', 'C']);
     expect(PsiphonLadder.order().map((r) => r.name), ['A', 'D', 'C']);
@@ -54,5 +56,28 @@ void main() {
     expect(psiphonServerEntrySignatureKey, hasLength(44));
     expect(psiphonExchangeObfuscationKey, hasLength(44));
     expect(psiphonAlternateDns, hasLength(3));
+  });
+}
+
+void psiphonNodeTests() {
+  test('detects the Psiphon socks node in a config', () {
+    expect(
+      PsiphonManager.isPsiphonNodeIn({
+        'proxies': [
+          {'name': 'x', 'type': 'ss', 'server': 'a', 'port': 1},
+          {'name': 'Psiphon', 'type': 'socks5', 'server': '127.0.0.1', 'port': 20830},
+        ],
+      }),
+      isTrue,
+    );
+    expect(PsiphonManager.isPsiphonNodeIn({'proxies': []}), isFalse);
+    expect(
+      PsiphonManager.isPsiphonNodeIn({
+        'proxies': [
+          {'name': 'o', 'type': 'socks5', 'server': '127.0.0.1', 'port': 1080},
+        ],
+      }),
+      isFalse,
+    );
   });
 }

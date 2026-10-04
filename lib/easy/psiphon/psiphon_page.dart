@@ -158,12 +158,16 @@ class _PsiphonViewState extends ConsumerState<PsiphonView> {
               const SizedBox(height: 16),
               Text(
                 fa
-                    ? 'برای استفاده در اپ، یک بار نود Psiphon را به پروفایل '
-                          'Default اضافه کنید و هنگام استفاده، Psiphon را '
-                          'روشن نگه دارید.'
-                    : 'To use it in the app, add the Psiphon node to the '
-                          'Default profile once and keep Psiphon running '
-                          'while you use it.',
+                    ? 'نود Psiphon را به پروفایل Default اضافه کنید، سپس در '
+                          'بخش سرورها «Psiphon» را انتخاب و وصل شوید. با وصل '
+                          'شدن، Psiphon خودکار روشن می‌شود (اتصال اولیه ممکن '
+                          'است تا حدود یک دقیقه طول بکشد) و با قطع اتصال '
+                          'خاموش می‌شود.'
+                    : 'Add the Psiphon node to the Default profile, then pick '
+                          '"Psiphon" in the servers list and connect. Psiphon '
+                          'starts automatically when you connect (the first '
+                          'link can take up to a minute) and stops when you '
+                          'disconnect.',
               ),
               const SizedBox(height: 12),
               Align(
