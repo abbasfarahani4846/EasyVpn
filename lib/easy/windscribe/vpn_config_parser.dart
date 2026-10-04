@@ -245,11 +245,12 @@ class VpnConfigParser {
     if (!blocks.containsKey('ca')) {
       throw const VpnConfigException('OpenVPN config has no <ca> certificate');
     }
-    if (needsCredentials &&
-        (username == null ||
-            username.isEmpty ||
-            password == null ||
-            password.isEmpty)) {
+    final hasCredentials =
+        username != null &&
+        username.isNotEmpty &&
+        password != null &&
+        password.isNotEmpty;
+    if (needsCredentials && !hasCredentials) {
       throw const VpnConfigException(
         'This config needs a username and password (Windscribe: "Get Credentials")',
       );
@@ -274,8 +275,10 @@ class VpnConfigParser {
       if (blocks.containsKey('tls-crypt')) 'tls-crypt': blocks['tls-crypt'],
       if (blocks.containsKey('tls-crypt-v2'))
         'tls-crypt-v2': blocks['tls-crypt-v2'],
-      if (needsCredentials) 'username': username,
-      if (needsCredentials) 'password': password,
+      // Whatever the user typed is used, even if the file has no
+      // auth-user-pass line: the provider still checks it.
+      if (hasCredentials) 'username': username,
+      if (hasCredentials) 'password': password,
       'ping': ?ping,
       'ping-restart': ?pingRestart,
       'udp': true,

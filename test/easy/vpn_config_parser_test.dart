@@ -96,6 +96,19 @@ void main() {
     );
   });
 
+  test('typed credentials are used even without an auth-user-pass line', () {
+    final noLine = _ovpn.replaceFirst('auth-user-pass\n', '');
+    final withCreds = VpnConfigParser.parse(
+      noLine,
+      username: 'u',
+      password: 'p',
+    );
+    expect(withCreds['username'], 'u');
+    expect(withCreds['password'], 'p');
+    final without = VpnConfigParser.parse(noLine);
+    expect(without.containsKey('username'), isFalse);
+  });
+
   test('openvpn pointing at separate files is refused', () {
     final split = _ovpn.replaceAll(RegExp(r'<ca>[\s\S]*?</ca>'), 'ca ca.crt');
     expect(

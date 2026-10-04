@@ -35,9 +35,9 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
   bool get _fa => Localizations.localeOf(context).languageCode == 'fa';
   String _t(String fa, String en) => _fa ? fa : en;
 
-  bool get _needsCredentials =>
-      VpnConfigParser.looksLikeOpenVpn(_text.text) &&
-      RegExp(r'^\s*auth-user-pass\b', multiLine: true).hasMatch(_text.text);
+  /// Every OpenVPN file gets the fields (WireGuard keeps its keys inside the
+  /// file); they are required only when the file has `auth-user-pass`.
+  bool get _needsCredentials => VpnConfigParser.looksLikeOpenVpn(_text.text);
 
   @override
   void dispose() {
