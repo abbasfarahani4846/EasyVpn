@@ -137,6 +137,8 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.runTime: 'runTime',
   DashboardWidget.proxyGroups: 'proxyGroups',
   DashboardWidget.profiles: 'profiles',
+  DashboardWidget.easyConnect: 'easyConnect',
+  DashboardWidget.easyRoute: 'easyRoute',
 };
 
 _AccessControlProps _$AccessControlPropsFromJson(Map<String, dynamic> json) =>

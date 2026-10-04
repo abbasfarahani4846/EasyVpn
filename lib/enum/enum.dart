@@ -448,7 +448,9 @@ enum DashboardWidget {
   overrideNtpButton,
   runTime,
   proxyGroups,
-  profiles;
+  profiles,
+  easyConnect, // EASY-HOOK
+  easyRoute; // EASY-HOOK
 
   final List<SupportPlatform> platforms;
 

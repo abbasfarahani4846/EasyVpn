@@ -3,6 +3,7 @@ import 'dart:async';
 import 'country_bypass/country_bypass_store.dart';
 import 'entry_server/entry_server_chain.dart';
 import 'entry_server/entry_server_store.dart';
+import 'psiphon/psiphon_bypass.dart';
 import 'psiphon/psiphon_manager.dart';
 
 /// Single seam for what the easy features need from the app's connect cycle.
@@ -19,6 +20,9 @@ class EasyConfig {
     var config = rawConfig;
     config = await EntryServerStore.applyStored(config);
     config = await CountryBypassStore.applyStored(config);
+    if (PsiphonManager.isPsiphonNodeIn(config)) {
+      config = PsiphonBypass.apply(config);
+    }
     if (_running && PsiphonManager.isPsiphonNodeIn(config)) {
       final entry = await EntryServerStore.load();
       await PsiphonManager.instance.setUpstream(

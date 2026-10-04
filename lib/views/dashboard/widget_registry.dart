@@ -1,3 +1,4 @@
+import 'package:fl_clash/easy/home/dashboard_items.dart'; // EASY-HOOK
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -95,6 +96,8 @@ extension DashboardWidgetView on DashboardWidget {
       crossAxisCellCount: 4,
       child: ProfilesCard(),
     ),
+    DashboardWidget.easyConnect => easyConnectItem, // EASY-HOOK
+    DashboardWidget.easyRoute => easyRouteItem, // EASY-HOOK
   };
 }
 

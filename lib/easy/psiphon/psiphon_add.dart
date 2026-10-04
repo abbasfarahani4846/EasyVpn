@@ -32,6 +32,9 @@ class _EasyPsiphonAddItemState extends ConsumerState<EasyPsiphonAddItem> {
     final fa = Localizations.localeOf(context).languageCode == 'fa';
     try {
       await PsiphonManager.instance.setRegion(null);
+      ref
+          .read(patchClashConfigProvider.notifier)
+          .update((s) => s.copyWith(findProcessMode: FindProcessMode.always));
       await SingleConfigService.addParsed(
         ref,
         ShareLinkParseResult(PsiphonNodes.build(), const []),

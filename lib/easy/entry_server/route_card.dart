@@ -9,7 +9,10 @@ import 'entry_server_store.dart';
 /// Shows "You -> entry server -> selected server -> Internet" while an entry
 /// server (chain proxy) is set.
 class EasyRouteCard extends ConsumerWidget {
-  const EasyRouteCard({super.key});
+  /// As a dashboard widget it stays visible with a hint when no entry is set.
+  final bool alwaysShow;
+
+  const EasyRouteCard({super.key, this.alwaysShow = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,7 +25,20 @@ class EasyRouteCard extends ConsumerWidget {
         future: EntryServerStore.load(),
         builder: (context, snapshot) {
           final entry = snapshot.data;
-          if (entry == null) return const SizedBox.shrink();
+          if (entry == null) {
+            if (!alwaysShow) return const SizedBox.shrink();
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.alt_route),
+                title: Text(fa ? 'مسیر زنجیره' : 'Chain route'),
+                subtitle: Text(
+                  fa
+                      ? 'سرور ورودی انتخاب نشده (ابزارها ← سرور ورودی)'
+                      : 'No entry server (Tools ▸ Entry server)',
+                ),
+              ),
+            );
+          }
           final entryName = '${entry['name']}';
           final isEntryItself =
               leaf == entryName || leaf == '$entryName [entry]';
@@ -44,7 +60,7 @@ class EasyRouteCard extends ConsumerWidget {
           final scheme = Theme.of(context).colorScheme;
           final accent = running ? scheme.primary : scheme.outline;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: EdgeInsets.only(bottom: alwaysShow ? 0 : 16),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),

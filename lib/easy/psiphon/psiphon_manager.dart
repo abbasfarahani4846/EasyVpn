@@ -94,6 +94,8 @@ class PsiphonManager {
   bool _networkChanged = false;
   String? _fingerprint;
   String? _upstream;
+  final List<String> _log = [];
+  String? _dataDirPath;
 
   bool get isRunning =>
       status.value.stage != PsiphonStage.idle &&
@@ -113,6 +115,7 @@ class PsiphonManager {
     _stopRequested = false;
     status.value = const PsiphonStatus(stage: PsiphonStage.starting);
     final dataDir = await _dataDir();
+    _dataDirPath = dataDir;
     await _seed(exe, dataDir);
     unawaited(_loop(session, exe, dataDir));
   }
@@ -345,6 +348,7 @@ class PsiphonManager {
             return;
           }
           final type = notice['noticeType'];
+          _record(rung.name, '$type', notice['data']);
           final data = (notice['data'] as Map?) ?? const {};
           if (type == 'ConnectingServer') {
             protocol = '${data['protocol']}';
@@ -385,6 +389,31 @@ class PsiphonManager {
     await sub.cancel();
     if (!result || session != _session) await _kill();
     return result;
+  }
+
+  /// Keeps the notices that explain a failure and writes them beside the
+  /// core's data, so "it did not connect" always has something to read.
+  void _record(String rung, String type, Object? data) {
+    const interesting = {
+      'ConnectingServer',
+      'Tunnels',
+      'Alert',
+      'Warning',
+      'Error',
+      'AvailableEgressRegions',
+      'ListeningSocksProxyPort',
+    };
+    final isFailure =
+        type == 'Info' && '${(data as Map?)?['message']}'.contains('failed');
+    if (!interesting.contains(type) && !isFailure) return;
+    var text = jsonEncode(data);
+    if (text.length > 300) text = '${text.substring(0, 300)}…';
+    _log.add('${DateTime.now().toIso8601String()} [$rung] $type $text');
+    if (_log.length > 200) _log.removeRange(0, _log.length - 200);
+    final dir = _dataDirPath;
+    if (dir != null && _log.length % 10 == 0) {
+      unawaited(File('$dir/psiphon.log').writeAsString(_log.join('\n')));
+    }
   }
 
   Future<void> _kill() async {
