@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../warp/warp_registration.dart';
+import 'share_link_parser.dart';
 import 'single_config_service.dart';
 
 void showSingleConfigPage() {
@@ -76,6 +78,32 @@ class _SingleConfigViewState extends ConsumerState<SingleConfigView> {
     }
   }
 
+  Future<void> _addWarp() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final fa = _fa;
+    try {
+      final proxy = await WarpRegistration.register(name: 'WARP');
+      final result = await SingleConfigService.addParsed(
+        ref,
+        ShareLinkParseResult([proxy], const []),
+      );
+      if (!mounted) return;
+      dialogs.showNotifier(
+        result.added > 0
+            ? (fa ? 'WARP اضافه شد' : 'WARP added')
+            : (fa ? 'WARP از قبل وجود دارد' : 'WARP already exists'),
+        level: MessageLevel.success,
+      );
+      globalState.navigatorKey.currentState?.popUntil((r) => r.isFirst);
+      ref.read(currentPageLabelProvider.notifier).toProfiles();
+    } catch (e) {
+      dialogs.showNotifier(compactError(e), level: MessageLevel.error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final fa = _fa;
@@ -123,6 +151,22 @@ class _SingleConfigViewState extends ConsumerState<SingleConfigView> {
                   : Text(fa ? 'افزودن' : 'Add'),
             ),
           ],
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.cloud),
+          title: const Text('Cloudflare WARP'),
+          subtitle: Text(
+            fa
+                ? 'یک حساب رایگان و ناشناس WARP می‌سازد و به پروفایل Default اضافه می‌کند'
+                : 'Creates a free anonymous WARP device and adds it to the Default profile',
+          ),
+          trailing: OutlinedButton(
+            onPressed: _busy ? null : _addWarp,
+            child: Text(fa ? 'افزودن' : 'Add'),
+          ),
         ),
       ],
     );

@@ -36,7 +36,13 @@ class SingleConfigService {
   }
 
   static Future<SingleConfigResult> add(WidgetRef ref, String text) async {
-    final parsed = ShareLinkParser.parse(text);
+    return addParsed(ref, ShareLinkParser.parse(text));
+  }
+
+  static Future<SingleConfigResult> addParsed(
+    WidgetRef ref,
+    ShareLinkParseResult parsed,
+  ) async {
     if (parsed.proxies.isEmpty) {
       throw MessageException(
         parsed.errors.isEmpty ? 'No config found' : parsed.errors.join('\n'),

@@ -29,6 +29,11 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   Sources: MetaCubeX/meta-rules-dat (IPs for all countries, China and Russia domains) and
   Chocolate4U/Iran-clash-rules (Iran domains and CIDRs); jsDelivr mirror toggle.
 
+- `warp`: "Add" on the single-config page registers an anonymous Cloudflare WARP device
+  (X25519 key pair made in Dart, `lib/easy/warp/x25519.dart`) and stores a mihomo `wireguard`
+  proxy in the Default profile. Needs access to api.cloudflareclient.com (blocked in some networks;
+  works through an active proxy). No upstream hook.
+
 New features that only change the generated config go through `lib/easy/easy_config.dart`;
 new Tools entries go into `lib/easy/easy_tools.dart`. Neither needs another upstream hook.
 
