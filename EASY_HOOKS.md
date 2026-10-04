@@ -50,7 +50,11 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 
 - `windscribe`: Add profile > "Windscribe / OpenVPN / WireGuard" takes a downloaded `.ovpn` (inline certificates;
   username/password asked when the file has `auth-user-pass`) or wg-quick `.conf` (pick a file or paste), checks it with the
-  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. mihomo has no IKEv2.
+  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. A WireGuard file can be
+  expanded into every location: its private key, address, preshared key and DNS are combined with each city's public key and
+  endpoint from Windscribe's public server list (`assets.windscribe.com/serverlist/mob-v2/{1,0}/1`; free = the 25 cities
+  `pro=0` in the free list). No login, no private API: Windscribe's login needs a client-authentication secret from its own
+  app, which we deliberately do not use. Whether one location's key works on the others is untested. mihomo has no IKEv2.
   No upstream hook.
 
 - `psiphon`: one tap in Add profile creates and selects a `Psiphon` profile (an Auto node plus one node per

@@ -13,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import '../single_config/share_link_parser.dart';
 import '../single_config/single_config_service.dart';
 import 'vpn_config_parser.dart';
+import 'windscribe_servers.dart';
 
 const windscribeProfileLabel = 'Windscribe';
 
@@ -31,6 +32,8 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
   final _user = TextEditingController();
   final _pass = TextEditingController();
   bool _busy = false;
+  bool _allCities = true;
+  bool _proAccount = false;
 
   bool get _fa => Localizations.localeOf(context).languageCode == 'fa';
   String _t(String fa, String en) => _fa ? fa : en;
@@ -79,18 +82,34 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
         username: _user.text.trim(),
         password: _pass.text,
       );
+      final expandAll =
+          _allCities && VpnConfigParser.looksLikeWireGuard(_text.text);
+      final proxies = expandAll
+          ? WindscribeServers.expand(
+              proxy,
+              await WindscribeServers.fetch(),
+              proAccount: _proAccount,
+            )
+          : [proxy];
+      if (proxies.isEmpty) {
+        throw const VpnConfigException(
+          'No locations found for this account type',
+        );
+      }
       final result = await SingleConfigService.addParsed(
         ref,
-        ShareLinkParseResult([proxy], const []),
+        ShareLinkParseResult(proxies, const []),
         label: windscribeProfileLabel,
         select: true,
+        // 25-200 nodes: no automatic latency testing of all of them.
+        urlTest: !expandAll,
       );
       if (!mounted) return;
       dialogs.showNotifier(
         result.added > 0
             ? _t(
-                'به پروفایل Windscribe اضافه شد؛ دکمه‌ی اتصال را بزنید',
-                'Added to the Windscribe profile; press connect',
+                '${result.added} مکان به پروفایل Windscribe اضافه شد؛ دکمه‌ی اتصال را بزنید',
+                '${result.added} location(s) added to the Windscribe profile; press connect',
               )
             : _t('این کانفیگ از قبل وجود دارد', 'This config already exists'),
         level: MessageLevel.success,
@@ -161,6 +180,47 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
               labelText: _t('محتوای کانفیگ', 'Config content'),
             ),
           ),
+          if (VpnConfigParser.looksLikeWireGuard(_text.text)) ...[
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _allCities,
+              title: Text(
+                _t(
+                  'ساخت همه‌ی مکان‌های Windscribe از این فایل',
+                  'Create every Windscribe location from this file',
+                ),
+              ),
+              subtitle: Text(
+                _t(
+                  'کلید و آدرس این فایل با لیست عمومی سرورها ترکیب می‌شود. '
+                      'اگر روی بعضی مکان‌ها وصل نشد، همان مکان را جدا دانلود کنید.',
+                  'This file\'s key and address are combined with the public '
+                      'server list. If a location does not connect, download '
+                      'that location separately.',
+                ),
+              ),
+              onChanged: (v) => setState(() => _allCities = v),
+            ),
+            if (_allCities)
+              SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text(
+                      _t('حساب رایگان (۲۵ شهر)', 'Free account (25 cities)'),
+                    ),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text(_t('حساب پرو (همه)', 'Pro account (all)')),
+                  ),
+                ],
+                selected: {_proAccount},
+                onSelectionChanged: (s) =>
+                    setState(() => _proAccount = s.first),
+              ),
+          ],
           if (_needsCredentials) ...[
             const SizedBox(height: 12),
             TextField(
