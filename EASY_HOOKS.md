@@ -50,7 +50,10 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 
 - `windscribe`: Add profile > "Windscribe / OpenVPN / WireGuard" takes a downloaded `.ovpn` (inline certificates;
   username/password asked when the file has `auth-user-pass`) or wg-quick `.conf` (pick a file or paste), checks it with the
-  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. A WireGuard file can be
+  core and stores it in its own selected `Windscribe` profile; more locations accumulate there. The server host in a file is looked up over DNS-over-HTTPS (`doh_resolver.dart`, resolvers asked in parallel, private/bogon
+  answers rejected) and stored as an IP, because some networks answer ordinary DNS for these hosts with a private address
+  (10.10.34.x). Verified on the author's network: direct OpenVPN handshakes get no reply there, but through an entry server the
+  handshake completes (AUTH_FAILED with dummy credentials). A WireGuard file can be
   expanded into every location: its private key, address, preshared key and DNS are combined with each city's public key and
   endpoint from Windscribe's public server list (`assets.windscribe.com/serverlist/mob-v2/{1,0}/1`; free = the 25 cities
   `pro=0` in the free list). No login, no private API: Windscribe's login needs a client-authentication secret from its own

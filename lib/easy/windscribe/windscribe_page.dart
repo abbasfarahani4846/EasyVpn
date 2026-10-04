@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../single_config/share_link_parser.dart';
 import '../single_config/single_config_service.dart';
+import 'doh_resolver.dart';
 import 'vpn_config_parser.dart';
 import 'windscribe_servers.dart';
 
@@ -76,12 +77,24 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
     setState(() => _busy = true);
     try {
       final name = _name.text.trim();
-      final proxy = VpnConfigParser.parse(
+      var proxy = VpnConfigParser.parse(
         _text.text,
         name: name.isEmpty ? null : name,
         username: _user.text.trim(),
         password: _pass.text,
       );
+      // Some networks answer ordinary DNS with a private address for these
+      // hosts, so the real address is found over HTTPS and stored instead.
+      var unresolved = false;
+      final host = '${proxy['server']}';
+      if (!DohResolver.isIp(host)) {
+        final ip = await DohResolver.resolve(host);
+        if (ip != null) {
+          proxy = {...proxy, 'server': ip};
+        } else {
+          unresolved = true;
+        }
+      }
       final expandAll =
           _allCities && VpnConfigParser.looksLikeWireGuard(_text.text);
       final proxies = expandAll
@@ -114,6 +127,15 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
             : _t('این کانفیگ از قبل وجود دارد', 'This config already exists'),
         level: MessageLevel.success,
       );
+      if (unresolved) {
+        dialogs.showNotifier(
+          _t(
+            'آدرس سرور پیدا نشد (DNS شبکه ممکن است آن را عوض کند)؛ اگر وصل نشد، فایل را با آدرس IP دانلود کنید',
+            'Could not look up the server address; your network DNS may redirect it. If it does not connect, use a config with an IP address.',
+          ),
+          level: MessageLevel.warning,
+        );
+      }
       globalState.navigatorKey.currentState?.popUntil((r) => r.isFirst);
       ref.read(currentPageLabelProvider.notifier).toProfiles();
     } catch (e) {
