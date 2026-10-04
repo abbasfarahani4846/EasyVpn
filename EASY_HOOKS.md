@@ -10,7 +10,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 | `lib/views/tools.dart` | import + `...easySettingItems` in the settings list | entry_server, country_bypass |
 | `lib/providers/actions/setup.dart` | `EasyConfig.apply(rawConfig)` before the profile task; `EasyConfig.onRunning(running)` at the top of `setRunning` | entry_server, country_bypass, psiphon |
 | `lib/views/proxies/card.dart` | import + `EasyProxyPicker.tryPick` at the top of `selectGroupProxy` (lets the Proxies page act as a server chooser) | entry_server |
-| `lib/views/dashboard/dashboard.dart` | import + `EasyDashboardTop(child: ...)` around the grid (chain route card) | entry_server |
+| `lib/views/dashboard/dashboard.dart` | import + `EasyDashboardTop(child: ...)` around the grid (minimal home screen; the original widgets sit behind "More") | home |
 | `lib/providers/action.dart` | import for the line above (`setup.dart` is a `part of`) | entry_server, country_bypass |
 
 ## Features
@@ -19,10 +19,16 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   tuic, anytls) or Clash YAML; it is validated by the core and merged into a
   profile labelled `Default`, created on first use.
 
-- `entry_server`: pick one server (from the real Proxies page, via `EasyProxyPicker`) as the first hop, with a route card on the dashboard (You -> entry -> server -> Internet); every other proxy (and every
-  proxy-provider, via `override`) gets `dialer-proxy: <entry>`, so connections
-  and delay tests both go through it. Stored in SharedPreferences
-  (`easy.entry_server`) as a full proxy map so it survives profile switches.
+- `entry_server`: pick one server from every profile (grouped by profile, searchable; `lib/easy/servers/`) as the
+  first hop. Every other remote proxy and proxy-provider gets `dialer-proxy: <entry>` (local proxies such as
+  Psiphon are skipped). The entry also gets a local socks listener (127.0.0.1:20840) pinned to it, which
+  Psiphon uses as its `UpstreamProxyURL`, so Psiphon reaches its servers through the entry. The choice is
+  stored as a full proxy map and survives profile switches. The home screen shows the route.
+
+- `home`: `EasyHome` replaces the dashboard body with one connect button that reports "Connected" only after
+  an end-to-end check (IP through the core's mixed port vs the system's own IP vs the IP before connecting),
+  status lines (incl. Psiphon progress), a not-connected prompt after 12 s (30 s for Psiphon) with
+  keep-waiting / disconnect, TUN and system-proxy switches, and the original widgets under "More".
 
 - `country_bypass`: pick a country; its IP and domain lists are added as mihomo
   `rule-providers` (format `mrs`, refreshed every 24 h by the core, manual "Update now"
@@ -40,7 +46,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not committed) runs in the background: it starts when a
   profile containing the node is connected (the connect waits for the tunnel) and stops on disconnect.
   Picking a country node restarts it with that `EgressRegion` (tap observed in `EasyProxyPicker.tryPick`).
-  A ladder of methods (A fronted/CDN, D all direct, C in-proxy) is tried in order; the winner is remembered
+  A ladder of methods (A fronted/CDN, D all direct, C in-proxy) is tried in order with short budgets that grow each pass (8 s, 15 s, then 25-40 s); the winner is remembered
   per network (interface + /24 fingerprint), refreshed on every connect, and the ladder restarts when the
   network changes or the tunnel drops. A server list downloaded once ships beside the core in
   `easy_bin/psiphon/seed/` and is copied into the data dir on first run. Windows only for now.

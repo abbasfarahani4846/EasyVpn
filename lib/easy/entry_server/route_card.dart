@@ -1,53 +1,21 @@
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../home/selected_server.dart';
 import 'entry_server_store.dart';
-
-/// Puts the chain route card above the dashboard grid.
-class EasyDashboardTop extends StatelessWidget {
-  final Widget child;
-
-  const EasyDashboardTop({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [const EasyRouteCard(), child],
-    );
-  }
-}
 
 /// Shows "You -> entry server -> selected server -> Internet" while an entry
 /// server (chain proxy) is set.
 class EasyRouteCard extends ConsumerWidget {
   const EasyRouteCard({super.key});
 
-  String? _selectedLeaf(WidgetRef ref, List<Group> groups) {
-    if (groups.isEmpty) return null;
-    final byName = {for (final g in groups) g.name: g};
-    String? name = ref.watch<String?>(
-      selectedProxyNameProvider(groups.first.name),
-    );
-    for (var depth = 0; depth < 5; depth++) {
-      final current = name;
-      if (current == null) return null;
-      final nested = byName[current];
-      if (nested == null) return current;
-      name = ref.watch<String?>(selectedProxyNameProvider(nested.name));
-    }
-    return name;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fa = Localizations.localeOf(context).languageCode == 'fa';
     final running = ref.watch(isStartProvider);
-    final groups = ref.watch(visibleGroupsStateProvider).value;
-    final leaf = _selectedLeaf(ref, groups);
+    final leaf = easySelectedServer(ref);
     return ValueListenableBuilder<int>(
       valueListenable: EntryServerStore.version,
       builder: (context, _, _) => FutureBuilder<Map<String, Object?>?>(

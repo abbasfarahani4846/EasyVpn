@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:fl_clash/easy/entry_server/route_card.dart'; // EASY-HOOK
+import 'package:fl_clash/easy/home/easy_home.dart'; // EASY-HOOK
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
