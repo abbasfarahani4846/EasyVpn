@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/easy/entry_server/entry_server_page.dart'; // EASY-HOOK
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -69,6 +70,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
+        const EasyEntryServerItem(), // EASY-HOOK
         const _GeneralItem(),
       ],
     );

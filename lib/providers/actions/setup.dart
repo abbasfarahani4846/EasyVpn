@@ -374,6 +374,7 @@ class SetupAction extends _$SetupAction {
     if (scriptContent?.isNotEmpty == true) {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
     }
+    rawConfig = await EntryServerStore.applyStored(rawConfig); // EASY-HOOK
     final directory = await appPath.profilesPath;
     final injected = await _resolveInjectedProviders(
       setupState,
