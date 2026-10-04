@@ -110,6 +110,32 @@ class PsiphonManager {
     unawaited(_loop(session, exe, dataDir, order, prefs));
   }
 
+  /// Starts the core and completes once a tunnel is up, or after [timeout]
+  /// (or when stopped / failed), so connecting the profile waits for Psiphon.
+  Future<bool> startAndWait({
+    Duration timeout = const Duration(seconds: 110),
+  }) async {
+    if (status.value.stage == PsiphonStage.connected) return true;
+    await start();
+    final done = Completer<bool>();
+    void listener() {
+      final stage = status.value.stage;
+      if (done.isCompleted) return;
+      if (stage == PsiphonStage.connected) done.complete(true);
+      if (stage == PsiphonStage.failed || stage == PsiphonStage.idle) {
+        done.complete(false);
+      }
+    }
+
+    status.addListener(listener);
+    listener();
+    try {
+      return await done.future.timeout(timeout, onTimeout: () => false);
+    } finally {
+      status.removeListener(listener);
+    }
+  }
+
   Future<void> stop() async {
     _stopRequested = true;
     _session++;

@@ -26,23 +26,28 @@ class SingleConfigResult {
 class SingleConfigService {
   const SingleConfigService._();
 
-  static Profile? findDefault(List<Profile> profiles) {
+  static Profile? findByLabel(List<Profile> profiles, String label) {
     for (final profile in profiles) {
-      if (profile.url.isEmpty && profile.label == DefaultProfileConfig.label) {
-        return profile;
-      }
+      if (profile.url.isEmpty && profile.label == label) return profile;
     }
     return null;
   }
+
+  static Profile? findDefault(List<Profile> profiles) =>
+      findByLabel(profiles, DefaultProfileConfig.label);
 
   static Future<SingleConfigResult> add(WidgetRef ref, String text) async {
     return addParsed(ref, ShareLinkParser.parse(text));
   }
 
+  /// [label] picks the profile the configs go into (created on first use);
+  /// [select] makes it the active profile so one tap on connect is enough.
   static Future<SingleConfigResult> addParsed(
     WidgetRef ref,
-    ShareLinkParseResult parsed,
-  ) async {
+    ShareLinkParseResult parsed, {
+    String label = DefaultProfileConfig.label,
+    bool select = false,
+  }) async {
     if (parsed.proxies.isEmpty) {
       throw MessageException(
         parsed.errors.isEmpty ? 'No config found' : parsed.errors.join('\n'),
@@ -63,7 +68,7 @@ class SingleConfigService {
     }
     if (valid.isEmpty) throw MessageException(errors.join('\n'));
 
-    final existing = findDefault(ref.read(profilesProvider));
+    final existing = findByLabel(ref.read(profilesProvider), label);
     var current = <Map<String, Object?>>[];
     if (existing != null) {
       final file = await existing.file;
@@ -77,8 +82,7 @@ class SingleConfigService {
       final bytes = Uint8List.fromList(
         utf8.encode(DefaultProfileConfig.build(merged.proxies)),
       );
-      final base =
-          existing ?? Profile.normal(label: DefaultProfileConfig.label);
+      final base = existing ?? Profile.normal(label: label);
       final saved = await base.saveFile(
         bytes,
         validate: (path) => core.validateConfig(path),
@@ -88,6 +92,9 @@ class SingleConfigService {
         actions.putProfile(saved);
       } else {
         actions.setProfileAndAutoApply(saved);
+      }
+      if (select) {
+        ref.read(currentProfileIdProvider.notifier).value = saved.id;
       }
     }
     return SingleConfigResult(

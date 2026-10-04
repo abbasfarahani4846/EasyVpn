@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:fl_clash/easy/entry_server/route_card.dart'; // EASY-HOOK
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -219,37 +220,40 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           constraints: BoxConstraints(
                             maxWidth: dashboardMaxGridWidth,
                           ),
-                          child: LayoutBuilder(
-                            builder: (_, constraints) {
-                              final band = DashboardGridBand.of(
-                                constraints.maxWidth,
-                              );
-                              final columns = band.columns;
-                              final grid = SuperGrid(
-                                key: key,
-                                editing: isEdit,
-                                crossAxisCount: columns,
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: spacing,
-                                onChanged: _saveDashboardWidgets,
-                                revealPadding: padding.copyWith(
-                                  left: 0,
-                                  right: 0,
-                                ),
-                                children: children,
-                              );
-                              return DashboardWidgetMetrics(
-                                unitHeight: dashboardUnitHeight(
+                          child: EasyDashboardTop(
+                            // EASY-HOOK
+                            child: LayoutBuilder(
+                              builder: (_, constraints) {
+                                final band = DashboardGridBand.of(
                                   constraints.maxWidth,
-                                ),
-                                child: isEdit
-                                    ? BackLayerScope(
-                                        onBack: _handleExitEdit,
-                                        child: grid,
-                                      )
-                                    : grid,
-                              );
-                            },
+                                );
+                                final columns = band.columns;
+                                final grid = SuperGrid(
+                                  key: key,
+                                  editing: isEdit,
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  onChanged: _saveDashboardWidgets,
+                                  revealPadding: padding.copyWith(
+                                    left: 0,
+                                    right: 0,
+                                  ),
+                                  children: children,
+                                );
+                                return DashboardWidgetMetrics(
+                                  unitHeight: dashboardUnitHeight(
+                                    constraints.maxWidth,
+                                  ),
+                                  child: isEdit
+                                      ? BackLayerScope(
+                                          onBack: _handleExitEdit,
+                                          child: grid,
+                                        )
+                                      : grid,
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),

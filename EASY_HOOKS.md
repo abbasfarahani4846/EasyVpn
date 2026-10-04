@@ -10,6 +10,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
 | `lib/views/tools.dart` | import + `...easySettingItems` in the settings list | entry_server, country_bypass |
 | `lib/providers/actions/setup.dart` | `EasyConfig.apply(rawConfig)` before the profile task; `EasyConfig.onRunning(running)` at the top of `setRunning` | entry_server, country_bypass, psiphon |
 | `lib/views/proxies/card.dart` | import + `EasyProxyPicker.tryPick` at the top of `selectGroupProxy` (lets the Proxies page act as a server chooser) | entry_server |
+| `lib/views/dashboard/dashboard.dart` | import + `EasyDashboardTop(child: ...)` around the grid (chain route card) | entry_server |
 | `lib/providers/action.dart` | import for the line above (`setup.dart` is a `part of`) | entry_server, country_bypass |
 
 ## Features
@@ -18,7 +19,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   tuic, anytls) or Clash YAML; it is validated by the core and merged into a
   profile labelled `Default`, created on first use.
 
-- `entry_server`: pick one server (from the real Proxies page, via `EasyProxyPicker`) as the first hop; every other proxy (and every
+- `entry_server`: pick one server (from the real Proxies page, via `EasyProxyPicker`) as the first hop, with a route card on the dashboard (You -> entry -> server -> Internet); every other proxy (and every
   proxy-provider, via `override`) gets `dialer-proxy: <entry>`, so connections
   and delay tests both go through it. Stored in SharedPreferences
   (`easy.entry_server`) as a full proxy map so it survives profile switches.
@@ -29,15 +30,15 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   Sources: MetaCubeX/meta-rules-dat (IPs for all countries, China and Russia domains) and
   Chocolate4U/Iran-clash-rules (Iran domains and CIDRs); jsDelivr mirror toggle.
 
-- `warp`: "Add" on the single-config page registers an anonymous Cloudflare WARP device
+- `warp`: the WARP item in Add profile registers an anonymous Cloudflare WARP device
   (X25519 key pair made in Dart, `lib/easy/warp/x25519.dart`) and stores a mihomo `wireguard`
-  proxy in the Default profile. Needs access to api.cloudflareclient.com (blocked in some networks;
+  proxy in its own selected `WARP` profile. Needs access to api.cloudflareclient.com (blocked in some networks;
   works through an active proxy). No upstream hook.
 
 - `psiphon`: runs the official Psiphon core (`easy_bin/psiphon/psiphon-tunnel-core-i686.exe`, not
   committed) as a child process and walks a ladder of methods (A fronted/CDN, D all direct protocols,
   C in-proxy relay), remembering the winner. Psiphon fetches its own server list; local SOCKS5 on
-  127.0.0.1:20830, added to the Default profile as a `socks5` node. Starts automatically when a profile
+  127.0.0.1:20830, added to its own selected `Psiphon` profile as a `socks5` node. Starts automatically when a profile
   containing that node is connected and stops on disconnect (`EasyConfig`). A server list downloaded
   once ships beside the core in `easy_bin/psiphon/seed/` and is copied into the data dir on first run.
   Windows only for now.

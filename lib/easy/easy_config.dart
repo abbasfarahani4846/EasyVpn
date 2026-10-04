@@ -19,7 +19,7 @@ class EasyConfig {
     config = await EntryServerStore.applyStored(config);
     config = await CountryBypassStore.applyStored(config);
     if (_running && PsiphonManager.isPsiphonNodeIn(config)) {
-      unawaited(PsiphonManager.instance.start());
+      await PsiphonManager.instance.startAndWait();
     }
     return config;
   }

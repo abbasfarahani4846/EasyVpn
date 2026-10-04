@@ -2,36 +2,17 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../single_config/share_link_parser.dart';
 import '../single_config/single_config_service.dart';
-import 'psiphon_ladder.dart';
 import 'psiphon_manager.dart';
 
-bool _isFa(BuildContext context) =>
-    Localizations.localeOf(context).languageCode == 'fa';
-
-class EasyPsiphonItem extends StatelessWidget {
-  const EasyPsiphonItem({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final fa = _isFa(context);
-    return ListItem.open(
-      leading: const Icon(Icons.travel_explore),
-      title: const Text('Psiphon'),
-      subtitle: Text(
-        fa
-            ? 'اتصال رایگان با تلاش خودکار چند روش (CDN، مستقیم، رله)'
-            : 'Free tunnel that tries several methods automatically',
-      ),
-      widget: const PsiphonView(),
-    );
-  }
-}
+const psiphonProfileLabel = 'Psiphon';
 
 class PsiphonView extends ConsumerStatefulWidget {
   const PsiphonView({super.key});
@@ -41,13 +22,12 @@ class PsiphonView extends ConsumerStatefulWidget {
 }
 
 class _PsiphonViewState extends ConsumerState<PsiphonView> {
-  final _manager = PsiphonManager.instance;
   bool _adding = false;
 
-  Future<void> _addProxy() async {
+  Future<void> _add() async {
     if (_adding) return;
     setState(() => _adding = true);
-    final fa = _isFa(context);
+    final fa = Localizations.localeOf(context).languageCode == 'fa';
     try {
       final result = await SingleConfigService.addParsed(
         ref,
@@ -60,13 +40,22 @@ class _PsiphonViewState extends ConsumerState<PsiphonView> {
             'udp': false,
           },
         ], []),
+        label: psiphonProfileLabel,
+        select: true,
       );
+      if (!mounted) return;
       dialogs.showNotifier(
         result.added > 0
-            ? (fa ? 'نود Psiphon اضافه شد' : 'Psiphon node added')
-            : (fa ? 'نود Psiphon از قبل وجود دارد' : 'Psiphon node already exists'),
+            ? (fa
+                  ? 'پروفایل Psiphon ساخته شد؛ فقط دکمه‌ی اتصال را بزنید'
+                  : 'Psiphon profile created; just press connect')
+            : (fa
+                  ? 'پروفایل Psiphon انتخاب شد؛ دکمه‌ی اتصال را بزنید'
+                  : 'Psiphon profile selected; press connect'),
         level: MessageLevel.success,
       );
+      globalState.navigatorKey.currentState?.popUntil((r) => r.isFirst);
+      ref.read(currentPageLabelProvider.notifier).toProfiles();
     } catch (e) {
       dialogs.showNotifier(compactError(e), level: MessageLevel.error);
     } finally {
@@ -74,29 +63,15 @@ class _PsiphonViewState extends ConsumerState<PsiphonView> {
     }
   }
 
-  String _statusText(bool fa, PsiphonStatus s) {
+  String? _statusText(bool fa, PsiphonStatus s) {
     switch (s.stage) {
       case PsiphonStage.idle:
-        return fa ? 'خاموش' : 'Stopped';
+        return null;
       case PsiphonStage.starting:
-        return fa ? 'در حال شروع…' : 'Starting…';
       case PsiphonStage.dialling:
-        final rung = PsiphonLadder.byName(s.rung);
-        final label = rung == null
-            ? ''
-            : (fa ? rung.labelFa : rung.labelEn);
-        return fa
-            ? 'در حال اتصال — روش ${s.rungIndex + 1} از ${s.rungCount}: $label'
-            : 'Connecting — method ${s.rungIndex + 1} of ${s.rungCount}: $label';
+        return fa ? 'Psiphon در حال اتصال…' : 'Psiphon is connecting…';
       case PsiphonStage.connected:
-        final rung = PsiphonLadder.byName(s.rung);
-        final label = rung == null
-            ? ''
-            : (fa ? rung.labelFa : rung.labelEn);
-        final proto = s.protocol == null ? '' : ' · ${s.protocol}';
-        return fa
-            ? 'وصل شد — $label$proto (پورت SOCKS ${PsiphonManager.socksPort})'
-            : 'Connected — $label$proto (SOCKS port ${PsiphonManager.socksPort})';
+        return fa ? 'Psiphon وصل است' : 'Psiphon is connected';
       case PsiphonStage.failed:
         if (s.error == 'binary-missing') {
           return fa
@@ -109,78 +84,52 @@ class _PsiphonViewState extends ConsumerState<PsiphonView> {
 
   @override
   Widget build(BuildContext context) {
-    final fa = _isFa(context);
+    final fa = Localizations.localeOf(context).languageCode == 'fa';
     return CommonScaffold(
       title: 'Psiphon',
-      body: ValueListenableBuilder<PsiphonStatus>(
-        valueListenable: _manager.status,
-        builder: (context, status, _) {
-          final running = _manager.isRunning;
-          return ListView(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              context.contentTopPadding,
-              16,
-              16,
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 16),
+        children: [
+          Text(
+            fa
+                ? 'یک پروفایل جدا به نام «Psiphon» ساخته و انتخاب می‌شود. '
+                      'فقط دکمه‌ی اتصال را بزنید؛ Psiphon خودش روشن می‌شود، '
+                      'لیست سرورها را می‌گیرد و بهترین روش اتصال را برای '
+                      'اینترنت شما پیدا می‌کند (ممکن است تا حدود یک دقیقه '
+                      'طول بکشد).'
+                : 'Creates and selects a separate "Psiphon" profile. Just '
+                      'press connect; Psiphon starts by itself, fetches its '
+                      'server list and finds the method that works on your '
+                      'network (this can take up to a minute).',
+          ),
+          const SizedBox(height: 16),
+          ValueListenableBuilder<PsiphonStatus>(
+            valueListenable: PsiphonManager.instance.status,
+            builder: (context, status, _) {
+              final text = _statusText(fa, status);
+              return text == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(text),
+                    );
+            },
+          ),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton.icon(
+              onPressed: _adding ? null : () => unawaited(_add()),
+              icon: _adding
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add),
+              label: Text(fa ? 'افزودن پروفایل Psiphon' : 'Add Psiphon profile'),
             ),
-            children: [
-              Text(
-                fa
-                    ? 'لیست سرورها را خود Psiphon از شبکه‌ی خودش می‌گیرد. چون '
-                          'در هر اینترنت یک روش جواب می‌دهد، برنامه همه‌ی روش‌ها '
-                          'را به ترتیب امتحان می‌کند و روشی که جواب داد را '
-                          'برای دفعه‌ی بعد اول امتحان می‌کند.'
-                    : 'Psiphon downloads its own server list. Since a different '
-                          'method works on each network, the app tries every '
-                          'method in turn and tries the one that worked last '
-                          'time first.',
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: ListTile(
-                  leading: Icon(
-                    status.stage == PsiphonStage.connected
-                        ? Icons.check_circle
-                        : Icons.travel_explore,
-                  ),
-                  title: Text(_statusText(fa, status)),
-                  trailing: FilledButton(
-                    onPressed: () =>
-                        running ? _manager.stop() : _manager.start(),
-                    child: Text(
-                      running
-                          ? (fa ? 'توقف' : 'Stop')
-                          : (fa ? 'شروع' : 'Start'),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                fa
-                    ? 'نود Psiphon را به پروفایل Default اضافه کنید، سپس در '
-                          'بخش سرورها «Psiphon» را انتخاب و وصل شوید. با وصل '
-                          'شدن، Psiphon خودکار روشن می‌شود (اتصال اولیه ممکن '
-                          'است تا حدود یک دقیقه طول بکشد) و با قطع اتصال '
-                          'خاموش می‌شود.'
-                    : 'Add the Psiphon node to the Default profile, then pick '
-                          '"Psiphon" in the servers list and connect. Psiphon '
-                          'starts automatically when you connect (the first '
-                          'link can take up to a minute) and stops when you '
-                          'disconnect.',
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: OutlinedButton.icon(
-                  onPressed: _adding ? null : _addProxy,
-                  icon: const Icon(Icons.add),
-                  label: Text(fa ? 'افزودن نود Psiphon' : 'Add Psiphon node'),
-                ),
-              ),
-            ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }

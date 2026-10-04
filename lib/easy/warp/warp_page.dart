@@ -31,13 +31,15 @@ class _WarpViewState extends ConsumerState<WarpView> {
       final result = await SingleConfigService.addParsed(
         ref,
         ShareLinkParseResult([proxy], const []),
+        label: 'WARP',
+        select: true,
       );
       if (!mounted) return;
       dialogs.showNotifier(
         result.added > 0
             ? (fa
-                  ? 'WARP اضافه شد؛ از بخش سرورها انتخابش کنید'
-                  : 'WARP added; pick it in the servers list')
+                  ? 'پروفایل WARP ساخته شد؛ فقط دکمه‌ی اتصال را بزنید'
+                  : 'WARP profile created; just press connect')
             : (fa ? 'WARP از قبل وجود دارد' : 'WARP already exists'),
         level: MessageLevel.success,
       );
@@ -60,13 +62,14 @@ class _WarpViewState extends ConsumerState<WarpView> {
         children: [
           Text(
             fa
-                ? 'یک حساب رایگان و ناشناس WARP ساخته و به پروفایل «Default» '
-                      'اضافه می‌شود. بعد از آن در بخش سرورها «WARP» را انتخاب '
-                      'کنید و وصل شوید. ساخت حساب به دسترسی به سرور Cloudflare '
-                      'نیاز دارد؛ اگر باز نمی‌شود، با یک فیلترشکن امتحان کنید.'
-                : 'Creates a free anonymous WARP account and adds it to the '
-                      '"Default" profile. Then choose "WARP" in the servers '
-                      'list and connect. Creating the account needs access to '
+                ? 'یک حساب رایگان و ناشناس WARP ساخته و در یک پروفایل جدا '
+                      'به نام «WARP» ذخیره و انتخاب می‌شود. بعد از آن فقط '
+                      'دکمه‌ی اتصال را بزنید. ساخت حساب به دسترسی به سرور '
+                      'Cloudflare نیاز دارد؛ اگر باز نمی‌شود، با یک فیلترشکن '
+                      'امتحان کنید.'
+                : 'Creates a free anonymous WARP account and saves it in its '
+                      'own "WARP" profile, selected for you. Then just press '
+                      'connect. Creating the account needs access to '
                       'Cloudflare; if it is blocked, try with a VPN on.',
           ),
           const SizedBox(height: 16),
