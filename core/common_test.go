@@ -339,3 +339,22 @@ func TestLookupExternalProviderMatchesTheListedPrecedence(t *testing.T) {
 		t.Error("the proxy provider shadowed the rule provider, reversing the listed precedence")
 	}
 }
+
+func TestFillXHTTPPaddingDefaults(t *testing.T) {
+	obfs := map[string]any{"xhttp-opts": map[string]any{
+		"x-padding-obfs-mode": true,
+		"x-padding-key":       "k",
+	}}
+	plain := map[string]any{"xhttp-opts": map[string]any{"path": "/"}}
+	ws := map[string]any{"network": "ws"}
+	fillXHTTPPaddingDefaults([]map[string]any{obfs, plain, ws})
+
+	opts := obfs["xhttp-opts"].(map[string]any)
+	if opts["x-padding-key"] != "k" || opts["x-padding-header"] != "X-Padding" ||
+		opts["x-padding-placement"] != "queryInHeader" || opts["x-padding-method"] != "repeat-x" {
+		t.Fatalf("obfs padding defaults not applied: %v", opts)
+	}
+	if _, set := plain["xhttp-opts"].(map[string]any)["x-padding-key"]; set {
+		t.Fatal("padding defaults leaked into a profile without obfs mode")
+	}
+}

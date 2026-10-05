@@ -27,7 +27,6 @@ import (
 	"github.com/metacubex/mihomo/constant/features"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub"
-	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
 	authStore "github.com/metacubex/mihomo/listener/auth"
@@ -378,12 +377,39 @@ func reconcileGeoUpdater() {
 // policy answers by killing the process rather than with EPERM.
 var systemTimeWritable = runtime.GOOS != "android"
 
+// Xray defaults these under obfuscated padding; mihomo sends empty ones and gets a 400.
+var xhttpObfsPaddingDefaults = map[string]string{
+	"x-padding-key":       "x_padding",
+	"x-padding-header":    "X-Padding",
+	"x-padding-placement": "queryInHeader",
+	"x-padding-method":    "repeat-x",
+}
+
+func fillXHTTPPaddingDefaults(proxies []map[string]any) {
+	for _, proxy := range proxies {
+		opts, ok := proxy["xhttp-opts"].(map[string]any)
+		if !ok || opts["x-padding-obfs-mode"] != true {
+			continue
+		}
+		for key, value := range xhttpObfsPaddingDefaults {
+			if current, set := opts[key]; !set || current == nil || current == "" {
+				opts[key] = value
+			}
+		}
+	}
+}
+
 func loadConfig(path string) (*config.Config, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := executor.ParseWithBytes(buf)
+	rawCfg, err := config.UnmarshalRawConfig(buf)
+	if err != nil {
+		return nil, err
+	}
+	fillXHTTPPaddingDefaults(rawCfg.Proxy)
+	cfg, err := config.ParseRawConfig(rawCfg)
 	if err != nil {
 		return nil, err
 	}
