@@ -110,6 +110,7 @@ class ProfilesAction extends _$ProfilesAction {
       ref.read(profilesProvider.notifier).put(profile, renameIn: renameIn);
       final newProfile = await profile.update(
         validate: (path) => _core.validateConfig(path),
+        transform: healProfileBytes,
       );
       ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == ref.read(currentProfileIdProvider)) {
@@ -154,10 +155,10 @@ class ProfilesAction extends _$ProfilesAction {
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        return Profile.normal(
-          label: label,
-          url: url,
-        ).update(validate: (path) => _core.validateConfig(path));
+        return Profile.normal(label: label, url: url).update(
+          validate: (path) => _core.validateConfig(path),
+          transform: healProfileBytes,
+        );
       },
       title: currentAppLocalizations.addProfile,
     );

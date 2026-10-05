@@ -172,7 +172,10 @@ extension ProfileExtension on Profile {
     return _getFile();
   }
 
-  Future<Profile> update({required ValidateConfig validate}) async {
+  Future<Profile> update({
+    required ValidateConfig validate,
+    Future<Uint8List> Function(Uint8List bytes)? transform,
+  }) async {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
@@ -182,7 +185,12 @@ extension ProfileExtension on Profile {
         id.toString(),
       ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data ?? Uint8List.fromList([]), validate: validate);
+    ).saveFile(
+      await (transform ?? (bytes) async => bytes)(
+        response.data ?? Uint8List.fromList([]),
+      ),
+      validate: validate,
+    );
   }
 
   Future<Profile> saveFile(
