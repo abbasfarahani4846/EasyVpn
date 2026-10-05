@@ -75,7 +75,7 @@ class ShareLinkParser {
     final result = <Map<String, Object?>>[];
     for (final item in list) {
       if (item is Map && item['type'] != null && item['server'] != null) {
-        result.add(Map<String, Object?>.from(item));
+        result.add(_withXhttpPaddingDefaults(Map<String, Object?>.from(item)));
       }
     }
     return result.isEmpty ? null : result;
@@ -479,36 +479,212 @@ class ShareLinkParser {
         };
         final extra = q['extra'];
         if (extra != null && extra.isNotEmpty) {
-          try {
-            _applyXhttpExtra(jsonDecode(extra) as Map<String, dynamic>, opts);
-          } catch (_) {}
+          _applyXhttpExtra(_decodeXhttpExtra(extra), opts);
         }
         proxy['xhttp-opts'] = opts;
+        _withXhttpPaddingDefaults(proxy);
       default:
         proxy['network'] = network;
     }
   }
 
-  static const _xhttpExtraKeys = {
-    'xPaddingBytes': 'x-padding-bytes',
-    'xPaddingObfsMode': 'x-padding-obfs-mode',
+  static Map<String, dynamic> _decodeXhttpExtra(String extra) {
+    var text = extra.trim();
+    if (!text.startsWith('{')) {
+      try {
+        text = Uri.decodeComponent(text);
+      } catch (_) {}
+    }
+    try {
+      final decoded = jsonDecode(text);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } catch (_) {}
+    throw const FormatException('invalid xhttp extra');
+  }
+
+  static const _xhttpStringKeys = {
     'xPaddingKey': 'x-padding-key',
     'xPaddingHeader': 'x-padding-header',
     'xPaddingPlacement': 'x-padding-placement',
     'xPaddingMethod': 'x-padding-method',
-    'noGRPCHeader': 'no-grpc-header',
+    'uplinkHTTPMethod': 'uplink-http-method',
+    'seqPlacement': 'seq-placement',
+    'seqKey': 'seq-key',
+    'uplinkDataPlacement': 'uplink-data-placement',
+    'uplinkDataKey': 'uplink-data-key',
+    'sessionIDTable': 'session-table',
+  };
+
+  // Xray writes these as a number, a "from-to" string or a {from, to} object;
+  // mihomo reads all of them as one string.
+  static const _xhttpRangeKeys = {
+    'xPaddingBytes': 'x-padding-bytes',
+    'sessionIDLength': 'session-length',
+    'uplinkChunkSize': 'uplink-chunk-size',
     'scMaxEachPostBytes': 'sc-max-each-post-bytes',
     'scMinPostsIntervalMs': 'sc-min-posts-interval-ms',
+  };
+
+  static const _xmuxRangeKeys = {
+    'maxConnections': 'max-connections',
+    'maxConcurrency': 'max-concurrency',
+    'cMaxReuseTimes': 'c-max-reuse-times',
+    'hMaxRequestTimes': 'h-max-request-times',
+    'hMaxReusableSecs': 'h-max-reusable-secs',
   };
 
   static void _applyXhttpExtra(
     Map<String, dynamic> extra,
     Map<String, Object?> opts,
   ) {
-    extra.forEach((key, value) {
-      final mapped = _xhttpExtraKeys[key];
-      if (mapped != null) opts[mapped] = value;
+    final headers = _stringMap(extra['headers']);
+    if (headers.isNotEmpty) opts['headers'] = headers;
+    if (extra['noGRPCHeader'] == true) opts['no-grpc-header'] = true;
+    final obfs = extra['xPaddingObfsMode'];
+    if (obfs is bool) opts['x-padding-obfs-mode'] = obfs;
+    _xhttpStringKeys.forEach((key, mapped) {
+      final value = extra[key];
+      if (value is String && value.isNotEmpty) opts[mapped] = value;
     });
+    _xhttpRangeKeys.forEach((key, mapped) {
+      final value = _xhttpRange(extra[key]);
+      if (value != null) opts[mapped] = value;
+    });
+    for (final key in const ['sessionIDPlacement', 'sessionPlacement']) {
+      final value = extra[key];
+      if (value is String && value.isNotEmpty) {
+        opts['session-placement'] = value;
+        break;
+      }
+    }
+    for (final key in const ['sessionIDKey', 'sessionKey']) {
+      final value = extra[key];
+      if (value is String && value.isNotEmpty) {
+        opts['session-key'] = value;
+        break;
+      }
+    }
+    final xmux = _xmuxToReuse(extra['xmux']);
+    if (xmux.isNotEmpty) opts['reuse-settings'] = xmux;
+    final download = _xhttpDownloadSettings(extra['downloadSettings']);
+    if (download.isNotEmpty) opts['download-settings'] = download;
+  }
+
+  // Xray fills these in when obfuscated padding is on and a share link or
+  // panel export leaves them out; mihomo sends empty ones and the server
+  // answers 400.
+  static const _xhttpObfsPaddingDefaults = {
+    'x-padding-key': 'x_padding',
+    'x-padding-header': 'X-Padding',
+    'x-padding-placement': 'queryInHeader',
+    'x-padding-method': 'repeat-x',
+  };
+
+  static Map<String, Object?> _withXhttpPaddingDefaults(
+    Map<String, Object?> proxy,
+  ) {
+    final opts = proxy['xhttp-opts'];
+    if (opts is Map && opts['x-padding-obfs-mode'] == true) {
+      final filled = Map<String, Object?>.from(opts);
+      _xhttpObfsPaddingDefaults.forEach((key, value) {
+        final current = filled[key];
+        if (current == null || '$current'.isEmpty) filled[key] = value;
+      });
+      proxy['xhttp-opts'] = filled;
+    }
+    return proxy;
+  }
+
+  static String? _xhttpRange(Object? value) {
+    if (value is String) return value.isEmpty ? null : value;
+    if (value is num) return '${value.toInt()}';
+    if (value is Map) {
+      final from = _xhttpRange(value['from']);
+      final to = _xhttpRange(value['to']);
+      if (from == null) return to;
+      return to == null || to == from ? from : '$from-$to';
+    }
+    return null;
+  }
+
+  static Map<String, String> _stringMap(Object? value) {
+    if (value is! Map) return const {};
+    return {
+      for (final e in value.entries)
+        if (e.value != null) '${e.key}': '${e.value}',
+    };
+  }
+
+  static Map<String, Object?> _xmuxToReuse(Object? xmux) {
+    if (xmux is! Map) return const {};
+    final reuse = <String, Object?>{};
+    _xmuxRangeKeys.forEach((key, mapped) {
+      final value = _xhttpRange(xmux[key]);
+      if (value != null) reuse[mapped] = value;
+    });
+    final keepAlive = xmux['hKeepAlivePeriod'];
+    if (keepAlive is num) reuse['h-keep-alive-period'] = keepAlive.toInt();
+    return reuse;
+  }
+
+  static Map<String, Object?> _xhttpDownloadSettings(Object? settings) {
+    if (settings is! Map) return const {};
+    final ds = <String, Object?>{};
+    final address = settings['address'];
+    if (address is String && address.isNotEmpty) ds['server'] = address;
+    final port = settings['port'];
+    if (port is num) {
+      ds['port'] = port.toInt();
+    } else if (port is String && int.tryParse(port) != null) {
+      ds['port'] = int.parse(port);
+    }
+    final security = '${settings['security'] ?? ''}'.toLowerCase();
+    if (security == 'tls' || security == 'reality') {
+      ds['tls'] = true;
+      final tls = settings['tlsSettings'];
+      if (tls is Map) {
+        final sni = tls['serverName'];
+        if (sni is String && sni.isNotEmpty) ds['servername'] = sni;
+        final fp = tls['fingerprint'];
+        if (fp is String && fp.isNotEmpty) ds['client-fingerprint'] = fp;
+        final alpn = tls['alpn'];
+        if (alpn is List) {
+          final list = [
+            for (final a in alpn)
+              if (a is String) a,
+          ];
+          if (list.isNotEmpty) ds['alpn'] = list;
+        }
+        if (tls['allowInsecure'] == true) ds['skip-cert-verify'] = true;
+      }
+      final reality = settings['realitySettings'];
+      if (security == 'reality' && reality is Map) {
+        final key = reality['publicKey'];
+        final shortId = reality['shortId'];
+        final opts = <String, Object?>{
+          if (key is String && key.isNotEmpty) 'public-key': key,
+          if (shortId is String && shortId.isNotEmpty) 'short-id': shortId,
+        };
+        if (opts.isNotEmpty) ds['reality-opts'] = opts;
+        final sni = reality['serverName'];
+        if (sni is String && sni.isNotEmpty) ds['servername'] = sni;
+        final fp = reality['fingerprint'];
+        if (fp is String && fp.isNotEmpty) ds['client-fingerprint'] = fp;
+      }
+    }
+    final xhttp = settings['xhttpSettings'];
+    if (xhttp is Map) {
+      final path = xhttp['path'];
+      if (path is String && path.isNotEmpty) ds['path'] = path;
+      final host = xhttp['host'];
+      if (host is String && host.isNotEmpty) ds['host'] = host;
+      final headers = _stringMap(xhttp['headers']);
+      if (headers.isNotEmpty) ds['headers'] = headers;
+      final extra = xhttp['extra'];
+      final xmux = _xmuxToReuse(extra is Map ? extra['xmux'] : null);
+      if (xmux.isNotEmpty) ds['reuse-settings'] = xmux;
+    }
+    return ds;
   }
 
   static void _requireEndpoint(Uri uri) {

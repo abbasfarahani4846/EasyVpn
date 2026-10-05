@@ -26,6 +26,125 @@ void main() {
     expect(opts['x-padding-obfs-mode'], true);
   });
 
+  test(
+    'vless xhttp extra with ranges, xmux, headers and download settings',
+    () {
+      final extra = jsonEncode({
+        'xPaddingBytes': {'from': 100, 'to': 1000},
+        'scMaxEachPostBytes': 1000000,
+        'scMinPostsIntervalMs': {'from': 10, 'to': 10},
+        'uplinkHTTPMethod': 'PUT',
+        'sessionIDPlacement': 'header',
+        'headers': {'X-Test': 'a'},
+        'xmux': {
+          'maxConcurrency': {'from': 16, 'to': 32},
+          'cMaxReuseTimes': 0,
+          'hKeepAlivePeriod': 30,
+        },
+        'downloadSettings': {
+          'address': 'dl.example.com',
+          'port': 8443,
+          'security': 'reality',
+          'realitySettings': {
+            'publicKey': 'PUB',
+            'shortId': 'ab',
+            'serverName': 'cdn.example.com',
+            'fingerprint': 'chrome',
+          },
+          'xhttpSettings': {
+            'path': '/down',
+            'host': 'd.example.com',
+            'extra': {
+              'xmux': {'maxConnections': '4'},
+            },
+          },
+        },
+      });
+      final r = ShareLinkParser.parse(
+        'vless://$uuid@example.com:443?security=tls&type=xhttp&path=%2Fx'
+        '&extra=${Uri.encodeQueryComponent(extra)}#n',
+      );
+      expect(r.errors, isEmpty);
+      final opts = r.proxies.single['xhttp-opts'] as Map;
+      expect(opts['path'], '/x');
+      expect(opts['x-padding-bytes'], '100-1000');
+      expect(opts['sc-max-each-post-bytes'], '1000000');
+      expect(opts['sc-min-posts-interval-ms'], '10');
+      expect(opts['uplink-http-method'], 'PUT');
+      expect(opts['session-placement'], 'header');
+      expect(opts['headers'], {'X-Test': 'a'});
+      expect(opts['reuse-settings'], {
+        'max-concurrency': '16-32',
+        'c-max-reuse-times': '0',
+        'h-keep-alive-period': 30,
+      });
+      final ds = opts['download-settings'] as Map;
+      expect(ds['server'], 'dl.example.com');
+      expect(ds['port'], 8443);
+      expect(ds['tls'], true);
+      expect(ds['reality-opts'], {'public-key': 'PUB', 'short-id': 'ab'});
+      expect(ds['servername'], 'cdn.example.com');
+      expect(ds['path'], '/down');
+      expect(ds['host'], 'd.example.com');
+      expect(ds['reuse-settings'], {'max-connections': '4'});
+    },
+  );
+
+  test('xhttp obfuscated padding gets Xray defaults in link and YAML', () {
+    final link =
+        ShareLinkParser.parse(
+              'vless://$uuid@e.com:443?security=tls&type=xhttp&mode=stream-up'
+              '&extra=%7B%22xPaddingObfsMode%22%3Atrue%2C%22xPaddingKey%22%3A%22k%22%7D#n',
+            ).proxies.single['xhttp-opts']
+            as Map;
+    expect(link['x-padding-key'], 'k');
+    expect(link['x-padding-header'], 'X-Padding');
+    expect(link['x-padding-placement'], 'queryInHeader');
+    expect(link['x-padding-method'], 'repeat-x');
+
+    final yaml =
+        ShareLinkParser.parse('''
+proxies:
+- name: a
+  type: vless
+  server: e.com
+  port: 443
+  uuid: $uuid
+  network: xhttp
+  xhttp-opts:
+    path: /
+    x-padding-obfs-mode: true
+''').proxies.single['xhttp-opts']
+            as Map;
+    expect(yaml['x-padding-key'], 'x_padding');
+    expect(yaml['x-padding-header'], 'X-Padding');
+
+    final plain =
+        ShareLinkParser.parse(
+              'vless://$uuid@e.com:443?security=tls&type=xhttp#n',
+            ).proxies.single['xhttp-opts']
+            as Map;
+    expect(plain.containsKey('x-padding-key'), isFalse);
+  });
+
+  test('vless xhttp extra that is not valid JSON is reported', () {
+    final r = ShareLinkParser.parse(
+      'vless://$uuid@example.com:443?security=tls&type=xhttp&extra=%7Bbroken#n',
+    );
+    expect(r.proxies, isEmpty);
+    expect(r.errors.single, contains('invalid xhttp extra'));
+  });
+
+  test('vless xhttp extra encoded twice is still read', () {
+    final extra = Uri.encodeComponent('{"xPaddingBytes":"1-2"}');
+    final r = ShareLinkParser.parse(
+      'vless://$uuid@example.com:443?security=tls&type=xhttp'
+      '&extra=${Uri.encodeQueryComponent(extra)}#n',
+    );
+    expect(r.errors, isEmpty);
+    expect((r.proxies.single['xhttp-opts'] as Map)['x-padding-bytes'], '1-2');
+  });
+
   test('vless tcp http header becomes http network', () {
     final p = ShareLinkParser.parse(
       'vless://$uuid@e.com:33017?type=tcp&headerType=http&host=a.com&path=%2F#x',
