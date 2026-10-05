@@ -1,28 +1,37 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'country_rules_cache.dart';
 
 /// Hands the cached rule lists to the core over loopback, so the core's own
 /// fetch is instant and never depends on the internet or on DNS.
 class CountryRulesServer {
-  CountryRulesServer._();
+  CountryRulesServer._() : _listenPort = port;
+
+  @visibleForTesting
+  CountryRulesServer.forTest(this._listenPort);
 
   static final CountryRulesServer instance = CountryRulesServer._();
+
+  final int _listenPort;
 
   /// Fixed so the provider URLs in the generated profile stay the same.
   static const port = 20841;
 
   HttpServer? _server;
 
-  String urlFor(String name) => 'http://127.0.0.1:$port/$name';
+  int get boundPort => _server?.port ?? _listenPort;
+
+  String urlFor(String name) => 'http://127.0.0.1:$boundPort/$name';
 
   Future<bool> ensureStarted() async {
     if (_server != null) return true;
     try {
       final server = await HttpServer.bind(
         InternetAddress.loopbackIPv4,
-        port,
+        _listenPort,
         shared: true,
       );
       _server = server;
@@ -34,6 +43,20 @@ class CountryRulesServer {
   }
 
   Future<void> _handle(HttpRequest request) async {
+    try {
+      await _serve(request);
+    } catch (_) {
+      try {
+        request.response.statusCode = HttpStatus.internalServerError;
+        await request.response.close();
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _serve(HttpRequest request) async {
+    // The core's HTTP client reuses idle connections; Dart drops them after
+    // two minutes without telling it, and the next fetch then reads EOF.
+    request.response.persistentConnection = false;
     final name = request.uri.pathSegments.isEmpty
         ? ''
         : request.uri.pathSegments.last;
