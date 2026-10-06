@@ -109,5 +109,6 @@ class CountryBypassConfig {
     'format': 'mrs',
     'url': url,
     'interval': updateInterval,
+    'proxy': 'DIRECT',
   };
 }

@@ -85,7 +85,10 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
     });
   }
 
-  Future<void> _save(CountrySelection? selection) async {
+  Future<void> _save(
+    CountrySelection? selection, {
+    bool refresh = false,
+  }) async {
     if (selection == null) {
       await CountryBypassStore.clear();
     } else {
@@ -99,7 +102,11 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
     });
     if (selection != null) {
       // Lists are fetched here, by the app, so connecting never waits for them.
-      final urls = await CountryRulesCache.prepare(selection, wait: true);
+      final urls = await CountryRulesCache.prepare(
+        selection,
+        wait: true,
+        force: refresh,
+      );
       if (!mounted) return;
       setState(() => _updating = false);
       final missing = CountryRulesCache.sources(selection).length - urls.length;
@@ -112,20 +119,27 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
         );
       }
     }
+    if (refresh && selection != null) {
+      await ref.read(setupActionProvider.notifier).applyProfile(force: true);
+      if (mounted) await _updateNow(download: false);
+      return;
+    }
     ref.read(setupActionProvider.notifier).applyProfileDebounce();
     Timer(const Duration(seconds: 6), () {
       if (mounted) unawaited(_refreshStatus());
     });
   }
 
-  Future<void> _updateNow() async {
+  Future<void> _updateNow({bool download = true}) async {
     final selection = _selection;
     if (selection == null || _updating) return;
     setState(() => _updating = true);
     final fa = _isFa(context);
     final core = ref.read(coreHandlerProvider);
     final errors = <String>[];
-    await CountryRulesCache.prepare(selection, wait: true, force: true);
+    if (download) {
+      await CountryRulesCache.prepare(selection, wait: true, force: true);
+    }
     for (final name in CountryBypassConfig.providerNames(selection)) {
       try {
         final message = await core.updateExternalProvider(providerName: name);
@@ -270,7 +284,8 @@ class _CountryBypassViewState extends ConsumerState<CountryBypassView> {
                     ? 'اگر raw.githubusercontent.com باز نمی‌شود روشن کنید'
                     : 'Turn on if raw.githubusercontent.com is blocked',
               ),
-              onChanged: (v) => _save(selection.copyWith(mirror: v)),
+              onChanged: (v) =>
+                  _save(selection.copyWith(mirror: v), refresh: true),
             ),
             const Divider(),
             for (final name in CountryBypassConfig.providerNames(selection))

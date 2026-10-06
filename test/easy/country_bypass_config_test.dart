@@ -33,6 +33,11 @@ void main() {
       containsAll(['mine', 'easy-ir-domain', 'easy-ir-ip']),
     );
     expect(providers['easy-ir-domain']['behavior'], 'domain');
+    expect(
+      providers['easy-ir-domain']['proxy'],
+      'DIRECT',
+      reason: 'the core fetches providers through its rules; loopback must not',
+    );
     expect(providers['easy-ir-domain']['format'], 'mrs');
     expect(
       providers['easy-ir-domain']['url'],
