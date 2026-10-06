@@ -2,8 +2,8 @@ name: easy-build
 
 # Builds Android, Windows and Linux on every push and keeps the newest build
 # of the branch as the "nightly" pre-release. A tag like v1.2.3 makes a normal
-# release. Separate from FlClash's own workflows (disabled on this fork) so
-# merging upstream never touches this file.
+# release. Separate from the other workflows in this folder, which are disabled
+# here, so merging never touches this file.
 
 on:
   push:
@@ -122,6 +122,13 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: dart setup.dart android -v
 
+      - name: Rename the Android files
+        if: matrix.platform == 'android'
+        run: |
+          cd dist
+          for f in FlClash-*; do mv "$f" "EasyVpn-${f#FlClash-}"; done
+          ls -la
+
       # ------------------------------------------------------------ Windows
       - name: Build Windows
         if: matrix.platform == 'windows'
@@ -141,7 +148,7 @@ jobs:
           Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Chocolate4U/Iran-clash-rules/release/ir.mrs' -OutFile "$release/easy_bin/country/ir-domain.mrs"
           Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Chocolate4U/Iran-clash-rules/release/ircidr.mrs' -OutFile "$release/easy_bin/country/ir-ip.mrs"
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path "$release/*" -DestinationPath 'dist/EasyFlClash-windows-x64.zip' -Force
+          Compress-Archive -Path "$release/*" -DestinationPath 'dist/EasyVpn-windows-x64.zip' -Force
 
       # -------------------------------------------------------------- Linux
       - name: Build Linux
@@ -149,7 +156,7 @@ jobs:
         run: |
           flutter build linux --release
           mkdir -p dist
-          tar -czf dist/EasyFlClash-linux-x64.tar.gz -C build/linux/x64/release bundle
+          tar -czf dist/EasyVpn-linux-x64.tar.gz -C build/linux/x64/release bundle
 
       - name: Upload
         uses: actions/upload-artifact@v4
