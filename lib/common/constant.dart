@@ -3,9 +3,9 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
 import 'package:material_ui/material_ui.dart';
 
 const appName = 'EasyVpn';
@@ -14,7 +14,7 @@ const coreManifestName = 'manifest.json';
 const coreName = 'clash.meta';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const packageName = 'com.follow.clash';
+const packageName = 'com.easyvpn.app';
 final unixSocketPath = '/tmp/EasyVpnSocket_${Random().nextInt(10000)}.sock';
 final windowsPipeName = '\\\\.\\pipe\\EasyVpnCore_${_randomPipeId()}';
 const helperPort = 47890;

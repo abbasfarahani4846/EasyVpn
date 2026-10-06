@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/pages/scan.dart';
-import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:fl_clash/widgets/null_status.dart';
+import 'package:easy_vpn/common/app_localizations.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/pages/scan.dart';
+import 'package:easy_vpn/widgets/activate_box.dart';
+import 'package:easy_vpn/widgets/null_status.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

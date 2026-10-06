@@ -1,6 +1,6 @@
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
-import 'package:fl_clash/views/dashboard/widgets/traffic_usage.dart';
-import 'package:fl_clash/widgets/donut_chart.dart';
+import 'package:easy_vpn/views/dashboard/widget_metrics.dart';
+import 'package:easy_vpn/views/dashboard/widgets/traffic_usage.dart';
+import 'package:easy_vpn/widgets/donut_chart.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

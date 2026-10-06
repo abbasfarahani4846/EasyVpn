@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+import 'package:easy_vpn/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef _TextMeasureKey = (

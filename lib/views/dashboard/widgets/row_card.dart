@@ -1,9 +1,9 @@
 import 'dart:math';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/dashboard/widget_metrics.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _rowGap = 8.0;

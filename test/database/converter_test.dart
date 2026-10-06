@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:fl_clash/database/database.dart';
+import 'package:easy_vpn/database/database.dart';
 import 'package:test/test.dart';
 
 void main() {

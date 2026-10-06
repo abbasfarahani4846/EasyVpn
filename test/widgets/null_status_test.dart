@@ -1,5 +1,5 @@
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/widgets/null_status.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/widgets/null_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 

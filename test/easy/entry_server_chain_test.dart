@@ -1,4 +1,4 @@
-import 'package:fl_clash/easy/entry_server/entry_server_chain.dart';
+import 'package:easy_vpn/easy/entry_server/entry_server_chain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

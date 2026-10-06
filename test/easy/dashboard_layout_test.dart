@@ -1,7 +1,7 @@
-import 'package:fl_clash/easy/home/dashboard_items.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/config.dart';
-import 'package:fl_clash/views/dashboard/widget_registry.dart';
+import 'package:easy_vpn/easy/home/dashboard_items.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/config.dart';
+import 'package:easy_vpn/views/dashboard/widget_registry.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/protocol.dart';
+import 'package:easy_vpn/common/protocol.dart';
 import 'package:test/test.dart';
 
 void main() {

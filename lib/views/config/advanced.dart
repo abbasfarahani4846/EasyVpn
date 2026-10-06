@@ -1,13 +1,13 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/views/config/dns.dart';
-import 'package:fl_clash/views/config/network.dart';
-import 'package:fl_clash/views/config/ntp.dart';
-import 'package:fl_clash/views/config/providers.dart';
-import 'package:fl_clash/views/config/scripts.dart';
-import 'package:fl_clash/widgets/list.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/views/config/dns.dart';
+import 'package:easy_vpn/views/config/network.dart';
+import 'package:easy_vpn/views/config/ntp.dart';
+import 'package:easy_vpn/views/config/providers.dart';
+import 'package:easy_vpn/views/config/scripts.dart';
+import 'package:easy_vpn/widgets/list.dart';
+import 'package:easy_vpn/widgets/scaffold.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'rules.dart';

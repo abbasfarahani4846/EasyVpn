@@ -1,9 +1,9 @@
-package com.follow.clash.service
+package com.easyvpn.app.service
 
-import com.follow.clash.common.AccessControlMode
-import com.follow.clash.service.models.AccessControlProps
-import com.follow.clash.service.models.NotificationParams
-import com.follow.clash.service.models.VpnOptions
+import com.easyvpn.app.common.AccessControlMode
+import com.easyvpn.app.service.models.AccessControlProps
+import com.easyvpn.app.service.models.NotificationParams
+import com.easyvpn.app.service.models.VpnOptions
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame

@@ -1,6 +1,6 @@
-package com.follow.clash.service.models
+package com.easyvpn.app.service.models
 
-import com.follow.clash.common.AccessControlMode
+import com.easyvpn.app.common.AccessControlMode
 import java.net.Inet4Address
 import java.net.Inet6Address
 import org.junit.Assert.assertEquals

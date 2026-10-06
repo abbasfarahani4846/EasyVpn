@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fl_clash/common/exception.dart';
-import 'package:fl_clash/common/javascript.dart';
+import 'package:easy_vpn/common/exception.dart';
+import 'package:easy_vpn/common/javascript.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

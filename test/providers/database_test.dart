@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:drift/native.dart';
-import 'package:fl_clash/common/feature.dart';
+import 'package:easy_vpn/common/feature.dart';
 // `Profiles`, `Scripts` and `ProxyGroups` name both a drift table and a
 // notifier, so the schema side is imported behind a prefix.
-import 'package:fl_clash/database/database.dart' as db;
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/database.dart';
+import 'package:easy_vpn/database/database.dart' as db;
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';

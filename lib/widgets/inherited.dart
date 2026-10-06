@@ -1,7 +1,7 @@
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:flutter/foundation.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/sheet.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

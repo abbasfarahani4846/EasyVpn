@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/providers/route_state.dart';
-import 'package:fl_clash/providers/routed_probe.dart';
-import 'package:fl_clash/providers/state.dart';
+import 'package:easy_vpn/core/controller.dart';
+import 'package:easy_vpn/core/interface.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/providers/core.dart';
+import 'package:easy_vpn/providers/route_state.dart';
+import 'package:easy_vpn/providers/routed_probe.dart';
+import 'package:easy_vpn/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';

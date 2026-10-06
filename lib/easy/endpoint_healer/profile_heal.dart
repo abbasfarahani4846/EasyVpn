@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/enum/enum.dart';
 
 import 'endpoint_healer.dart';
 

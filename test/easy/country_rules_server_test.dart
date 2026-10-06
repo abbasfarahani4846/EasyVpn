@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:fl_clash/easy/country_bypass/country_bypass_config.dart';
-import 'package:fl_clash/easy/country_bypass/country_rules_cache.dart';
-import 'package:fl_clash/easy/country_bypass/country_rules_server.dart';
+import 'package:easy_vpn/easy/country_bypass/country_bypass_config.dart';
+import 'package:easy_vpn/easy/country_bypass/country_rules_cache.dart';
+import 'package:easy_vpn/easy/country_bypass/country_rules_server.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

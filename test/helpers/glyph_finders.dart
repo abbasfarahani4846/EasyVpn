@@ -1,4 +1,4 @@
-import 'package:fl_clash/icons/icons.dart';
+import 'package:easy_vpn/icons/icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 extension GlyphFinders on CommonFinders {

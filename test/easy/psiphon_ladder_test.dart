@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:fl_clash/easy/psiphon/psiphon_constants.dart';
-import 'package:fl_clash/easy/psiphon/psiphon_ladder.dart';
-import 'package:fl_clash/easy/psiphon/network_fingerprint.dart';
-import 'package:fl_clash/easy/psiphon/psiphon_manager.dart';
-import 'package:fl_clash/easy/psiphon/psiphon_nodes.dart';
+import 'package:easy_vpn/easy/psiphon/psiphon_constants.dart';
+import 'package:easy_vpn/easy/psiphon/psiphon_ladder.dart';
+import 'package:easy_vpn/easy/psiphon/network_fingerprint.dart';
+import 'package:easy_vpn/easy/psiphon/psiphon_manager.dart';
+import 'package:easy_vpn/easy/psiphon/psiphon_nodes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, Object?> build(String rung) => PsiphonLadder.buildConfig(

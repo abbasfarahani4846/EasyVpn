@@ -314,7 +314,7 @@ jobs:
 
   build:
     # Releases publish where the release links point: the public repository.
-    if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.repository == 'abbasfarahani4846/EasyVpn' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -521,15 +521,15 @@ jobs:
         if: ${{ env.IS_STABLE == 'true' }}
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          arm_sha=$(sha256sum "./dist/FlClash-${version}-macos-arm64.dmg" | awk '{print $1}')
-          amd_sha=$(sha256sum "./dist/FlClash-${version}-macos-amd64.dmg" | awk '{print $1}')
+          arm_sha=$(sha256sum "./dist/EasyVpn-${version}-macos-arm64.dmg" | awk '{print $1}')
+          amd_sha=$(sha256sum "./dist/EasyVpn-${version}-macos-amd64.dmg" | awk '{print $1}')
 
           mkdir -p ./brew/Casks
           sed \
             -e "s|VERSION|$version|g" \
             -e "s|ARM_SHA256|$arm_sha|g" \
             -e "s|AMD_SHA256|$amd_sha|g" \
-            ./.github/homebrew_cask_template.rb > ./brew/Casks/flclash.rb
+            ./.github/homebrew_cask_template.rb > ./brew/Casks/easyvpn.rb
 
       - name: Push to Homebrew tap
         if: ${{ env.IS_STABLE == 'true' }}
@@ -561,7 +561,7 @@ jobs:
         with:
           source-directory: ./tmp/
           destination-github-username: chen08209
-          destination-repository-name: FlClash-fdroid-repo
+          destination-repository-name: EasyVpn-fdroid-repo
           user-name: 'chen08029'
           user-email: 'chen08209@gmail.com'
           target-branch: main

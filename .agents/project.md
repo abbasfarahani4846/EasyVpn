@@ -1,6 +1,6 @@
 # Project Context
 
-FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, using a Material You design with Surfboard-like UI.
+EasyVpn is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, using a Material You design with Surfboard-like UI.
 
 ## Version Notes
 
@@ -32,7 +32,7 @@ of the same number:
 diff -ru ~/.pub-cache/hosted/pub.dev/<name>-<version> ~/.pub-cache/git/<name>-<sha>
 ```
 
-The `window_manager` fork (`chen08209/window_manager`, tag `v0.5.1-flclash.3`)
+The `window_manager` fork (`chen08209/window_manager`, tag `v0.5.1-easyvpn.3`)
 was replaced by the in-repo `plugins/window` package; the behaviors it carried
 (work-area maximize with a hidden title bar on Windows, geometry restore on
 re-map on Linux, corner preference, terminate and activate events) live there
@@ -43,7 +43,7 @@ now, see the window plugin section of `architecture.md`.
 - Migrates `win32_registry` from `^2.0.0` to `^3.0.3`, which is a breaking rename
   across the whole Windows implementation (`Registry.openPath` → `CURRENT_USER.open`,
   `createValue` → `setValue`, `getStringValue` → `getString`).
-- This one is not optional while it lasts: FlClash depends on `win32_registry: ^3.0.3`
+- This one is not optional while it lasts: EasyVpn depends on `win32_registry: ^3.0.3`
   directly, and upstream's `^2.0.0` constraint cannot co-resolve with it.
 - Drop the fork when upstream publishes a release that accepts `win32_registry` 3.x.
 
@@ -57,7 +57,7 @@ now, see the window plugin section of `architecture.md`.
 
 The `code_forge` fork (`chen08209/code_forge`) is frozen: its Dart code now lives
 in the in-repo `plugins/code_forge` package and its Rust code in the `editor/`
-module of `plugins/rust_api`, both trimmed to what FlClash uses.
+module of `plugins/rust_api`, both trimmed to what EasyVpn uses.
 `plugins/code_forge/README.md` records what was kept and what was removed;
 upstream's MIT notice stays in `plugins/code_forge/LICENSE`.
 

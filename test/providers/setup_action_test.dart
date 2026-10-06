@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/core/controller.dart';
+import 'package:easy_vpn/core/interface.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/action.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/providers/config.dart';
+import 'package:easy_vpn/providers/core.dart';
+import 'package:easy_vpn/providers/database.dart';
+import 'package:easy_vpn/providers/state.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -760,7 +760,7 @@ void main() {
       originalLastConfigMd5 = globalState.lastConfigMd5;
       globalState.packageInfo = PackageInfo(
         appName: 'EasyVpn',
-        packageName: 'com.follow.clash',
+        packageName: 'com.easyvpn.app',
         version: '0.0.0',
         buildNumber: '0',
       );

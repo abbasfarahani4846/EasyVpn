@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/providers/routed_probe.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/providers/routed_probe.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 mixin ProbeStartHold<T extends ConsumerStatefulWidget> on ConsumerState<T> {

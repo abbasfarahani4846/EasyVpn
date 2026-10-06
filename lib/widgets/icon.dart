@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/common/cache.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/database/database.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/plugins/app.dart';
+import 'package:easy_vpn/common/cache.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/database/database.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/plugins/app.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';

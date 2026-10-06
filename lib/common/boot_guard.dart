@@ -1,10 +1,10 @@
 import 'dart:math';
 
-import 'package:fl_clash/common/boot_record.dart';
-import 'package:fl_clash/common/preferences.dart';
-import 'package:fl_clash/common/print.dart';
-import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/common/boot_record.dart';
+import 'package:easy_vpn/common/preferences.dart';
+import 'package:easy_vpn/common/print.dart';
+import 'package:easy_vpn/common/system.dart';
+import 'package:easy_vpn/enum/enum.dart';
 
 class BootGuard {
   final bool _supported;

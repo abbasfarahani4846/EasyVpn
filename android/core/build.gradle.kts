@@ -14,7 +14,7 @@ val coreAbis =
         ?: coreAbiByPlatform.values.toList()
 
 android {
-    namespace = "com.follow.clash.core"
+    namespace = "com.easyvpn.app.core"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndkVersion.get()
 

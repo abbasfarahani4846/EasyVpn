@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/window.dart';
-import 'package:fl_clash/models/config.dart';
+import 'package:easy_vpn/common/constant.dart';
+import 'package:easy_vpn/common/window.dart';
+import 'package:easy_vpn/models/config.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 

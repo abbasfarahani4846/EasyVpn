@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/easy/update/easy_update_provider.dart';
+import 'package:easy_vpn/easy/update/easy_update_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

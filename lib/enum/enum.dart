@@ -2,9 +2,9 @@
 
 import 'dart:io';
 
-import 'package:fl_clash/common/context.dart';
-import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:easy_vpn/common/context.dart';
+import 'package:easy_vpn/common/system.dart';
+import 'package:easy_vpn/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';

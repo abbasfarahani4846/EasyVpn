@@ -1,7 +1,7 @@
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 

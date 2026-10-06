@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:fl_clash/easy/update/easy_update_banner.dart';
-import 'package:fl_clash/easy/update/easy_update_provider.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:easy_vpn/easy/update/easy_update_banner.dart';
+import 'package:easy_vpn/easy/update/easy_update_provider.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/providers/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';

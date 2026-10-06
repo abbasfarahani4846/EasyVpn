@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
+import 'package:easy_vpn/widgets/inherited.dart';
+import 'package:easy_vpn/widgets/keyboard_inset_hold.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fl_clash/common/yaml.dart';
-import 'package:fl_clash/easy/warp/warp_registration.dart';
+import 'package:easy_vpn/common/yaml.dart';
+import 'package:easy_vpn/easy/warp/warp_registration.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

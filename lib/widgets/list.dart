@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/inherited.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/widgets/inherited.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';

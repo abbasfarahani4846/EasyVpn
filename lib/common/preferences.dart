@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fl_clash/common/boot_record.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/system_dns.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/common/boot_record.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/common/system_dns.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Preferences {

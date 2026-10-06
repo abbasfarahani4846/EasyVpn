@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/snowflake.dart';
+import 'package:easy_vpn/common/snowflake.dart';
 import 'package:test/test.dart';
 
 void main() {

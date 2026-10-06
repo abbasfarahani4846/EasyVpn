@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
+import 'package:easy_vpn/common/constant.dart';
+import 'package:easy_vpn/common/system.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/core.dart';
 import 'package:flutter/foundation.dart';
 
 import 'desktop/helper_client.dart';

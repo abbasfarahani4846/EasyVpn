@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:fl_clash/easy/update/easy_installer.dart';
-import 'package:fl_clash/easy/update/easy_updater.dart';
+import 'package:easy_vpn/easy/update/easy_installer.dart';
+import 'package:easy_vpn/easy/update/easy_updater.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<Map<String, Object?>> _releases({String sha = 'abcdef1'}) => [

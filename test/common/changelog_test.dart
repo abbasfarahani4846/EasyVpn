@@ -1,5 +1,5 @@
-import 'package:fl_clash/common/changelog.dart';
-import 'package:fl_clash/models/changelog.dart';
+import 'package:easy_vpn/common/changelog.dart';
+import 'package:easy_vpn/models/changelog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 String _body(String payload) =>

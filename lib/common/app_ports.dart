@@ -1,7 +1,7 @@
 import 'dart:ui' show Brightness, Color;
 
-import 'package:fl_clash/common/provider_reader.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/common/provider_reader.dart';
+import 'package:easy_vpn/models/models.dart';
 
 abstract interface class WindowPort {
   Future<WindowProps?> captureNormalGeometry(WindowProps current);

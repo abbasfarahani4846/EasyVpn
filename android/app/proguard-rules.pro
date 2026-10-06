@@ -1,4 +1,4 @@
 
--keep class com.follow.clash.models.** { *; }
+-keep class com.easyvpn.app.models.** { *; }
 
--keep class com.follow.clash.service.models.** { *; }
+-keep class com.easyvpn.app.service.models.** { *; }

@@ -1,9 +1,9 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/scroll.dart';
-import 'package:fl_clash/widgets/sheet.dart';
-import 'package:fl_clash/widgets/sheet_header.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/widgets/inherited.dart';
+import 'package:easy_vpn/widgets/scaffold.dart';
+import 'package:easy_vpn/widgets/scroll.dart';
+import 'package:easy_vpn/widgets/sheet.dart';
+import 'package:easy_vpn/widgets/sheet_header.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fl_clash/easy/endpoint_healer/endpoint_healer.dart';
+import 'package:easy_vpn/easy/endpoint_healer/endpoint_healer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 

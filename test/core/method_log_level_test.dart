@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/core/method.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

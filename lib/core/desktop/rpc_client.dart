@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/event.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/core/event.dart';
+import 'package:easy_vpn/core/method.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import 'transport.dart';

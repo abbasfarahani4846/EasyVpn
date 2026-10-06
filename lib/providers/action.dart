@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/common/boot_guard.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/system_dns.dart';
-import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/easy/easy_config.dart'; // EASY-HOOK
-import 'package:fl_clash/easy/endpoint_healer/profile_heal.dart';
-import 'package:fl_clash/database/database.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/plugins/service.dart';
-import 'package:fl_clash/providers/actions/system_exit.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/common/boot_guard.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/common/system_dns.dart';
+import 'package:easy_vpn/core/core.dart';
+import 'package:easy_vpn/easy/easy_config.dart'; // EASY-HOOK
+import 'package:easy_vpn/easy/endpoint_healer/profile_heal.dart';
+import 'package:easy_vpn/database/database.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/plugins/app.dart';
+import 'package:easy_vpn/plugins/service.dart';
+import 'package:easy_vpn/providers/actions/system_exit.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

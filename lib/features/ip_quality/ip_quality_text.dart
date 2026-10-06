@@ -1,7 +1,7 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/ip_quality.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/config.dart';
+import 'package:easy_vpn/providers/ip_quality.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

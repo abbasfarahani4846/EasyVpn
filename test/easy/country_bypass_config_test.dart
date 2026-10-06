@@ -1,5 +1,5 @@
-import 'package:fl_clash/easy/country_bypass/country_bypass_config.dart';
-import 'package:fl_clash/easy/country_bypass/country_catalog.dart';
+import 'package:easy_vpn/easy/country_bypass/country_bypass_config.dart';
+import 'package:easy_vpn/easy/country_bypass/country_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

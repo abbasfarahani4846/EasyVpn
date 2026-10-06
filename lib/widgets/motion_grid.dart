@@ -1,5 +1,5 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/widgets/grid.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/widgets/grid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 

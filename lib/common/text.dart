@@ -1,4 +1,4 @@
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'color.dart';

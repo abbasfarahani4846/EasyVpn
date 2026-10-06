@@ -13,7 +13,7 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
         return manager
     }()
     private lazy var wifiClient = CWWiFiClient.shared()
-    private let ssidQueue = DispatchQueue(label: "com.follow.clash.wifi_ssid")
+    private let ssidQueue = DispatchQueue(label: "com.easyvpn.app.wifi_ssid")
     private var pendingPermissionResults: [FlutterResult] = []
 
     private enum Method {

@@ -1,6 +1,6 @@
-import 'package:fl_clash/common/permission.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:easy_vpn/common/permission.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/providers/config.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';

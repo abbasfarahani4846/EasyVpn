@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/text_loupe.dart';
+import 'package:easy_vpn/widgets/text_loupe.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 

@@ -4,9 +4,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/print.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/common/constant.dart';
+import 'package:easy_vpn/common/print.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:path/path.dart' as p;
 
 import 'core_manifest.dart';

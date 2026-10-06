@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:fl_clash/easy/single_config/default_profile_config.dart';
-import 'package:fl_clash/easy/single_config/share_link_parser.dart';
+import 'package:easy_vpn/easy/single_config/default_profile_config.dart';
+import 'package:easy_vpn/easy/single_config/share_link_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

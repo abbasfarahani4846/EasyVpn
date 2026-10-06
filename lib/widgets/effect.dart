@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/widgets/inherited.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/widgets/inherited.dart';
 import 'package:material_ui/material_ui.dart';
 
 class EffectGestureDetector extends StatefulWidget {

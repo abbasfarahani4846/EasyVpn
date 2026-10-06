@@ -1,6 +1,6 @@
 import 'package:drift/native.dart';
-import 'package:fl_clash/database/database.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/database/database.dart';
+import 'package:easy_vpn/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

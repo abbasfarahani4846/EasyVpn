@@ -1,7 +1,7 @@
-import 'package:fl_clash/common/tray.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/common/tray.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';

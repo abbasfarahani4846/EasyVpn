@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/common/network_error.dart';
-import 'package:fl_clash/common/webdav.dart';
-import 'package:fl_clash/core/desktop/helper_client.dart';
-import 'package:fl_clash/core/desktop/launch_policy.dart';
-import 'package:fl_clash/core/desktop/model.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:easy_vpn/common/app_localizations.dart';
+import 'package:easy_vpn/common/network_error.dart';
+import 'package:easy_vpn/common/webdav.dart';
+import 'package:easy_vpn/core/desktop/helper_client.dart';
+import 'package:easy_vpn/core/desktop/launch_policy.dart';
+import 'package:easy_vpn/core/desktop/model.dart';
+import 'package:easy_vpn/core/method.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

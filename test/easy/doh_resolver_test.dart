@@ -1,4 +1,4 @@
-import 'package:fl_clash/easy/windscribe/doh_resolver.dart';
+import 'package:easy_vpn/easy/windscribe/doh_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,9 +1,9 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/views/connection/requests.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/views/connection/requests.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'feed_card.dart';

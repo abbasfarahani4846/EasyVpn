@@ -30,12 +30,12 @@ cask "easyvpn" do
         writable_base:  :appdir
   end
 
-  uninstall quit: "com.follow.clash"
+  uninstall quit: "com.easyvpn.app"
 
   zap trash: [
-    "~/Library/Application Support/com.follow.clash",
-    "~/Library/Caches/com.follow.clash",
-    "~/Library/Preferences/com.follow.clash.plist",
-    "~/Library/Saved Application State/com.follow.clash.savedState",
+    "~/Library/Application Support/com.easyvpn.app",
+    "~/Library/Caches/com.easyvpn.app",
+    "~/Library/Preferences/com.easyvpn.app.plist",
+    "~/Library/Saved Application State/com.easyvpn.app.savedState",
   ]
 end

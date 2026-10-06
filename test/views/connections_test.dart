@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/connection/connections.dart';
-import 'package:fl_clash/widgets/null_status.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/core/controller.dart';
+import 'package:easy_vpn/core/interface.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/database.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/connection/connections.dart';
+import 'package:easy_vpn/widgets/null_status.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

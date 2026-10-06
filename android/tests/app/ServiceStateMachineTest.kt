@@ -1,11 +1,11 @@
-package com.follow.clash
+package com.easyvpn.app
 
-import com.follow.clash.common.AccessControlMode
-import com.follow.clash.models.SetupParams
-import com.follow.clash.models.SharedState
-import com.follow.clash.service.models.AccessControlProps
-import com.follow.clash.service.models.NotificationParams
-import com.follow.clash.service.models.VpnOptions
+import com.easyvpn.app.common.AccessControlMode
+import com.easyvpn.app.models.SetupParams
+import com.easyvpn.app.models.SharedState
+import com.easyvpn.app.service.models.AccessControlProps
+import com.easyvpn.app.service.models.NotificationParams
+import com.easyvpn.app.service.models.VpnOptions
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -104,7 +104,7 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     var lastStartOptions: VpnOptions? = null
 
     override var runTimeMillis = 0L
-    override val homeDirPath = "/data/user/0/com.follow.clash/files"
+    override val homeDirPath = "/data/user/0/com.easyvpn.app/files"
     override val sdkInt = 34
 
     val toasts = mutableListOf<String>()

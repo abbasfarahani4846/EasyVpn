@@ -1,9 +1,9 @@
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/models/profile.dart';
-import 'package:fl_clash/pages/editor.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/profiles/preview.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/models/profile.dart';
+import 'package:easy_vpn/pages/editor.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/profiles/preview.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

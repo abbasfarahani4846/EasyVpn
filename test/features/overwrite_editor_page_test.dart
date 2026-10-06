@@ -1,7 +1,7 @@
-import 'package:fl_clash/features/overwrite/overwrite.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/providers/app.dart';
+import 'package:easy_vpn/features/overwrite/overwrite.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/providers/app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

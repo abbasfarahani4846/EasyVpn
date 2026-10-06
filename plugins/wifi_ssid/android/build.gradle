@@ -1,4 +1,4 @@
-group 'com.follow.clash.wifi_ssid'
+group 'com.easyvpn.app.wifi_ssid'
 version '1.0'
 
 buildscript {
@@ -22,7 +22,7 @@ allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'com.follow.clash.wifi_ssid'
+    namespace 'com.easyvpn.app.wifi_ssid'
     compileSdk 37
 
     compileOptions {

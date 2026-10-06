@@ -1,4 +1,4 @@
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/enum/enum.dart';
 
 enum InputIssueKind { keyTooLong, valueTooLong, missingValue }
 

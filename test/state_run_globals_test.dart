@@ -1,15 +1,15 @@
-import 'package:fl_clash/bootstrap.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/bootstrap.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/providers/config.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod/riverpod.dart';
 
 final _packageInfo = PackageInfo(
   appName: 'EasyVpn',
-  packageName: 'com.follow.clash',
+  packageName: 'com.easyvpn.app',
   version: '1.2.3',
   buildNumber: '1',
 );

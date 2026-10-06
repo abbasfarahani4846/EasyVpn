@@ -1,5 +1,5 @@
-import 'package:fl_clash/widgets/active_polling.dart';
-import 'package:fl_clash/widgets/inherited.dart';
+import 'package:easy_vpn/widgets/active_polling.dart';
+import 'package:easy_vpn/widgets/inherited.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef TickWidgetBuilder = Widget Function(BuildContext context, int tick);

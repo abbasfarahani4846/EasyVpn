@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:animations/animations.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/widgets/drag_back.dart';
-import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/widgets/drag_back.dart';
+import 'package:easy_vpn/widgets/keyboard_inset_hold.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 

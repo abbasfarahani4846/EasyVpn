@@ -3,21 +3,21 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/request.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/overwrite/overwrite.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/editor.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/about.dart';
-import 'package:fl_clash/views/config/scripts.dart';
-import 'package:fl_clash/views/profiles/overwrite/standard.dart';
-import 'package:fl_clash/views/proxies/setting.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/common/constant.dart';
+import 'package:easy_vpn/common/request.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/features/overwrite/overwrite.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/pages/editor.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/about.dart';
+import 'package:easy_vpn/views/config/scripts.dart';
+import 'package:easy_vpn/views/profiles/overwrite/standard.dart';
+import 'package:easy_vpn/views/proxies/setting.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -133,7 +133,7 @@ void main() {
     // populates.
     globalState.packageInfo = PackageInfo(
       appName: 'EasyVpn',
-      packageName: 'com.follow.clash',
+      packageName: 'com.easyvpn.app',
       version: '0.0.0',
       buildNumber: '1',
     );

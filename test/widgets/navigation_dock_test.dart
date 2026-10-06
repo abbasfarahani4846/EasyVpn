@@ -1,15 +1,15 @@
 import 'dart:typed_data';
 
-import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/home.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
-import 'package:fl_clash/views/navigation.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/common/app_ports.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/pages/home.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/dashboard/widgets/start_button.dart';
+import 'package:easy_vpn/views/navigation.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

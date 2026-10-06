@@ -1,13 +1,13 @@
 import 'dart:math';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
-import 'package:fl_clash/views/dashboard/widgets/outbound_mode.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/common/theme.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
+import 'package:easy_vpn/views/dashboard/widget_metrics.dart';
+import 'package:easy_vpn/views/dashboard/widgets/outbound_mode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_color_utilities/hct/hct.dart';

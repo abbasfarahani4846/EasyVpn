@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/common/shape.dart';
+import 'package:easy_vpn/providers/app.dart';
+import 'package:easy_vpn/common/shape.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

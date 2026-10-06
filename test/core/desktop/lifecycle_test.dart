@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:fl_clash/core/desktop/lifecycle.dart';
-import 'package:fl_clash/core/desktop/model.dart';
-import 'package:fl_clash/core/desktop/transport.dart';
+import 'package:easy_vpn/core/desktop/lifecycle.dart';
+import 'package:easy_vpn/core/desktop/model.dart';
+import 'package:easy_vpn/core/desktop/transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fakes.dart';

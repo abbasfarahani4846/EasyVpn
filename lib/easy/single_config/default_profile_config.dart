@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/yaml.dart';
+import 'package:easy_vpn/common/yaml.dart';
 import 'package:yaml/yaml.dart';
 
 /// Pure helpers that keep the default profile's YAML in sync with its proxies.

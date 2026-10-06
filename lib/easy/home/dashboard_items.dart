@@ -1,5 +1,5 @@
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../entry_server/route_card.dart';

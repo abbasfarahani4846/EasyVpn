@@ -1,5 +1,5 @@
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

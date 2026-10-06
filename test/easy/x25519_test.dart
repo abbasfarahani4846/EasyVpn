@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:fl_clash/easy/warp/x25519.dart';
+import 'package:easy_vpn/easy/warp/x25519.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Uint8List hex(String s) => Uint8List.fromList([

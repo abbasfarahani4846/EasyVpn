@@ -1,4 +1,4 @@
-import 'package:fl_clash/easy/windscribe/vpn_config_parser.dart';
+import 'package:easy_vpn/easy/windscribe/vpn_config_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _wg = '''

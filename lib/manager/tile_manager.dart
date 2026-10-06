@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/plugins/tile.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:easy_vpn/common/app_localizations.dart';
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/plugins/app.dart';
+import 'package:easy_vpn/plugins/tile.dart';
+import 'package:easy_vpn/providers/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

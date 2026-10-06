@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
+import 'package:easy_vpn/common/common.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
@@ -175,7 +175,7 @@ void main() {
     });
 
     test('passes a path containing spaces through untouched', () {
-      const path = '/Users/a b/Library/Application Support/com.follow.clash';
+      const path = '/Users/a b/Library/Application Support/com.easyvpn.app';
 
       final arguments = System.aclArguments(path, 'alice');
 

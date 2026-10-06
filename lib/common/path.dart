@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/common/legacy_data.dart';
+import 'package:easy_vpn/enum/enum.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -33,7 +34,8 @@ class AppPath {
 
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
-    supportDirectory().then((value) {
+    supportDirectory().then((value) async {
+      await LegacyData.migrate(value);
       dataDir.complete(value);
     });
     temporaryDirectory().then((value) {

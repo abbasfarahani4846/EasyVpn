@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:ui' show Brightness, Color;
 
-import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/common/preferences.dart';
-import 'package:fl_clash/models/config.dart';
-import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/providers/actions/system_exit.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/common/app_ports.dart';
+import 'package:easy_vpn/common/preferences.dart';
+import 'package:easy_vpn/models/config.dart';
+import 'package:easy_vpn/providers/action.dart';
+import 'package:easy_vpn/providers/actions/system_exit.dart';
+import 'package:easy_vpn/providers/config.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';

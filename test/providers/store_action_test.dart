@@ -1,16 +1,16 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/database/database.dart' as db;
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/core/controller.dart';
+import 'package:easy_vpn/core/interface.dart';
+import 'package:easy_vpn/database/database.dart' as db;
+import 'package:easy_vpn/enum/enum.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/action.dart';
+import 'package:easy_vpn/providers/core.dart';
+import 'package:easy_vpn/providers/database.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart';

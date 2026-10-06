@@ -1,4 +1,4 @@
-import 'package:fl_clash/easy/psiphon/psiphon_bypass.dart';
+import 'package:easy_vpn/easy/psiphon/psiphon_bypass.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

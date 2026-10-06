@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fl_clash/common/migration.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:easy_vpn/common/migration.dart';
+import 'package:easy_vpn/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

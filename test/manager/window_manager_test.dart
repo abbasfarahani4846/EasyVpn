@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/common/feature.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/manager/window_manager.dart';
-import 'package:fl_clash/models/config.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
+import 'package:easy_vpn/common/app_localizations.dart';
+import 'package:easy_vpn/common/app_ports.dart';
+import 'package:easy_vpn/common/feature.dart';
+import 'package:easy_vpn/icons/icons.dart';
+import 'package:easy_vpn/l10n/l10n.dart';
+import 'package:easy_vpn/manager/window_manager.dart';
+import 'package:easy_vpn/models/config.dart';
+import 'package:easy_vpn/providers/providers.dart';
+import 'package:easy_vpn/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

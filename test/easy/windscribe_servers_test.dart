@@ -1,4 +1,4 @@
-import 'package:fl_clash/easy/windscribe/windscribe_servers.dart';
+import 'package:easy_vpn/easy/windscribe/windscribe_servers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Trimmed from the shape of assets.windscribe.com/serverlist/mob-v2/1/1.

@@ -1,5 +1,5 @@
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:easy_vpn/models/models.dart';
+import 'package:easy_vpn/providers/providers.dart';
 
 class TestProfiles extends Profiles {
   final List<Profile> initial;

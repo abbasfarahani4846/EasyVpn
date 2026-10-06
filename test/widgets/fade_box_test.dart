@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/fade_box.dart';
+import 'package:easy_vpn/widgets/fade_box.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

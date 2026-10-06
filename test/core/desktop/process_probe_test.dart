@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fl_clash/core/desktop/process_probe.dart';
+import 'package:easy_vpn/core/desktop/process_probe.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

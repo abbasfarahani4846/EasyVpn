@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fl_clash/easy/home/connection_verifier.dart';
+import 'package:easy_vpn/easy/home/connection_verifier.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
