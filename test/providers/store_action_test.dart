@@ -46,7 +46,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(0);
-    home = Directory.systemTemp.createTempSync('flclash-store-');
+    home = Directory.systemTemp.createTempSync('easyvpn-store-');
     AppPath.supportDirectory = () async => home;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;

@@ -28,7 +28,7 @@ run `grep -rn EASY-HOOK lib` and check each one still compiles.
   Psiphon uses as its `UpstreamProxyURL`, so Psiphon reaches its servers through the entry. The choice is
   stored as a full proxy map and survives profile switches. The home screen shows the route.
 
-- `home`: two real dashboard widgets, so FlClash's own edit mode moves, removes and re-adds them:
+- `home`: two real dashboard widgets, so EasyVpn's own edit mode moves, removes and re-adds them:
   `easyConnect` (big connect button that says "Connected" only after an end-to-end check: IP through the
   core's mixed port vs the system's own IP vs the IP before connecting; status lines incl. Psiphon progress;
   a not-connected prompt after 12 s, 30 s for Psiphon, with keep-waiting / disconnect) and `easyRoute`

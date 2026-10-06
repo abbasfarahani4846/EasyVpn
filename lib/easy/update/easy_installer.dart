@@ -11,7 +11,7 @@ class EasyInstaller {
 param([int]$AppPid, [string]$Source, [string]$Dest, [string]$Exe)
 $log = Join-Path (Split-Path $Source) 'update.log'
 try { Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue } catch {}
-Get-Process -Name FlClashCore -ErrorAction SilentlyContinue |
+Get-Process -Name EasyVpnCore -ErrorAction SilentlyContinue |
   Where-Object { $_.Path -and $_.Path.StartsWith($Dest, [StringComparison]::OrdinalIgnoreCase) } |
   Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
@@ -55,7 +55,7 @@ nohup "$EXE" >/dev/null 2>&1 &
       case 'windows':
         final work = await _fresh(file, 'extracted');
         await extractFileToDisk(file.path, work.path);
-        final source = contentRoot(work, 'FlClash.exe');
+        final source = contentRoot(work, 'EasyVpn.exe');
         final script = File(
           '${file.parent.path}${Platform.pathSeparator}apply_update.ps1',
         );

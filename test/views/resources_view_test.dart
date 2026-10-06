@@ -25,7 +25,7 @@ void main() {
   final cacheDirectory = AppPath.cacheDirectory;
 
   setUpAll(() async {
-    home = Directory.systemTemp.createTempSync('flclash-resources-');
+    home = Directory.systemTemp.createTempSync('easyvpn-resources-');
     AppPath.supportDirectory = () async => home;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;

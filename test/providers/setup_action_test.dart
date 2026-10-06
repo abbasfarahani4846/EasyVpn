@@ -759,7 +759,7 @@ void main() {
       await AppLocalizations.load(const Locale('en'));
       originalLastConfigMd5 = globalState.lastConfigMd5;
       globalState.packageInfo = PackageInfo(
-        appName: 'FlClash',
+        appName: 'EasyVpn',
         packageName: 'com.follow.clash',
         version: '0.0.0',
         buildNumber: '0',

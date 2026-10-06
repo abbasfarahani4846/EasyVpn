@@ -132,7 +132,7 @@ void main() {
     // AboutView reads globalState.packageInfo, which only the real app bootstrap
     // populates.
     globalState.packageInfo = PackageInfo(
-      appName: 'FlClash',
+      appName: 'EasyVpn',
       packageName: 'com.follow.clash',
       version: '0.0.0',
       buildNumber: '1',

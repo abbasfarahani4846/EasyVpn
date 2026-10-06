@@ -135,7 +135,7 @@ void main() {
     });
 
     test('passes a path containing spaces through untouched', () {
-      const path = '/Users/a b/FlClash.app/Contents/MacOS/FlClashCore';
+      const path = '/Users/a b/EasyVpn.app/Contents/MacOS/EasyVpnCore';
       for (final isMacOS in [true, false]) {
         final arguments = System.statArguments(path, isMacOS: isMacOS);
         expect(arguments.last, path);

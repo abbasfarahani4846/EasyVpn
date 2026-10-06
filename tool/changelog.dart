@@ -7,7 +7,7 @@ import 'src/changelog/git.dart';
 import 'src/changelog/models.dart';
 import 'src/changelog/render.dart';
 
-const _repository = 'chen08209/FlClash';
+const _repository = 'abbasfarahani4846/EasyVpn';
 
 Future<void> main(List<String> arguments) async {
   final parser = ArgParser()

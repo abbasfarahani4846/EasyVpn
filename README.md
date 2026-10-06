@@ -23,7 +23,7 @@ Get the newest build from the [Releases](../../releases) page:
 
 | Platform | File |
 |---|---|
-| Windows | `EasyVpn-windows-x64.zip` (unzip and run `FlClash.exe`) |
+| Windows | `EasyVpn-windows-x64.zip` (unzip and run `EasyVpn.exe`) |
 | Android | the `.apk` that matches your phone (`arm64-v8a` for most) |
 | Linux | `EasyVpn-linux-x64.tar.gz` |
 

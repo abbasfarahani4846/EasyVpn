@@ -61,7 +61,7 @@ var (
 
 	delayTestSlots = make(chan struct{}, delayTestConcurrency)
 
-	debugStderr = os.Getenv("FLCLASH_CORE_DEBUG") != ""
+	debugStderr = os.Getenv("EASYVPN_CORE_DEBUG") != ""
 )
 
 var (

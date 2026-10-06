@@ -9,7 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Wraps the dashboard grid. Its only job is to give the dashboard a minimal
-/// layout built from FlClash's own widgets plus the easy ones, once; after
+/// layout built from EasyVpn's own widgets plus the easy ones, once; after
 /// that the layout belongs to the user (the dashboard's edit mode moves,
 /// removes and adds widgets as usual).
 class EasyDashboardTop extends ConsumerStatefulWidget {

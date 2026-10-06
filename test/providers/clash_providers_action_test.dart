@@ -57,7 +57,7 @@ void main() {
   late Map<int, Map<String, dynamic>> subscriptions;
 
   setUpAll(() {
-    home = Directory.systemTemp.createTempSync('flclash-providers-action-');
+    home = Directory.systemTemp.createTempSync('easyvpn-providers-action-');
     AppPath.supportDirectory = () async => home;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;

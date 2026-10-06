@@ -1,4 +1,4 @@
-cask "flclash" do
+cask "easyvpn" do
   version "VERSION"
 
   on_macos do
@@ -7,12 +7,12 @@ cask "flclash" do
     sha256 arm:   "ARM_SHA256",
            intel: "AMD_SHA256"
 
-    url "https://github.com/chen08209/FlClash/releases/download/v#{version}/FlClash-#{version}-macos-#{arch}.dmg"
+    url "https://github.com/abbasfarahani4846/EasyVpn/releases/download/v#{version}/EasyVpn-#{version}-macos-#{arch}.dmg"
   end
 
-  name "FlClash"
+  name "EasyVpn"
   desc "Multi-platform proxy client based on ClashMeta"
-  homepage "https://github.com/chen08209/FlClash"
+  homepage "https://github.com/abbasfarahani4846/EasyVpn"
 
   livecheck do
     url :url
@@ -21,12 +21,12 @@ cask "flclash" do
 
   depends_on :macos
 
-  app "FlClash.app"
+  app "EasyVpn.app"
 
   postflight_steps do
     run "/usr/bin/xattr",
-        args:           ["-rd", "com.apple.quarantine", "{{appdir}}/FlClash.app"],
-        writable_paths: ["FlClash.app"],
+        args:           ["-rd", "com.apple.quarantine", "{{appdir}}/EasyVpn.app"],
+        writable_paths: ["EasyVpn.app"],
         writable_base:  :appdir
   end
 

@@ -32,7 +32,7 @@ Future<YamlMap?> _ntpOf({
       proxyGroups: const [],
       rules: const [],
       addedRules: const [],
-      defaultUA: 'FlClash-Test',
+      defaultUA: 'EasyVpn-Test',
     ),
   );
   final config = loadYaml(result.yaml) as YamlMap;

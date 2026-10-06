@@ -23,7 +23,7 @@
 
 | پلتفرم | فایل |
 |---|---|
-| ویندوز | `EasyVpn-windows-x64.zip` (باز کنید و `FlClash.exe` را اجرا کنید) |
+| ویندوز | `EasyVpn-windows-x64.zip` (باز کنید و `EasyVpn.exe` را اجرا کنید) |
 | اندروید | فایل `.apk` مناسب گوشی (برای اکثر گوشی‌ها `arm64-v8a`) |
 | لینوکس | `EasyVpn-linux-x64.tar.gz` |
 

@@ -31,7 +31,7 @@ void main() {
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({'version': 1});
     await AppLocalizations.load(const Locale('en'));
-    home = Directory.systemTemp.createTempSync('flclash-backup-action-');
+    home = Directory.systemTemp.createTempSync('easyvpn-backup-action-');
     AppPath.supportDirectory = () async => home;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
@@ -68,7 +68,7 @@ void main() {
     late Directory kept;
 
     setUp(() {
-      kept = Directory.systemTemp.createTempSync('flclash-backup-kept-');
+      kept = Directory.systemTemp.createTempSync('easyvpn-backup-kept-');
       addTearDown(() => kept.deleteSync(recursive: true));
     });
 
@@ -271,7 +271,7 @@ void main() {
         ..createSync(recursive: true)
         ..writeAsStringSync('current');
       final added = File(await appPath.getProfilePath('42'));
-      final staging = Directory.systemTemp.createTempSync('flclash-staging-');
+      final staging = Directory.systemTemp.createTempSync('easyvpn-staging-');
       addTearDown(() => staging.deleteSync(recursive: true));
       for (final id in [41, 42]) {
         File(BackupEntries.resolve(staging.path, BackupEntries.profile(id)))

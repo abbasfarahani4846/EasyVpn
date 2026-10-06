@@ -122,13 +122,6 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: dart setup.dart android -v
 
-      - name: Rename the Android files
-        if: matrix.platform == 'android'
-        run: |
-          cd dist
-          for f in FlClash-*; do mv "$f" "EasyVpn-${f#FlClash-}"; done
-          ls -la
-
       # ------------------------------------------------------------ Windows
       - name: Build Windows
         if: matrix.platform == 'windows'

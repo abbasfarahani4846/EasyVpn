@@ -13,22 +13,22 @@ List<Map<String, Object?>> _releases({String sha = 'abcdef1'}) => [
     'body': 'Automatic build.\n<!-- easy-build:$sha -->',
     'assets': [
       {
-        'name': 'EasyFlClash-windows-x64.zip',
+        'name': 'EasyEasyVpn-windows-x64.zip',
         'browser_download_url': 'https://example.com/win.zip',
         'size': 100,
       },
       {
-        'name': 'EasyFlClash-linux-x64.tar.gz',
+        'name': 'EasyEasyVpn-linux-x64.tar.gz',
         'browser_download_url': 'https://example.com/linux.tgz',
         'size': 90,
       },
       {
-        'name': 'FlClash-0.8.99-android-arm64-v8a.apk',
+        'name': 'EasyVpn-0.8.99-android-arm64-v8a.apk',
         'browser_download_url': 'https://example.com/arm64.apk',
         'size': 80,
       },
       {
-        'name': 'FlClash-0.8.99-android-x86_64.apk',
+        'name': 'EasyVpn-0.8.99-android-x86_64.apk',
         'browser_download_url': 'https://example.com/x64.apk',
         'size': 85,
       },
@@ -45,7 +45,7 @@ void main() {
     );
     expect(info, isNotNull);
     expect(info!.sha, 'abcdef1');
-    expect(info.assetName, 'EasyFlClash-windows-x64.zip');
+    expect(info.assetName, 'EasyEasyVpn-windows-x64.zip');
     expect(info.assetUrl, 'https://example.com/win.zip');
     expect(info.assetSize, 100);
     expect(info.notes, 'Automatic build.');
@@ -99,7 +99,7 @@ void main() {
       platform: UpdatePlatform.linux,
     );
     expect(info!.sha, 'fedcba9');
-    expect(info.assetName, 'EasyFlClash-linux-x64.tar.gz');
+    expect(info.assetName, 'EasyEasyVpn-linux-x64.tar.gz');
   });
 
   test('android picks the apk of its own abi and others get none', () {
@@ -109,8 +109,8 @@ void main() {
       platform: UpdatePlatform.android,
       abi: abi,
     )?.assetName;
-    expect(pick('arm64-v8a'), 'FlClash-0.8.99-android-arm64-v8a.apk');
-    expect(pick('x86_64'), 'FlClash-0.8.99-android-x86_64.apk');
+    expect(pick('arm64-v8a'), 'EasyVpn-0.8.99-android-arm64-v8a.apk');
+    expect(pick('x86_64'), 'EasyVpn-0.8.99-android-x86_64.apk');
     expect(pick('armeabi-v7a'), isNull);
     expect(
       EasyUpdater.parse(
@@ -202,9 +202,9 @@ void main() {
       addTearDown(() => root.deleteSync(recursive: true));
       final sep = Platform.pathSeparator;
       final nested = Directory('${root.path}${sep}pkg')..createSync();
-      expect(EasyInstaller.contentRoot(root, 'FlClash.exe').path, nested.path);
-      File('${root.path}${sep}FlClash.exe').writeAsStringSync('x');
-      expect(EasyInstaller.contentRoot(root, 'FlClash.exe').path, root.path);
+      expect(EasyInstaller.contentRoot(root, 'EasyVpn.exe').path, nested.path);
+      File('${root.path}${sep}EasyVpn.exe').writeAsStringSync('x');
+      expect(EasyInstaller.contentRoot(root, 'EasyVpn.exe').path, root.path);
     });
   });
 }

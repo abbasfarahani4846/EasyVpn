@@ -156,7 +156,7 @@ abstract class ProxyGroup with _$ProxyGroup {
 
 extension ProxyGroupExt on ProxyGroup {
   /// Only what `GroupCommonOption` and the per-type option structs read, so the
-  /// generated config carries no FlClash bookkeeping and no null placeholders.
+  /// generated config carries no EasyVpn bookkeeping and no null placeholders.
   Map<String, dynamic> get definition {
     return {
       'name': name,

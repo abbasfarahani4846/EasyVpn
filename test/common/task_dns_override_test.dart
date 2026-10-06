@@ -44,7 +44,7 @@ Future<YamlMap> _dnsOf({
       proxyGroups: const [],
       rules: const [],
       addedRules: const [],
-      defaultUA: 'FlClash-Test',
+      defaultUA: 'EasyVpn-Test',
     ),
   );
   final config = loadYaml(result.yaml) as YamlMap;

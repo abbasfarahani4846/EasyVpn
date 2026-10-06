@@ -5,7 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../entry_server/route_card.dart';
 import 'easy_connect_card.dart';
 
-/// The easy widgets as dashboard grid items, so FlClash's own edit mode can
+/// The easy widgets as dashboard grid items, so EasyVpn's own edit mode can
 /// move and remove them like any other widget.
 const GridItem easyConnectItem = GridItem(
   key: ValueKey(DashboardWidget.easyConnect),

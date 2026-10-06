@@ -10,7 +10,7 @@ class NetworkFingerprint {
   const NetworkFingerprint._();
 
   static final _virtual = RegExp(
-    r'meta|clash|flclash|sing|tun|wintun|tap|vethernet|vmware|virtualbox|'
+    r'meta|clash|easyvpn|sing|tun|wintun|tap|vethernet|vmware|virtualbox|'
     r'hyper-v|loopback|tailscale|zerotier|wireguard|openvpn|psiphon|wsl',
     caseSensitive: false,
   );
