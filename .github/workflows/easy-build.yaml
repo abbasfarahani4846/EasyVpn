@@ -44,6 +44,15 @@ jobs:
             os: ubuntu-22.04
 
     steps:
+      # The Go core for every ABI, the NDK and Gradle together fill the
+      # runner's disk; the SDK under /usr/local/lib/android stays.
+      - name: Free disk space (Android)
+        if: matrix.platform == 'android'
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost             /usr/share/swift /opt/hostedtoolcache/CodeQL /usr/local/share/powershell             /opt/microsoft /usr/local/share/chromium || true
+          sudo docker image prune --all --force || true
+          df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
