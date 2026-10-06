@@ -5,6 +5,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'build_info.dart';
 import 'easy_installer.dart';
 import 'easy_updater.dart';
 
@@ -51,7 +52,7 @@ class EasyUpdateNotifier extends Notifier<EasyUpdateState> {
 
   /// Checks now and again every few hours while the app stays open.
   void start() {
-    if (_timer != null) return;
+    if (easyBuildSha == 'dev' || _timer != null) return;
     unawaited(check());
     _timer = Timer.periodic(
       const Duration(hours: 6),
