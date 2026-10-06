@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_vpn/easy/update/build_info.dart';
 import 'package:easy_vpn/easy/update/easy_update_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -64,7 +65,9 @@ class EasyUpdateBanner extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              failed ? '${update.error}' : '${info.name} · $size MB',
+              failed
+                  ? '${update.error}'
+                  : '${info.name} ($size MB) · ${fa ? 'نسخه فعلی' : 'installed'}: $easyBuildSha',
               style: theme.bodyMedium?.copyWith(color: foreground),
             ),
             if (info.notes.isNotEmpty && !busy && !failed) ...[

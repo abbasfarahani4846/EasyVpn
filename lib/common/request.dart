@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:easy_vpn/common/common.dart';
+import 'package:easy_vpn/easy/update/easy_updater.dart';
 import 'package:easy_vpn/enum/enum.dart';
 import 'package:easy_vpn/state.dart';
 
@@ -69,23 +70,9 @@ class Request {
   }
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
-    try {
-      final response = await dio.get(
-        'https://api.github.com/repos/$repository/releases/latest',
-        options: Options(responseType: ResponseType.json),
-      );
-      if (response.statusCode != 200) return null;
-      final data = response.data as Map<String, dynamic>;
-      final remoteVersion = data['tag_name'];
-      final version = globalState.packageInfo.version;
-      final hasUpdate =
-          compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-      if (!hasUpdate) return null;
-      return data;
-    } catch (e) {
-      commonPrint.log('checkForUpdate failed', logLevel: LogLevel.warning);
-      return null;
-    }
+    final info = await EasyUpdater.check(dio: dio);
+    if (info == null) return null;
+    return {'tag_name': info.tag, 'body': info.notes};
   }
 }
 

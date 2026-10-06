@@ -44,7 +44,7 @@ void main() {
       setGlobalUa('');
 
       expect(globalState.ua, _packageInfo.ua);
-      expect(globalState.ua, contains('EasyVpn/v1.2.3'));
+      expect(globalState.ua, startsWith('clash-verge/v1.2.3'));
     });
 
     test('prefers the configured global user agent', () {

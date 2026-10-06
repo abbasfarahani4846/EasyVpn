@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:easy_vpn/common/common.dart';
 import 'package:easy_vpn/enum/enum.dart';
 
+import '../single_config/subscription_converter.dart';
 import 'endpoint_healer.dart';
 
 bool get _fa => PlatformDispatcher.instance.locale.languageCode == 'fa';
@@ -25,13 +26,15 @@ String repairMessage(EndpointHealReport report) {
 
 /// Run on every downloaded profile before it is saved.
 Future<Uint8List> healProfileBytes(Uint8List bytes) async {
+  final original = utf8.decode(bytes, allowMalformed: true);
+  final converted = SubscriptionConverter.toClashYaml(original);
   final EndpointHealReport report;
   try {
-    report = await EndpointHealer.heal(
-      utf8.decode(bytes, allowMalformed: true),
-    );
+    report = await EndpointHealer.heal(converted ?? original);
   } catch (_) {
-    return bytes;
+    return converted == null
+        ? bytes
+        : Uint8List.fromList(utf8.encode(converted));
   }
   if (report.repaired.isNotEmpty || report.failed.isNotEmpty) {
     dialogs.showNotifier(
@@ -39,5 +42,8 @@ Future<Uint8List> healProfileBytes(Uint8List bytes) async {
       level: report.failed.isEmpty ? MessageLevel.info : MessageLevel.error,
     );
   }
-  return report.changed ? Uint8List.fromList(utf8.encode(report.yaml)) : bytes;
+  if (report.changed || converted != null) {
+    return Uint8List.fromList(utf8.encode(report.yaml));
+  }
+  return bytes;
 }

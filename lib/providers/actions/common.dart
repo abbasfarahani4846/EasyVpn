@@ -73,12 +73,7 @@ class CommonAction extends _$CommonAction {
     }
   }
 
-  Future<bool> autoCheckUpdate() async {
-    if (!ref.read(appSettingProvider).autoCheckUpdate) return false;
-    final res = await request.checkForUpdate();
-    await checkUpdateResultHandle(data: res);
-    return res != null;
-  }
+  Future<bool> autoCheckUpdate() async => false;
 
   TextSpan _releaseSpan(BuildContext context, String tagName, String? body) {
     final textTheme = context.textTheme;

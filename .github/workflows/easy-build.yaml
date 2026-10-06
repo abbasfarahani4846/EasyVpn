@@ -108,6 +108,18 @@ jobs:
         shell: bash
         run: echo "const easyBuildSha = '${GITHUB_SHA::7}';" > lib/easy/update/build_info.dart
 
+      # A tag decides the shown version; every build gets a higher build number.
+      - name: Stamp the version
+        shell: bash
+        run: |
+          BUILD=$((2026100300 + GITHUB_RUN_NUMBER))
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            sed -i "s/^version: .*/version: ${GITHUB_REF_NAME#v}+${BUILD}/" pubspec.yaml
+          else
+            sed -i -E "s/^(version: [0-9.]+)\+.*/\1+${BUILD}/" pubspec.yaml
+          fi
+          grep '^version:' pubspec.yaml
+
       - name: Get Flutter dependencies
         run: |
           flutter --version
