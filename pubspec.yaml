@@ -81,6 +81,7 @@ dependencies:
     path: plugins/rust_api
   setup:
     path: plugins/setup
+  open_filex: ^4.7.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

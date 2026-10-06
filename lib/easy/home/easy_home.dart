@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:fl_clash/easy/update/easy_update_banner.dart';
+import 'package:fl_clash/easy/update/easy_update_provider.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +38,10 @@ class _EasyDashboardTopState extends ConsumerState<EasyDashboardTop> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_apply()));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_apply());
+      ref.read(easyUpdateProvider.notifier).start();
+    });
   }
 
   Future<void> _apply() async {
@@ -51,5 +56,6 @@ class _EasyDashboardTopState extends ConsumerState<EasyDashboardTop> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) =>
+      Column(children: [const EasyUpdateBanner(), widget.child]);
 }
